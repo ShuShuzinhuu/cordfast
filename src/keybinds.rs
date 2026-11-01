@@ -43,14 +43,21 @@ pub enum Shortcut {
     NewGroup,
     Help,
     Shortcuts,
+    JumpToCall,
+    CopyChannelLink,
+    ToggleCategories,
+    ZoomIn,
+    ZoomOut,
+    ZoomReset,
 }
 
 /// Every shortcut: its id in the settings file, its name and Discord's
-/// default (its keyboard combos, Ctrl+/ in the official client).
+/// default (the bundle's keybinds, as its Ctrl+/ list shows them).
 pub const ALL: &[(Shortcut, &str, &str, &str)] = &[
     (Shortcut::ToggleMute, "toggle_mute", n!("Toggle Mute"), "Ctrl+Shift+M"),
     (Shortcut::ToggleDeaf, "toggle_deaf", n!("Toggle Deafen"), "Ctrl+Shift+D"),
-    (Shortcut::ReturnToVoice, "return_to_voice", n!("Return to Connected Voice Channel"), "Ctrl+Alt+A"),
+    (Shortcut::ReturnToVoice, "return_to_voice", n!("Return to Connected Voice Channel"), "Ctrl+Alt+ArrowLeft"),
+    (Shortcut::JumpToCall, "jump_to_call", n!("Navigate to current call"), "Ctrl+Alt+Shift+V"),
     (Shortcut::AnswerCall, "answer_call", n!("Answer Incoming Call"), "Ctrl+Enter"),
     (Shortcut::StartCall, "start_call", n!("Start Call in Conversation"), "Ctrl+Quote"),
     (Shortcut::QuickSwitcher, "quick_switcher", n!("Quick Switcher"), "Ctrl+K"),
@@ -78,11 +85,16 @@ pub const ALL: &[(Shortcut, &str, &str, &str)] = &[
     (Shortcut::NewGroup, "new_group", n!("Create a Private Group"), "Ctrl+Shift+T"),
     (Shortcut::Help, "help", n!("Help"), "Ctrl+Shift+H"),
     (Shortcut::Shortcuts, "shortcuts", n!("Keyboard Shortcuts"), "Ctrl+Slash"),
+    (Shortcut::CopyChannelLink, "copy_channel_link", n!("Copy channel link"), "Ctrl+Shift+L"),
+    (Shortcut::ToggleCategories, "toggle_categories", n!("Collapse or Expand All Categories"), "Ctrl+Shift+A"),
+    (Shortcut::ZoomIn, "zoom_in", n!("Zoom In"), "Ctrl+Plus"),
+    (Shortcut::ZoomOut, "zoom_out", n!("Zoom Out"), "Ctrl+Minus"),
+    (Shortcut::ZoomReset, "zoom_reset", n!("Reset Zoom"), "Ctrl+0"),
 ];
 
 /// How the settings page groups them.
 pub const SECTIONS: &[(&str, &[Shortcut])] = &[
-    (n!("Voice and Calls"), &[Shortcut::ToggleMute, Shortcut::ToggleDeaf, Shortcut::ReturnToVoice, Shortcut::AnswerCall, Shortcut::StartCall]),
+    (n!("Voice and Calls"), &[Shortcut::ToggleMute, Shortcut::ToggleDeaf, Shortcut::ReturnToVoice, Shortcut::JumpToCall, Shortcut::AnswerCall, Shortcut::StartCall]),
     (
         n!("Navigation"),
         &[
@@ -99,10 +111,11 @@ pub const SECTIONS: &[(&str, &[Shortcut])] = &[
             Shortcut::PrevMention,
             Shortcut::NextMention,
             Shortcut::OldestUnread,
+            Shortcut::ToggleCategories,
         ],
     ),
-    (n!("Chat and Panels"), &[Shortcut::Pins, Shortcut::Inbox, Shortcut::Members, Shortcut::Search, Shortcut::Emoji, Shortcut::Gif, Shortcut::Sticker, Shortcut::Upload]),
-    (n!("Other"), &[Shortcut::CreateServer, Shortcut::NewGroup, Shortcut::Help, Shortcut::Shortcuts]),
+    (n!("Chat and Panels"), &[Shortcut::Pins, Shortcut::Inbox, Shortcut::Members, Shortcut::Search, Shortcut::Emoji, Shortcut::Gif, Shortcut::Sticker, Shortcut::Upload, Shortcut::CopyChannelLink]),
+    (n!("Other"), &[Shortcut::CreateServer, Shortcut::NewGroup, Shortcut::Help, Shortcut::Shortcuts, Shortcut::ZoomIn, Shortcut::ZoomOut, Shortcut::ZoomReset]),
 ];
 
 /// Discord's combos that do not change: shown under the others.

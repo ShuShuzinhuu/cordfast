@@ -851,6 +851,8 @@ impl App {
             .find(|(name, _)| *name == self.settings.theme)
             .map_or(crate::theme::DISCORD_DARK, |(_, p)| *p);
         crate::theme::apply(ctx, palette, self.settings.accent);
+        // Zoom keys are rebindable shortcuts here, not egui's own.
+        ctx.options_mut(|o| o.zoom_with_keyboard = false);
         ctx.set_zoom_factor(self.settings.zoom.clamp(0.6, 2.0));
     }
 
