@@ -36,7 +36,7 @@ jobs:
           version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
           if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "new=false" >> "$GITHUB_OUTPUT"
-            echo "A versão $version já foi publicada." >> "$GITHUB_STEP_SUMMARY"
+            echo "Version $version is already published." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
@@ -145,7 +145,7 @@ jobs:
             openssl pkey -pubin -inform DER -in "$RUNNER_TEMP/public.der" -out "$RUNNER_TEMP/public.pem"
             openssl pkeyutl -verify -pubin -inkey "$RUNNER_TEMP/public.pem" -rawin -in checksums.txt -sigfile checksums.txt.sig
           else
-            echo "::warning::Sem o segredo CORDFAST_SIGNING_KEY: release publicada como pré-release, sem atualização automática."
+            echo "::warning::No CORDFAST_SIGNING_KEY secret: published as a pre-release, without automatic updates."
           fi
       - name: Publish
         env:
