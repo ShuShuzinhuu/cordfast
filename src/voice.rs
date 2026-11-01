@@ -860,7 +860,13 @@ impl Denoiser {
     /// the load takes longer than an audio callback may.
     fn with_model() -> Self {
         let started = std::time::Instant::now();
-        let params = df::tract::RuntimeParams::default_with_ch(1).with_post_filter(0.02);
+        // No post filter, which dulled the voice further, and the
+        // attenuation held to 20 dB: at full strength the model took
+        // 15-20 dB off 1-4 kHz and zeroed quiet syllables it judged noise
+        // (frames under -10 dB of local SNR), which people heard as a
+        // muffled voice with pops and gaps. The thresholds let quieter
+        // speech through before that zero mask applies.
+        let params = df::tract::RuntimeParams::default_with_ch(1).with_post_filter(0.0).with_atten_lim(20.0).with_thresholds(-15.0, 30.0, 20.0);
         let model = df::tract::DfTract::new(df::tract::DfParams::default(), &params)
             .map_err(|e| log::warn!("voice: noise suppression: {e:#}"))
             .ok()
@@ -1983,6 +1989,112 @@ mod devices_test {
         let rms = |x: &[f32]| (x.iter().map(|s| s * s).sum::<f32>() / x.len() as f32).sqrt();
         let tail = RATE as usize;
         assert!(rms(&out[out.len() - tail..]) > rms(&quiet[quiet.len() - tail..]) * 2.0);
+    }
+
+    /// How each step of the microphone's chain shapes a real voice, band by
+    /// band, against the input: `CORDFAST_SPEECH=voice.wav cargo test
+    /// --release mic_chain_tone -- --ignored --nocapture` (16-bit mono
+    /// 48 kHz). Writes each step's output beside the input to listen to.
+    #[test]
+    #[ignore]
+    fn mic_chain_tone() {
+        let Ok(path) = std::env::var("CORDFAST_SPEECH") else { return };
+        let bytes = std::fs::read(&path).unwrap();
+        let mut at = 12;
+        let mut voice = Vec::new();
+        while at + 8 <= bytes.len() {
+            let size = u32::from_le_bytes(bytes[at + 4..at + 8].try_into().unwrap()) as usize;
+            if &bytes[at..at + 4] == b"data" {
+                voice = bytes[at + 8..(at + 8 + size).min(bytes.len())].chunks_exact(2).map(|b| f32::from(i16::from_le_bytes([b[0], b[1]])) / 32768.0).collect();
+                break;
+            }
+            at += 8 + size + size % 2;
+        }
+        let write = |name: &str, x: &[f32]| {
+            let mut out = Vec::new();
+            let data = (x.len() * 2) as u32;
+            out.extend(b"RIFF");
+            out.extend((36 + data).to_le_bytes());
+            out.extend(b"WAVEfmt ");
+            out.extend(16u32.to_le_bytes());
+            out.extend(1u16.to_le_bytes());
+            out.extend(1u16.to_le_bytes());
+            out.extend(RATE.to_le_bytes());
+            out.extend((RATE * 2).to_le_bytes());
+            out.extend(2u16.to_le_bytes());
+            out.extend(16u16.to_le_bytes());
+            out.extend(b"data");
+            out.extend(data.to_le_bytes());
+            for s in x {
+                out.extend(((s.clamp(-1.0, 1.0) * 32767.0) as i16).to_le_bytes());
+            }
+            std::fs::write(std::path::Path::new(&path).with_file_name(format!("{name}.wav")), out).unwrap();
+        };
+        // Band energies by a plain DFT over 4096-sample windows.
+        let bands = |x: &[f32]| -> Vec<f32> {
+            const N: usize = 4096;
+            let edges = [0.0, 300.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];
+            let mut sum = vec![0.0f64; edges.len() - 1];
+            for window in x.chunks_exact(N).step_by(2) {
+                for k in 1..N / 2 {
+                    let f = k as f32 * RATE as f32 / N as f32;
+                    let Some(b) = edges.windows(2).position(|e| f >= e[0] && f < e[1]) else { continue };
+                    let (mut re, mut im) = (0.0f64, 0.0f64);
+                    for (n, s) in window.iter().enumerate() {
+                        let w = 0.5 - 0.5 * (std::f64::consts::TAU * n as f64 / N as f64).cos();
+                        let a = std::f64::consts::TAU * k as f64 * n as f64 / N as f64;
+                        re += f64::from(*s) * w * a.cos();
+                        im -= f64::from(*s) * w * a.sin();
+                    }
+                    sum[b] += re * re + im * im;
+                }
+            }
+            sum.iter().map(|e| (10.0 * (e + 1e-12).log10()) as f32).collect()
+        };
+        let reference = bands(&voice);
+        let report = |name: &str, x: &[f32]| {
+            let b = bands(x);
+            let line: Vec<String> = b.iter().zip(&reference).map(|(o, i)| format!("{:6.1}", o - i)).collect();
+            println!("{name:<28} 0-300 300-1k 1-2k 2-4k 4-8k 8-16k Hz: {}", line.join(" "));
+        };
+        // Someone else talking in the headphones while we talk: the far end
+        // the echo canceller hears, which never reaches the microphone.
+        let far: Vec<f32> = voice.iter().rev().map(|s| s * 0.5).collect();
+        let silent = vec![0.0f32; voice.len()];
+        let run_echo = |far: &[f32]| {
+            let render = Mutex::new(VecDeque::new());
+            let mut echo = Processor::echo();
+            let mut out = Vec::new();
+            for (played, heard) in far.chunks(FRAME).zip(voice.chunks(FRAME)) {
+                render.lock().unwrap().extend(played);
+                out.extend(echo.run(heard, Some(&render)));
+            }
+            out
+        };
+        let denoise = |x: &[f32]| {
+            let mut d = Denoiser::with_model();
+            let mut out = Vec::new();
+            for chunk in x.chunks(FRAME) {
+                out.extend(d.run(chunk).0);
+            }
+            out
+        };
+        report("input", &voice);
+        let echo_quiet = run_echo(&silent);
+        report("echo, speakers silent", &echo_quiet);
+        write("step-echo-quiet", &echo_quiet);
+        let echo_talk = run_echo(&far);
+        report("echo, other person talking", &echo_talk);
+        write("step-echo-talk", &echo_talk);
+        let clean = denoise(&voice);
+        report("deepfilternet", &clean);
+        write("step-deepfilter", &clean);
+        let both = denoise(&echo_talk);
+        report("echo (talking) + deepfilter", &both);
+        write("step-echo-deepfilter", &both);
+        let mut gain = Processor::gain();
+        let gained: Vec<f32> = both.chunks(FRAME).flat_map(|c| gain.run(c, None)).collect();
+        report("+ gain", &gained);
     }
 
     /// What the echo canceller and the gain cost on this machine:
