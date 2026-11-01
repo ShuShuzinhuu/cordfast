@@ -1257,6 +1257,15 @@ impl App {
             }
             Event::Activity(activity, full) => {
                 self.activity = activity;
+                // Each game played lands in Registered Games, newest first.
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64);
+                for game in full.iter().filter(|a| a.kind == 0) {
+                    let Some(id) = game.application.map(|id| id.to_string()) else { continue };
+                    self.settings.played_games.retain(|g| g.id != id);
+                    self.settings.played_games.insert(0, crate::settings::PlayedGame { id, name: game.name.clone(), last_played: now });
+                    self.settings.played_games.truncate(100);
+                    self.settings.save();
+                }
                 self.own_activities = full;
             }
             Event::Api { key, result } if !key.starts_with("do:") && !matches!(key.as_str(), "guild" | "members" | "invites" | "bans" | "emojis" | "audit") => {
