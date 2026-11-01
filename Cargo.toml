@@ -1,0 +1,148 @@
+[package]
+name = "cordfast"
+version = "0.3.2"
+edition = "2024"
+rust-version = "1.98"
+license = "MIT"
+description = "A fast, native Discord client built with Rust and egui"
+
+[dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+directories = "6"
+log = "0.4"
+# Logs to stderr and a file per run, for bug reports.
+fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# songbird reports through tracing; this forwards its events to the log.
+tracing = { version = "0.1", features = ["log"] }
+# UI framework. glow avoids the larger wgpu dependency, as in ZapFast.
+eframe = { version = "0.36.2", default-features = false, features = ["accesskit", "glow", "default_fonts", "persistence", "wayland", "x11"] }
+egui = "0.36.2"
+# Decodes avatars and attachments on the runtime thread, never in a frame.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif"] }
+# Pasting a screenshot into the composer (egui only passes text on); the
+# version egui-winit already brings.
+arboard = { version = "3", default-features = false, features = ["image-data"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros", "net", "io-util", "fs"] }
+# The gateway and remote-auth WebSockets.
+tokio-tungstenite = { version = "0.28", features = ["rustls-tls-webpki-roots"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip", "multipart", "stream", "blocking"] }
+# File picker for attachments.
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "wayland"] }
+# Voice: the voice gateway, UDP, Opus and DAVE end-to-end encryption.
+# Exactly 0.6.1: voice.rs reads a voice tick's `payload_end_pad` as the
+# index it holds there (`SsrcState::get_voice_tick`), not the count its
+# documentation describes; check `opus_frame` before moving on.
+songbird = { version = "=0.6.1", default-features = false, features = ["driver", "gateway", "rustls", "tungstenite", "receive"] }
+# Microphone and speakers.
+cpal = "0.16"
+# The trait songbird reads live audio through (its own version).
+symphonia-core = "0.5"
+# Discord's call sounds come as mp3; "pcm" is the decoder songbird needs
+# for the microphone's raw f32 track: without it the track fails with "no
+# compatible track found" and nothing reaches the call.
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "pcm"] }
+async-trait = "0.1"
+# Unicode emoji names, groups and shortcodes for the picker.
+emojis = "0.9"
+# Fallback faces for the symbols and rare scripts Discord names use: the
+# installed fonts' character maps, read through memory maps (the versions
+# fastframe-fonts already brings).
+skrifa = "0.44"
+memmap2 = "0.9"
+# Draws the Discord icons (SVG paths from the web client).
+resvg = { version = "0.45", default-features = false }
+# Discord's own stickers are Lottie animations: drawn here, pure Rust on
+# tiny-skia.
+rasterlottie = { version = "0.2", default-features = false }
+# Noise suppression: RNNoise, a small neural network, ported to Rust.
+nnnoiseless = { version = "0.5", default-features = false }
+# Echo cancellation (AEC3) and automatic gain control (AGC2): WebRTC's
+# audio processing, the engine Discord's client runs, as a pure Rust port.
+sonora = "0.2"
+# Noise suppression on the level of Discord's Krisp: DeepFilterNet3, full
+# band at 48 kHz, run by tract (pure Rust), its model built in. Written
+# against tract 0.21.4; later 0.21 releases changed the API it uses.
+deep_filter = { git = "https://github.com/Rikorose/DeepFilterNet", rev = "d375b2d8", default-features = false, features = ["tract", "default-model"] }
+ndarray = "0.15"
+tract-core = "=0.21.4"
+tract-onnx = "=0.21.4"
+tract-pulse = "=0.21.4"
+tract-hir = "=0.21.4"
+# QR login: the remote-auth handshake encrypts with RSA-OAEP/SHA-256.
+rsa = { version = "0.9", features = ["sha2"] }
+sha2 = "0.10"
+rand = "0.8"
+base64 = "0.22"
+qrcode = { version = "0.14", default-features = false }
+# The token lives in the OS credential store, never in a file.
+keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
+jiff = "0.2"
+open = "5"
+# Shared foundation of Carmine's egui apps (github.com/crmne/fastframe), the
+# same revision ZapFast and Spotifast use.
+fastframe-fonts = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+fastframe-emoji = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# Palette files (custom themes), as ZapFast and Spotifast read them.
+fastframe-theme = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# Keeps CordFast running without a window, behind the tray item.
+fastframe-shell = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+fastframe-tray = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+fastframe-notifications = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# Updates from GitHub releases with signed checksums, a helper and rollback.
+fastframe-update = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2", features = ["reqwest"] }
+# Starting at login (the Windows Run key), with the window or in the tray.
+fastframe-autostart = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# Discord's title bar drawn by the app: dragging, double click, the edges
+# that resize a window without the system frame.
+fastframe-titlebar = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+# The interface's languages: gettext catalogs in assets/i18n compiled into
+# the program, English as the source.
+fastframe-i18n = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
+
+[patch.crates-io]
+# crmne/egui apps-0.36.2, shared with ZapFast and Spotifast. fastframe builds
+# against it, so every egui crate comes from the same revision.
+ecolor = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+eframe = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+egui = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+egui-winit = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+egui_glow = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+emath = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+epaint = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+epaint_default_fonts = { git = "https://github.com/crmne/egui", rev = "6ce633ba5f7f64d19ef6d204f9377da560bb546b" }
+winit = { git = "https://github.com/crmne/winit", rev = "0bed9dc0a7db02590a279fb8bac795fa39ee6948" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[dev-dependencies]
+# Signs release checksums (examples/release.rs).
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+sha2 = "0.10"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# The token in the desktop's Secret Service (GNOME Keyring, KWallet), with
+# the kernel keyring as a cache; async-io so it never blocks inside tokio.
+keyring = { version = "3", features = ["linux-native-async-persistent", "async-io", "crypto-rust"] }
+
+[build-dependencies]
+# Compiles assets/i18n/*.po into Rust at build time.
+fastframe-i18n = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2", features = ["build"] }
+
+[target.'cfg(windows)'.build-dependencies]
+# The icon in the executable: the taskbar, Explorer and shortcuts show it
+# (the window's own icon only reaches the title bar).
+embed-resource = "3"
+
+[target.'cfg(windows)'.dependencies]
+# Push-to-talk reads the key's state wherever focus is.
+windows-sys = { version = "0.60", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_Media", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading"] }

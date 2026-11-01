@@ -1,0 +1,157 @@
+# Builds CordFast for Windows and Linux and publishes the GitHub release the
+# updater reads (fastframe-update's names):
+#   cordfast-v<version>-x86_64-pc-windows-msvc.zip        portable copy
+#   cordfast-v<version>-x86_64-pc-windows-msvc-setup.exe  setup program
+#   cordfast-v<version>-x86_64-unknown-linux-gnu.tar.gz   Linux
+#   checksums.txt, checksums.txt.sig                      signed checksums
+#
+# Runs for a tag v<version> (Cargo.toml's version), or by hand from the
+# Actions tab, which tags the commit it built; a version that already has
+# a release is left alone. The signature needs the
+# CORDFAST_SIGNING_KEY secret: the hex in %APPDATA%\CordFast\release-signing.key
+# on the owner's PC. Without it the release is published as a pre-release,
+# which installed copies never update to (they refuse unsigned releases),
+# but which can still be downloaded and installed by hand.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      new: ${{ steps.check.outputs.new }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "A versão $version já foi publicada." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    runs-on: windows-2022
+    env:
+      # .cargo/config.toml points CMake (for libopus) at the Build Tools of
+      # the owner's PC; the runner's is on the PATH.
+      CMAKE: cmake
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.*)"').Matches[0].Groups[1].Value
+          $name = "cordfast-v$version-x86_64-pc-windows-msvc"
+          New-Item -ItemType Directory -Force "dist\$name" | Out-Null
+          Copy-Item target\release\cordfast.exe "dist\$name\cordfast.exe"
+          # Unzipped anywhere, the copy updates itself.
+          Set-Content -Encoding ascii -NoNewline "dist\$name\cordfast-portable.txt" "cordfast-portable-v1"
+          # 7-Zip writes "/" in entry names, which the updater's tar expects.
+          Push-Location dist
+          7z a -tzip "$name.zip" $name | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "zip falhou" }
+          Pop-Location
+          Remove-Item "dist\$name" -Recurse
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y | Out-Null }
+          & $iscc /Qp "/DAppVersion=$version" scripts\cordfast.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup falhou" }
+          Get-ChildItem dist | Format-Table Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+          if-no-files-found: error
+
+  linux:
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    # The oldest supported runner: the binary runs on its glibc and newer.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake pkg-config clang libopus-dev \
+            libasound2-dev libxkbcommon-dev libwayland-dev libx11-dev libxcursor-dev libxrandr-dev \
+            libxi-dev libgl1-mesa-dev libfontconfig1-dev libfreetype6-dev libdbus-1-dev
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        env:
+          CMAKE: cmake
+        run: cargo build --release --locked
+      - name: Test
+        env:
+          CMAKE: cmake
+        run: cargo test --release --locked
+      - name: Package
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          name="cordfast-v$version-x86_64-unknown-linux-gnu"
+          mkdir -p "dist/$name"
+          cp target/release/cordfast "dist/$name/cordfast"
+          printf 'cordfast-portable-v1' > "dist/$name/cordfast-portable.txt"
+          tar -C dist -czf "dist/$name.tar.gz" "$name"
+          rm -r "dist/$name"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums and signature
+        env:
+          KEY: ${{ secrets.CORDFAST_SIGNING_KEY }}
+        run: |
+          cd dist
+          sha256sum *.zip *.exe *.tar.gz > checksums.txt
+          cat checksums.txt
+          if [ -n "$KEY" ]; then
+            # The raw 32-byte Ed25519 key as PKCS#8, for OpenSSL.
+            unhex() { python3 -c 'import sys, binascii; sys.stdout.buffer.write(binascii.unhexlify(sys.argv[1]))' "$1"; }
+            unhex "302e020100300506032b657004220420$(printf '%s' "$KEY" | tr -d '[:space:]')" > "$RUNNER_TEMP/key.der"
+            openssl pkey -inform DER -in "$RUNNER_TEMP/key.der" -out "$RUNNER_TEMP/key.pem"
+            openssl pkeyutl -sign -inkey "$RUNNER_TEMP/key.pem" -rawin -in checksums.txt -out checksums.txt.sig
+            rm "$RUNNER_TEMP/key.der" "$RUNNER_TEMP/key.pem"
+            # The key must be the one the app trusts.
+            unhex "302a300506032b6570032100$(tr -d '[:space:]' < ../assets/update-public-key.hex)" > "$RUNNER_TEMP/public.der"
+            openssl pkey -pubin -inform DER -in "$RUNNER_TEMP/public.der" -out "$RUNNER_TEMP/public.pem"
+            openssl pkeyutl -verify -pubin -inkey "$RUNNER_TEMP/public.pem" -rawin -in checksums.txt -sigfile checksums.txt.sig
+          else
+            echo "::warning::Sem o segredo CORDFAST_SIGNING_KEY: release publicada como pré-release, sem atualização automática."
+          fi
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          if [ -f dist/checksums.txt.sig ]; then kind=""; else kind="--prerelease"; fi
+          gh release create "v$version" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "CordFast $version" --notes-file scripts/release-notes.md $kind

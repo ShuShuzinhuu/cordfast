@@ -1,0 +1,4 @@
+// CordFast's icon in the executable, embedded by build.rs on Windows: the
+// taskbar, Explorer and shortcuts show it. The window's own icon (icon.rs)
+// only reaches the title bar.
+1 ICON "cordfast.ico"

@@ -1,0 +1,5007 @@
+# CordFast's interface in Japanese.
+# Kept in step with the code by scripts/i18n.py; empty messages show in English.
+msgid ""
+msgstr ""
+"Project-Id-Version: CordFast\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src\admin.rs:28 src\ui\settings.rs:481
+msgid "Overview"
+msgstr "概要"
+
+#: src\admin.rs:28 src\ui\guild.rs:410 src\ui\guild.rs:824 src\ui\guild.rs:893
+msgid "Roles"
+msgstr "ロール"
+
+#: src\admin.rs:28 src\ui\expressions.rs:232 src\ui\guild.rs:1088
+msgid "Emoji"
+msgstr "絵文字"
+
+#: src\admin.rs:28 src\ui\guild.rs:665
+msgid "Channels"
+msgstr "チャンネル"
+
+#: src\admin.rs:29
+msgid "Moderation"
+msgstr "モデレーション"
+
+#: src\admin.rs:29 src\ui\guild.rs:332
+msgid "Safety Setup"
+msgstr "安全設定"
+
+#: src\admin.rs:29 src\ui\guild.rs:1234
+msgid "Audit Log"
+msgstr "監査ログ"
+
+#: src\admin.rs:29
+msgid "Bans"
+msgstr "BAN"
+
+#: src\admin.rs:30
+msgid "User Management"
+msgstr "ユーザー管理"
+
+#: src\admin.rs:30
+msgid "Members"
+msgstr "メンバー"
+
+#: src\admin.rs:30 src\ui\guild.rs:949
+msgid "Invites"
+msgstr "招待"
+
+#: src\admin.rs:109
+msgid "General Server Permissions"
+msgstr "サーバー全般の権限"
+
+#: src\admin.rs:110
+msgid "View Channels"
+msgstr "チャンネルを見る"
+
+#: src\admin.rs:111
+msgid "Manage Channels"
+msgstr "チャンネルの管理"
+
+#: src\admin.rs:112
+msgid "Manage Roles"
+msgstr "ロールの管理"
+
+#: src\admin.rs:113
+msgid "Manage Expressions"
+msgstr "エクスプレッションの管理"
+
+#: src\admin.rs:114
+msgid "View Audit Log"
+msgstr "監査ログを表示"
+
+#: src\admin.rs:115
+msgid "Manage Webhooks"
+msgstr "ウェブフックの管理"
+
+#: src\admin.rs:116
+msgid "Manage Server"
+msgstr "サーバー管理"
+
+#: src\admin.rs:118
+msgid "Membership Permissions"
+msgstr "メンバーシップ権限"
+
+#: src\admin.rs:119 src\ui\guild.rs:954
+msgid "Create Invite"
+msgstr "招待を作成"
+
+#: src\admin.rs:120 src\ui\chat.rs:2166 src\ui\menu.rs:344
+msgid "Change Nickname"
+msgstr "ニックネームの変更"
+
+#: src\admin.rs:121
+msgid "Manage Nicknames"
+msgstr "ニックネームの管理"
+
+#: src\admin.rs:122
+msgid "Kick Members"
+msgstr "メンバーをキック"
+
+#: src\admin.rs:123
+msgid "Ban Members"
+msgstr "メンバーをBAN"
+
+#: src\admin.rs:124
+msgid "Timeout Members"
+msgstr "メンバーをタイムアウト"
+
+#: src\admin.rs:126
+msgid "Text Channel Permissions"
+msgstr "テキストチャンネル権限"
+
+#: src\admin.rs:127
+msgid "Send Messages"
+msgstr "メッセージを送信"
+
+#: src\admin.rs:128
+msgid "Send Messages in Threads"
+msgstr "スレッドでメッセージを送信"
+
+#: src\admin.rs:129
+msgid "Create Public Threads"
+msgstr "公開スレッドの作成"
+
+#: src\admin.rs:130
+msgid "Create Private Threads"
+msgstr "プライベートスレッドの作成"
+
+#: src\admin.rs:131
+msgid "Embed Links"
+msgstr "埋め込みリンク"
+
+#: src\admin.rs:132
+msgid "Attach Files"
+msgstr "ファイルを添付"
+
+#: src\admin.rs:133
+msgid "Add Reactions"
+msgstr "リアクションの追加"
+
+#: src\admin.rs:134
+msgid "Use External Emoji"
+msgstr "外部の絵文字を使用する"
+
+#: src\admin.rs:135
+msgid "Mention @everyone, @here, and All Roles"
+msgstr "@everyone、@here、全てのロールにメンション"
+
+#: src\admin.rs:136
+msgid "Manage Messages"
+msgstr "メッセージの管理"
+
+#: src\admin.rs:137
+msgid "Manage Threads"
+msgstr "スレッドの管理"
+
+#: src\admin.rs:138
+msgid "Read Message History"
+msgstr "メッセージ履歴を読む"
+
+#: src\admin.rs:139
+msgid "Send Text-to-Speech Messages"
+msgstr "テキスト読み上げメッセージを送信する"
+
+#: src\admin.rs:141
+msgid "Voice Channel Permissions"
+msgstr "ボイスチャンネル権限"
+
+#: src\admin.rs:142
+msgid "Connect"
+msgstr "接続"
+
+#: src\admin.rs:143
+msgid "Speak"
+msgstr "発言"
+
+#: src\admin.rs:144
+msgid "Video"
+msgstr "動画"
+
+#: src\admin.rs:145
+msgid "Use Voice Activity"
+msgstr "音声検出を使用"
+
+#: src\admin.rs:146
+msgid "Priority Speaker"
+msgstr "優先スピーカー"
+
+#: src\admin.rs:147
+msgid "Mute Members"
+msgstr "メンバーをミュート"
+
+#: src\admin.rs:148
+msgid "Deafen Members"
+msgstr "メンバーのスピーカーをミュート"
+
+#: src\admin.rs:149
+msgid "Move Members"
+msgstr "メンバーを移動"
+
+#: src\admin.rs:151
+msgid "Advanced Permissions"
+msgstr "高度な権限"
+
+#: src\admin.rs:151
+msgid "Administrator"
+msgstr "管理者"
+
+#: src\admin.rs:288
+msgid "Discord is indexing the members. Try again in a moment."
+msgstr "Discordがメンバーをインデックスしています。しばらくしてからもう一度お試しください。"
+
+#: src\admin.rs:300 src\app.rs:2125 src\ui\settings.rs:400
+msgid "Done."
+msgstr "完了しました。"
+
+#: src\admin.rs:372
+msgid "Allows members to view channels by default (excluding private channels)."
+msgstr "この権限を持つメンバーは、デフォルトでチャンネルを閲覧できます（プライベートチャンネルを除く）。"
+
+#: src\admin.rs:373
+msgid "Allows members to create, edit, or delete channels."
+msgstr "この権限を持つメンバーは、チャンネルを作成・編集・削除できます。"
+
+#: src\admin.rs:374
+msgid "Allows members to create new roles and edit or delete roles lower than their highest role. Also allows members to change permissions of individual channels that they have access to."
+msgstr "この権限を持つメンバーは、新しいロールを作成できます。また、個々人に割り当てられている最高レベルのロールを基準として、それよりも低レベルのロールを編集・削除できます。さらに、アクセスできる各チャンネルの権限を変更できます。"
+
+#: src\admin.rs:375
+msgid "Allows members to edit or remove custom emoji, stickers, and sounds in this server."
+msgstr "この権限を持つメンバーは、このサーバーでカスタム絵文字・スタンプ・サウンドを編集または削除できます。"
+
+#: src\admin.rs:376
+msgid "Allows members to view a record of who made which changes in this server."
+msgstr "この権限を持つメンバーは、このサーバーで誰がどのような変更を行ったかの記録を閲覧できます。"
+
+#: src\admin.rs:377
+msgid "Allows members to create, edit, or delete webhooks, which can post messages from other apps or sites into this server."
+msgstr "この権限を持つメンバーは、ウェブフックを作成・編集・削除できます。ウェブフックを使うと、他のアプリやサイトからこのサーバーにメッセージを投稿できます。"
+
+#: src\admin.rs:378
+msgid "Allow members to change this server's name, switch regions, view all invites, add apps to this server and create and update AutoMod rules."
+msgstr "この権限を持つメンバーは、このサーバーの名前を変更、地域を切り替え、全ての招待を閲覧、このサーバーにアプリを追加、またはAutoModルールを作成しアップデートすることができます。"
+
+#: src\admin.rs:379
+msgid "Allows members to invite new people to this server."
+msgstr "この権限を持つメンバーは、このサーバーに新メンバーを招待できます。"
+
+#: src\admin.rs:380
+msgid "Allows members to change their own nickname, a custom name for just this server."
+msgstr "この権限を持つメンバーは、自分のニックネームを変更し、このサーバーだけで使うカスタムネームにできます。"
+
+#: src\admin.rs:381
+msgid "Allows members to change the nicknames of other members."
+msgstr "この権限を持つメンバーは、他メンバーのニックネームを変更できます。"
+
+#: src\admin.rs:382
+msgid "Kick will remove other members from this server. Kicked members will be able to rejoin if they have another invite. If the server enables Member Requirements, this permission enables the ability to approve or reject members who request to join."
+msgstr "キックすると、他メンバーをこのサーバーから削除できます。キックされたメンバーは、招待があれば再度サーバーに参加できます。サーバーがメンバー要件を有効化していた場合、この権限により参加を希望するメンバーの承認および拒否をする機能が有効になります。"
+
+#: src\admin.rs:383
+msgid "Allows members to permanently ban and delete the message history of other members from this server."
+msgstr "メンバーは他のメンバーのメッセージ履歴をこのサーバーから恒久的にBANおよび削除できます。"
+
+#: src\admin.rs:384
+msgid "When you put a user in timeout they will not be able to send messages in chat, reply within threads, react to messages, or speak in voice or Stage channels."
+msgstr "ユーザーをタイムアウトすると、そのユーザーはチャットでメッセージを送ったり、スレッドで返信したり、メッセージにリアクションしたり、ボイス／ステージチャンネルで話したりできなくなります。"
+
+#: src\admin.rs:385
+msgid "Allow members to send messages in text channels and create posts in forum channels."
+msgstr "この権限を持つメンバーは、テキストチャンネルでメッセージを送ることができ、フォーラムチャンネルで投稿を作成できます。"
+
+#: src\admin.rs:386
+msgid "Allow members to send messages in threads and in posts on forum channels."
+msgstr "この権限を持つメンバーは、フォーラムチャンネルのスレッドと投稿でメッセージを送信できます。"
+
+#: src\admin.rs:387
+msgid "Allow members to create threads that everyone in a channel can view."
+msgstr "この権限を持つメンバーは、特定のチャンネル内の全員が閲覧可能なスレッドを作成できます。"
+
+#: src\admin.rs:388
+msgid "Allow members to create invite-only threads."
+msgstr "この権限を持つメンバーは、招待されたメンバー限定のスレッドを作成できます。"
+
+#: src\admin.rs:389
+msgid "Allows links that members share to show embedded content in text channels."
+msgstr "メンバーがテキストチャンネルで共有する、埋め込みコンテンツを表示するリンクを許可します。"
+
+#: src\admin.rs:390
+msgid "Allows members to upload files or media in text channels."
+msgstr "この権限を持つメンバーは、テキストチャンネルにファイルやメディアをアップロードできます。"
+
+#: src\admin.rs:391
+msgid "Allows members to add new emoji reactions to a message. If this permission is disabled, members can still react using any existing reactions on a message."
+msgstr "この権限を持つメンバーは、メッセージに新しい絵文字リアクションを追加できます。この権限を無効にした場合でも、既存のリアクションはすべて使用可能です。"
+
+#: src\admin.rs:392
+msgid "Allows members to use emoji from other servers, if they’re a Discord Nitro member."
+msgstr "この権限を持つメンバーは、他のサーバーの絵文字を使用できます（Discord Nitroサブスクライバーに限る）。"
+
+#: src\admin.rs:393
+msgid "Allows members to use @everyone (everyone in the server) or @here (only online members in that channel). They can also @mention all roles, even if the role’s “Allow anyone to mention this role” permission is disabled."
+msgstr "この権限を持つメンバーは、@everyone（サーバー内の全員）または @here（チャンネル内のオンラインのメンバーのみ）を使用できます。また全てのロールに @mention できます（ロールの「全員がこのロールにメンションすることを許可する」権限が無効化されている場合でも有効）。"
+
+#: src\admin.rs:394
+msgid "Allows members to delete or remove embeds from messages by other members."
+msgstr "メンバーに対し、他のメンバーによるメッセージから埋め込みを削除または取り除くことを許可します。"
+
+#: src\admin.rs:395
+msgid "Allows members to rename, delete, close, and turn on slow mode for threads and posts. They can also view private threads."
+msgstr "この権限を持つメンバーは、スレッドと投稿を名称変更したり、削除したり、クローズしたり、低速モードを有効にしたりできます。また、プライベートスレッドを閲覧できます。"
+
+#: src\admin.rs:396
+msgid "Allows members to read previous messages sent in channels. If this permission is disabled, members only see messages sent when they are online. This does not fully apply to threads and forum posts."
+msgstr "この権限を持つメンバーは、過去にチャンネルで送られたメッセージを読むことができます。この権限を無効にした場合、メンバーが読めるのはオンライン中に送られたメッセージのみとなります。これはスレッドおよびフォーラムの投稿のすべてには適用されません。"
+
+#: src\admin.rs:397
+msgid "Allows members to send text-to-speech messages by starting a message with /tts. These messages can be heard by anyone focused on the channel."
+msgstr "この権限を持つメンバーは、/ttsをメッセージの始めに付けることで、テキスト読み上げ機能のメッセージを送れます。これらのメッセージは、チャンネルにフォーカスしていれば誰でも聞くことができます。"
+
+#: src\admin.rs:398
+msgid "Allows members to join voice channels and hear others."
+msgstr "この権限を持つメンバーは、ボイスチャンネルに参加して他の人の会話を聞けます。"
+
+#: src\admin.rs:399
+msgid "Allows members to talk in voice channels. If this permission is disabled, members are default muted until somebody with the “Mute Members” permission un-mutes them."
+msgstr "この権限を持つメンバーは、ボイスチャンネルで話せます。この権限を無効にした場合、メンバーはデフォルトでミュート状態となり、「メンバーをミュート」権限を持つ他メンバーによってミュート状態を解除されなければ話すことはできません。"
+
+#: src\admin.rs:400
+msgid "Allows members to share their video, screen share, or stream a game in this server."
+msgstr "この権限を持つメンバーは、このサーバーで動画を共有したり、画面共有を行ったり、ゲームを配信したりできます。"
+
+#: src\admin.rs:401
+msgid "Allows members to speak in voice channels by simply talking. If this permission is disabled, members are required to use Push-to-talk. Good for controlling background noise or noisy members."
+msgstr "この権限を持つメンバーは、ボイスチャンネルで話す際、普通に話し始める以外の操作を必要としません。この権限を無効にした場合、プッシュツートークの使用が求められます。騒音やうるさいメンバーへの対処に便利です。"
+
+#: src\admin.rs:402
+msgid "Allows members to be more easily heard in voice channels. When activated, the volume of others without this permission will be automatically lowered."
+msgstr "この権限を持つメンバーは、ボイスチャンネルで声が聞き取られやすくなります。有効にすると、この権限を持たないメンバーの音量が自動的に下がります。"
+
+#: src\admin.rs:403
+msgid "Allows members to mute other members in voice channels for everyone."
+msgstr "この権限を持つメンバーは、ボイスチャンネルでメンバーをミュートできます。このミュートをされると、誰にも話すことはできません。"
+
+#: src\admin.rs:404
+msgid "Allows members to deafen other members in voice channels, which means they won’t be able to speak or hear others."
+msgstr "この権限を持つメンバーは、ボイスチャンネルで他メンバーをスピーカーミュートにできます。スピーカーミュートされたメンバーは、話したり他メンバーの声を聞いたりできなくなります。"
+
+#: src\admin.rs:405
+msgid "Allows members to disconnect or move other members between voice channels that the member with this permission has access to."
+msgstr "この権限を持つメンバーは、他メンバーを切断または他のボイスチャンネルへ移動させることができます（権限をもつメンバーがアクセスできるボイスチャンネルに限る）。"
+
+#: src\admin.rs:406
+msgid "Members with this permission will have every permission and will also bypass all channel specific permissions or restrictions (for example, these members would get access to all private channels). This is a dangerous permission to grant."
+msgstr "この権限を持つメンバーは、すべての権限を付与されます。また、チャンネル固有の権限も回避できます（例：全てのプライベートチャンネルにアクセスできるなど）。この権限を付与する場合は慎重に行ってください。"
+
+#: src\admin.rs:415
+msgid "{user} updated the server"
+msgstr "{user}がサーバーを更新しました"
+
+#: src\admin.rs:416
+msgid "{user} created a channel"
+msgstr "{user}がチャンネルを作成しました"
+
+#: src\admin.rs:417
+msgid "{user} updated a channel"
+msgstr "{user}がチャンネルを更新しました"
+
+#: src\admin.rs:418
+msgid "{user} deleted a channel"
+msgstr "{user}がチャンネルを削除しました"
+
+#: src\admin.rs:419
+msgid "{user} changed a channel's permissions"
+msgstr "{user}がチャンネルの権限を変更しました"
+
+#: src\admin.rs:420
+msgid "{user} kicked {target}"
+msgstr "{user}が{target}をキックしました"
+
+#: src\admin.rs:421
+msgid "{user} pruned inactive members"
+msgstr "{user}が非アクティブなメンバーを削除しました"
+
+#: src\admin.rs:422
+msgid "{user} banned {target}"
+msgstr "{user}が{target}をBANしました"
+
+#: src\admin.rs:423
+msgid "{user} revoked the ban for {target}"
+msgstr "{user}が{target}のBANを解除しました"
+
+#: src\admin.rs:424
+msgid "{user} updated {target}"
+msgstr "{user}が{target}を更新しました"
+
+#: src\admin.rs:425
+msgid "{user} updated the roles of {target}"
+msgstr "{user}が{target}のロールを更新しました"
+
+#: src\admin.rs:426
+msgid "{user} moved members in voice"
+msgstr "{user}がボイスでメンバーを移動しました"
+
+#: src\admin.rs:427
+msgid "{user} disconnected members from voice"
+msgstr "{user}がメンバーをボイスから切断しました"
+
+#: src\admin.rs:428
+msgid "{user} added the bot {target}"
+msgstr "{user}がBot {target}を追加しました"
+
+#: src\admin.rs:429
+msgid "{user} created a role"
+msgstr "{user}がロールを作成しました"
+
+#: src\admin.rs:430
+msgid "{user} updated a role"
+msgstr "{user}がロールを更新しました"
+
+#: src\admin.rs:431
+msgid "{user} deleted a role"
+msgstr "{user}がロールを削除しました"
+
+#: src\admin.rs:432
+msgid "{user} created an invite"
+msgstr "{user}が招待を作成しました"
+
+#: src\admin.rs:433
+msgid "{user} updated an invite"
+msgstr "{user}が招待を更新しました"
+
+#: src\admin.rs:434
+msgid "{user} deleted an invite"
+msgstr "{user}が招待を削除しました"
+
+#: src\admin.rs:435
+msgid "{user} changed a webhook"
+msgstr "{user}がウェブフックを変更しました"
+
+#: src\admin.rs:436
+msgid "{user} changed an emoji"
+msgstr "{user}が絵文字を変更しました"
+
+#: src\admin.rs:437
+msgid "{user} deleted a message by {target}"
+msgstr "{user}が{target}のメッセージを削除しました"
+
+#: src\admin.rs:438
+msgid "{user} bulk deleted messages"
+msgstr "{user}がメッセージを一括削除しました"
+
+#: src\admin.rs:439
+msgid "{user} pinned a message by {target}"
+msgstr "{user}が{target}のメッセージをピン留めしました"
+
+#: src\admin.rs:440
+msgid "{user} unpinned a message by {target}"
+msgstr "{user}が{target}のメッセージのピン留めを外しました"
+
+#: src\admin.rs:441
+msgid "{user} changed an integration"
+msgstr "{user}が連携を変更しました"
+
+#: src\admin.rs:442
+msgid "{user} changed a thread"
+msgstr "{user}がスレッドを変更しました"
+
+#: src\admin.rs:443
+msgid "{user} changed AutoMod"
+msgstr "{user}がAutoModを変更しました"
+
+#: src\admin.rs:444
+msgid "{user} made a change"
+msgstr "{user}が変更を加えました"
+
+#: src\app.rs:295
+msgid "Role deleted."
+msgstr "ロールを削除しました。"
+
+#: src\app.rs:302
+msgid "Channel deleted."
+msgstr "チャンネルを削除しました。"
+
+#: src\app.rs:1115
+msgid "Unmute Microphone"
+msgstr "マイクのミュートを解除"
+
+#: src\app.rs:1115 src\main.rs:63
+msgid "Mute Microphone"
+msgstr "マイクをミュート"
+
+#: src\app.rs:1119
+msgid "CordFast — {count} mention"
+msgid_plural "CordFast — {count} mentions"
+msgstr[0] "CordFast — {count}件のメンション"
+
+#: src\app.rs:1124 src\main.rs:62
+msgid "Open CordFast"
+msgstr "CordFastを開く"
+
+#: src\app.rs:1125 src\main.rs:65
+msgid "Quit CordFast"
+msgstr "CordFastを終了"
+
+#: src\app.rs:1178
+msgid "Message not sent: {error}"
+msgstr "メッセージを送信できませんでした: {error}"
+
+#: src\app.rs:1284 src\sounds.rs:34
+msgid "Voice Disconnected"
+msgstr "ボイス切断"
+
+#: src\app.rs:1367
+msgid "The session expired. Log in again."
+msgstr "セッションの有効期限が切れました。もう一度ログインしてください。"
+
+#: src\app.rs:1463
+msgid "Server"
+msgstr "サーバー"
+
+#: src\app.rs:1463
+msgid "You are no longer in {name}"
+msgstr "{name}のメンバーではなくなりました"
+
+#: src\app.rs:1511
+msgid "The application did not respond."
+msgstr "アプリケーションが応答しませんでした。"
+
+#: src\app.rs:1610
+msgid "Friendship"
+msgstr "フレンド"
+
+#: src\app.rs:1610
+msgid "{name} is no longer your friend"
+msgstr "{name}とフレンドではなくなりました"
+
+#: src\app.rs:1701 src\ui\guild.rs:987 src\ui\guild.rs:1266 src\ui\mod.rs:2021
+msgid "Someone"
+msgstr "誰か"
+
+#: src\app.rs:1703
+msgid "Incoming Call"
+msgstr "着信"
+
+#: src\app.rs:1703
+msgid "{name} is calling you"
+msgstr "{name}から着信中"
+
+#: src\app.rs:2050
+msgid "Discord asked for a captcha: opening the invite in the browser."
+msgstr "Discordがキャプチャを要求しました: 招待をブラウザで開きます。"
+
+#: src\app.rs:2073
+msgid "This server has no public profile."
+msgstr "このサーバーには公開プロフィールがありません。"
+
+#: src\app.rs:2088
+msgid "Discord is still indexing this channel. Try again in a moment."
+msgstr "Discordはまだこのチャンネルをインデックスしています。しばらくしてからもう一度お試しください。"
+
+#: src\app.rs:2103 src\app.rs:2202
+msgid "the server"
+msgstr "サーバー"
+
+#: src\app.rs:2104 src\app.rs:2203
+msgid "You joined {name}."
+msgstr "{name}に参加しました。"
+
+#: src\app.rs:2108
+msgid "Server created."
+msgstr "サーバーを作成しました。"
+
+#: src\app.rs:2174
+msgid "Invite copied: discord.gg/{code}"
+msgstr "招待をコピーしました: discord.gg/{code}"
+
+#: src\app.rs:2178
+msgid "Profile saved."
+msgstr "プロフィールを保存しました。"
+
+#: src\app.rs:2179
+msgid "Member kicked."
+msgstr "メンバーをキックしました。"
+
+#: src\app.rs:2180 src\ui\guild.rs:915
+msgid "Member timed out."
+msgstr "メンバーをタイムアウトしました。"
+
+#: src\app.rs:2181
+msgid "Member banned."
+msgstr "メンバーをBANしました。"
+
+#: src\app.rs:2182
+msgid "Nickname changed."
+msgstr "ニックネームを変更しました。"
+
+#: src\app.rs:2183
+msgid "Note saved."
+msgstr "メモを保存しました。"
+
+#: src\app.rs:2198
+msgid "Image saved to {path}"
+msgstr "画像を {path} に保存しました"
+
+#: src\app.rs:2200
+msgid "Image copied."
+msgstr "画像をコピーしました。"
+
+#: src\app.rs:2406 src\app.rs:2413
+msgid "New message"
+msgstr "新しいメッセージ"
+
+#: src\app.rs:2411
+msgid "Attachment"
+msgstr "添付ファイル"
+
+#: src\app.rs:2733
+msgid "Fill in the email and the password."
+msgstr "メールアドレスとパスワードを入力してください。"
+
+#: src\app.rs:2839
+msgid "Open a conversation with them before calling."
+msgstr "通話する前に相手との会話を開いてください。"
+
+#: src\app.rs:2852
+msgid "Looks like you're in another voice channel. Are you sure you want to switch to {channel}?"
+msgstr "別のボイスチャンネルに参加中のようです。本当に{channel}に切り替えてもよろしいですか？"
+
+#: src\app.rs:2853
+msgid "You sure?"
+msgstr "本当によろしいですか？"
+
+#: src\app.rs:2853 src\ui\mod.rs:274
+msgid "Confirm"
+msgstr "確認"
+
+#: src\app.rs:2955
+msgid "Upload Files"
+msgstr "ファイルをアップロード"
+
+#: src\app.rs:3126
+msgid "Couldn't update: {error}"
+msgstr "更新できませんでした: {error}"
+
+#: src\backend.rs:483 src\discord\rpc.rs:221
+msgid "Game"
+msgstr "ゲーム"
+
+#: src\backend.rs:615
+msgid "This account needs to log in again."
+msgstr "このアカウントはもう一度ログインする必要があります。"
+
+#: src\backend.rs:710 src\backend.rs:721
+msgid "The interaction failed: {error}"
+msgstr "インタラクションに失敗しました: {error}"
+
+#: src\backend.rs:732 src\backend.rs:754
+msgid "Couldn't save the status: {error}"
+msgstr "ステータスを保存できませんでした: {error}"
+
+#: src\backend.rs:742
+msgid "Couldn't save the setting: {error}"
+msgstr ""
+
+#: src\backend.rs:817
+msgid "Couldn't edit the message"
+msgstr "メッセージを編集できませんでした"
+
+#: src\backend.rs:822
+msgid "Couldn't delete the message"
+msgstr "メッセージを削除できませんでした"
+
+#: src\backend.rs:827
+msgid "Couldn't react"
+msgstr "リアクションできませんでした"
+
+#: src\backend.rs:837
+msgid "Couldn't mark as read"
+msgstr "既読にできませんでした"
+
+#: src\backend.rs:853
+msgid "Couldn't open the conversation"
+msgstr "会話を開けませんでした"
+
+#: src\backend.rs:857
+msgid "Couldn't load the forum"
+msgstr "フォーラムを読み込めませんでした"
+
+#: src\backend.rs:864
+msgid "Friend request sent to {name}."
+msgstr "{name}にフレンドリクエストを送信しました。"
+
+#: src\backend.rs:865
+msgid "Couldn't send the request"
+msgstr "リクエストを送信できませんでした"
+
+#: src\backend.rs:869
+msgid "Couldn't finish"
+msgstr "完了できませんでした"
+
+#: src\backend.rs:874
+msgid "Couldn't mute"
+msgstr "ミュートできませんでした"
+
+#: src\backend.rs:879
+msgid "Couldn't change the notifications"
+msgstr "通知を変更できませんでした"
+
+#: src\backend.rs:884
+msgid "Couldn't close the conversation"
+msgstr "会話を閉じられませんでした"
+
+#: src\backend.rs:889
+msgid "Couldn't leave the server"
+msgstr "サーバーから退出できませんでした"
+
+#: src\backend.rs:901
+msgid "Couldn't change the region"
+msgstr "地域を変更できませんでした"
+
+#: src\discord\commands.rs:218
+msgid "Your message"
+msgstr "メッセージ"
+
+#: src\discord\commands.rs:225
+msgid "Appends ¯\\_(ツ)_/¯ to your message."
+msgstr "メッセージに¯\\_(ツ)_/¯を追加します。"
+
+#: src\discord\commands.rs:226
+msgid "Appends (╯°□°)╯︵ ┻━┻ to your message."
+msgstr "(╯°□°)╯︵ ┻━┻をメッセージに追加します。"
+
+#: src\discord\commands.rs:227
+msgid "Appends ┬─┬ノ( º _ ºノ) to your message."
+msgstr "メッセージに ┬─┬ノ( º _ ºノ) を追加します。"
+
+#: src\discord\commands.rs:228
+msgid "Displays text with emphasis."
+msgstr "テキストを強調して表示します。"
+
+#: src\discord\commands.rs:229
+msgid "Marks your message as a spoiler."
+msgstr "自分のメッセージをスポイラーとしてマークします。"
+
+#: src\discord\gateway.rs:238 src\discord\gateway.rs:250 src\ui\chat.rs:2536 src\ui\friends.rs:246
+msgid "Streaming {name}"
+msgstr "{name}を配信中"
+
+#: src\discord\gateway.rs:239 src\discord\gateway.rs:251 src\ui\chat.rs:2537 src\ui\friends.rs:245
+msgid "Listening to {name}"
+msgstr "{name}を再生中"
+
+#: src\discord\gateway.rs:240 src\discord\gateway.rs:252 src\ui\chat.rs:2538 src\ui\friends.rs:247
+msgid "Watching {name}"
+msgstr "{name}を視聴中"
+
+#: src\discord\gateway.rs:241 src\discord\gateway.rs:253 src\ui\chat.rs:2539 src\ui\friends.rs:248
+msgid "Competing in {name}"
+msgstr "{name}で対戦中"
+
+#: src\discord\gateway.rs:242
+msgid "Playing"
+msgstr "プレイ中"
+
+#: src\discord\gateway.rs:249 src\ui\chat.rs:2540 src\ui\mod.rs:1987
+msgid "Playing {name}"
+msgstr "{name}をプレイ中"
+
+#: src\discord\gateway.rs:407
+msgid "no connection to Discord"
+msgstr "Discordに接続されていません"
+
+#: src\discord\gateway.rs:523
+msgid "the gateway refused the connection ({code})"
+msgstr "ゲートウェイが接続を拒否しました ({code})"
+
+#: src\discord\login.rs:93
+msgid "your phone"
+msgstr "あなたの電話"
+
+#: src\discord\login.rs:115 src\discord\login.rs:134
+msgid "Discord did not return the token."
+msgstr "Discordがトークンを返しませんでした。"
+
+#: src\discord\login.rs:140
+msgid "Discord asked for a captcha for this login. Log in with the QR code."
+msgstr "Discordがこのログインにキャプチャを要求しました。QRコードでログインしてください。"
+
+#: src\discord\login.rs:153
+msgid "Couldn't log in."
+msgstr "ログインできませんでした。"
+
+#: src\discord\model.rs:295
+msgid "Conversation"
+msgstr "会話"
+
+#: src\discord\remote_auth.rs:61
+msgid "couldn't connect to Discord"
+msgstr "Discordに接続できませんでした"
+
+#: src\discord\remote_auth.rs:78
+msgid "the code expired"
+msgstr "コードの有効期限が切れました"
+
+#: src\discord\remote_auth.rs:84
+msgid "Discord closed the connection"
+msgstr "Discordが接続を閉じました"
+
+#: src\discord\remote_auth.rs:136
+msgid "Discord refused the login: {reason}"
+msgstr "Discordがログインを拒否しました: {reason}"
+
+#: src\discord\remote_auth.rs:136
+msgid "no reason given"
+msgstr "理由の記載なし"
+
+#: src\discord\remote_auth.rs:141
+msgid "login cancelled on the phone"
+msgstr "スマートフォンでログインがキャンセルされました"
+
+#: src\discord\rest.rs:84 src\discord\rest.rs:273
+msgid "no connection"
+msgstr "接続なし"
+
+#: src\discord\rest.rs:143
+msgid "couldn't read {name}"
+msgstr "{name}を読み込めませんでした"
+
+#: src\i18n.rs:82
+msgid "English, US"
+msgstr "英語(アメリカ)"
+
+#: src\i18n.rs:83
+msgid "Portuguese, Brazilian"
+msgstr "ポルトガル語(ブラジル)"
+
+#: src\i18n.rs:84
+msgid "Spanish"
+msgstr "スペイン語"
+
+#: src\i18n.rs:85
+msgid "French"
+msgstr "フランス語"
+
+#: src\i18n.rs:86
+msgid "German"
+msgstr "ドイツ語"
+
+#: src\i18n.rs:87
+msgid "Italian"
+msgstr "イタリア語"
+
+#: src\i18n.rs:88
+msgid "Russian"
+msgstr "ロシア語"
+
+#: src\i18n.rs:89
+msgid "Japanese"
+msgstr "日本語"
+
+#: src\keybinds.rs:51
+msgid "Toggle Mute"
+msgstr "ミュート切り替え"
+
+#: src\keybinds.rs:52
+msgid "Toggle Deafen"
+msgstr "スピーカーミュート切り替え"
+
+#: src\keybinds.rs:53
+msgid "Return to Connected Voice Channel"
+msgstr "接続中のボイスチャンネルに戻る"
+
+#: src\keybinds.rs:54
+msgid "Answer Incoming Call"
+msgstr "着信に応答"
+
+#: src\keybinds.rs:55
+msgid "Start Call in Conversation"
+msgstr "会話で通話を開始"
+
+#: src\keybinds.rs:56
+msgid "Quick Switcher"
+msgstr "クイックスイッチャー"
+
+#: src\keybinds.rs:57
+msgid "Navigate Back"
+msgstr "戻る"
+
+#: src\keybinds.rs:58
+msgid "Navigate Forward"
+msgstr "進む"
+
+#: src\keybinds.rs:59
+msgid "Previous Server"
+msgstr "前のサーバー"
+
+#: src\keybinds.rs:60
+msgid "Next Server"
+msgstr "次のサーバー"
+
+#: src\keybinds.rs:61
+msgid "Toggle Between Last Server and DMs"
+msgstr "最後のサーバーとDMを切り替え"
+
+#: src\keybinds.rs:62
+msgid "Previous Channel"
+msgstr "前のチャンネル"
+
+#: src\keybinds.rs:63
+msgid "Next Channel"
+msgstr "次のチャンネル"
+
+#: src\keybinds.rs:64
+msgid "Previous Unread Channel"
+msgstr "前の未読チャンネル"
+
+#: src\keybinds.rs:65
+msgid "Next Unread Channel"
+msgstr "次の未読チャンネル"
+
+#: src\keybinds.rs:66
+msgid "Previous Channel with Mentions"
+msgstr "前のメンションありチャンネル"
+
+#: src\keybinds.rs:67
+msgid "Next Channel with Mentions"
+msgstr "次のメンションありチャンネル"
+
+#: src\keybinds.rs:68
+msgid "Jump to Oldest Unread Message"
+msgstr "最も古い未読メッセージへ移動"
+
+#: src\keybinds.rs:69 src\ui\chat.rs:122 src\ui\chat.rs:1937
+msgid "Pinned Messages"
+msgstr "ピン留めされたメッセージ"
+
+#: src\keybinds.rs:70 src\ui\titlebar.rs:81 src\ui\titlebar.rs:219
+msgid "Inbox"
+msgstr "受信トレイ"
+
+#: src\keybinds.rs:71
+msgid "Member List"
+msgstr "メンバーリスト"
+
+#: src\keybinds.rs:72 src\ui\chat.rs:116 src\ui\chat.rs:1938 src\ui\chat.rs:2073
+msgid "Search"
+msgstr "検索"
+
+#: src\keybinds.rs:73
+msgid "Emoji Picker"
+msgstr "絵文字ピッカー"
+
+#: src\keybinds.rs:74
+msgid "GIF Picker"
+msgstr "GIFピッカー"
+
+#: src\keybinds.rs:75
+msgid "Sticker Picker"
+msgstr "スタンプピッカー"
+
+#: src\keybinds.rs:76
+msgid "Upload a File"
+msgstr "ファイルをアップロード"
+
+#: src\keybinds.rs:77
+msgid "Create or Join a Server"
+msgstr "サーバーを作成・参加"
+
+#: src\keybinds.rs:78
+msgid "Create a Private Group"
+msgstr "プライベートグループを作成"
+
+#: src\keybinds.rs:79 src\ui\titlebar.rs:74
+msgid "Help"
+msgstr "ヘルプ"
+
+#: src\keybinds.rs:80
+msgid "Keyboard Shortcuts"
+msgstr "キーボードショートカット"
+
+#: src\keybinds.rs:85
+msgid "Voice and Calls"
+msgstr "ボイスと通話"
+
+#: src\keybinds.rs:87
+msgid "Navigation"
+msgstr "ナビゲーション"
+
+#: src\keybinds.rs:104
+msgid "Chat and Panels"
+msgstr "チャットとパネル"
+
+#: src\keybinds.rs:105
+msgid "Other"
+msgstr "その他"
+
+#: src\keybinds.rs:110
+msgid "Send Message"
+msgstr "メッセージを送信"
+
+#: src\keybinds.rs:111
+msgid "New Line"
+msgstr "改行"
+
+#: src\keybinds.rs:112
+msgid "Edit Your Last Message (empty box)"
+msgstr "最後のメッセージを編集(入力欄が空のとき)"
+
+#: src\keybinds.rs:113
+msgid "Mark Channel as Read, Cancel a Reply or Decline a Call"
+msgstr "チャンネルを既読にする、返信をキャンセル、または通話を拒否"
+
+#: src\keybinds.rs:114
+msgid "Mark Server as Read"
+msgstr "サーバーを既読にする"
+
+#: src\keybinds.rs:115
+msgid "Paste Text or Image"
+msgstr "テキストや画像を貼り付け"
+
+#: src\keybinds.rs:116
+msgid "Mouse Side Buttons"
+msgstr "マウスのサイドボタン"
+
+#: src\keybinds.rs:116
+msgid "Back and Forward"
+msgstr "戻る・進む"
+
+#: src\main.rs:97
+msgid "The update did not start; the previous version was restored."
+msgstr "アップデートが起動しなかったため、以前のバージョンに戻しました。"
+
+#: src\plugins.rs:87
+msgid "Extract components that have been concatenated by the bundler"
+msgstr ""
+
+#: src\plugins.rs:88
+msgid "Disables Discord's stupid deep linking feature which tries to force you to use their Desktop App"
+msgstr ""
+
+#: src\plugins.rs:89
+msgid "Fixes Discord's css lag"
+msgstr ""
+
+#: src\plugins.rs:90
+msgid "Adds Settings UI and debug info"
+msgstr ""
+
+#: src\plugins.rs:91
+msgid "Helps us provide support to you"
+msgstr ""
+
+#: src\plugins.rs:92
+msgid "Re-adds context menus missing in the web version of Discord: Links & Images (Copy/Open Link/Image), Text Area (Copy, Cut, Paste, SpellCheck)"
+msgstr ""
+
+#: src\plugins.rs:96
+msgid "Disable Discord's tracking (analytics/'science'), metrics and Sentry crash reporting"
+msgstr ""
+
+#: src\plugins.rs:102
+msgid "Keeps deleted messages (in red) and the earlier text of edited ones."
+msgstr "削除されたメッセージ(赤色)と、編集されたメッセージの以前のテキストを残します。"
+
+#: src\plugins.rs:108
+msgid "Doesn't tell others you're typing."
+msgstr "入力中であることを他の人に知らせません。"
+
+#: src\plugins.rs:114
+msgid "Replies don't mention (ping) the message's author."
+msgstr "返信でメッセージの送信者にメンション(ping)しません。"
+
+#: src\plugins.rs:120
+msgid "Removes tracking parameters (utm_, fbclid, si=...) from the links you send."
+msgstr "送信するリンクから追跡用パラメータ(utm_、fbclid、si=...)を取り除きます。"
+
+#: src\plugins.rs:126
+msgid "Shows the channels you can't see, with a lock."
+msgstr "見られないチャンネルを鍵付きで表示します。"
+
+#: src\plugins.rs:132
+msgid "Shows the username beside the nickname in messages."
+msgstr "メッセージでニックネームの横にユーザー名を表示します。"
+
+#: src\plugins.rs:138
+msgid "Double click: edits your message or replies to someone else's."
+msgstr "ダブルクリック: 自分のメッセージを編集、または他の人のメッセージに返信します。"
+
+#: src\plugins.rs:144
+msgid "Opens images in a viewer with zoom (mouse wheel) instead of the browser."
+msgstr "画像をブラウザではなく、ズーム(マウスホイール)できるビューアーで開きます。"
+
+#: src\plugins.rs:150
+msgid "\"View Raw\" in the message menu, with the original markup."
+msgstr "メッセージメニューに元のマークアップ付きの「ソースを表示」を追加します。"
+
+#: src\plugins.rs:156
+msgid "\"Copy Message Link\" in the message menu."
+msgstr "メッセージメニューに「メッセージリンクをコピー」を追加します。"
+
+#: src\plugins.rs:162
+msgid "Searches an image on Google Lens from the right-click menu."
+msgstr "右クリックメニューからGoogle レンズで画像を検索します。"
+
+#: src\plugins.rs:168
+msgid "Tells you when someone unfriends you or you leave a server."
+msgstr "誰かにフレンドを解除されたときや、サーバーから退出したときに知らせます。"
+
+#: src\plugins.rs:174
+msgid "Hides the messages of people you blocked completely."
+msgstr "ブロックした人のメッセージを完全に非表示にします。"
+
+#: src\plugins.rs:180
+msgid "Shows who is typing beside the channel in the list."
+msgstr "リストのチャンネルの横に入力中の人を表示します。"
+
+#: src\plugins.rs:186
+msgid "Shows on the profile since when you've been friends."
+msgstr "プロフィールにいつからフレンドかを表示します。"
+
+#: src\plugins.rs:192
+msgid "Opening a folder closes the others."
+msgstr "フォルダを開くと他のフォルダが閉じます。"
+
+#: src\plugins.rs:198
+msgid "Shows how long you've been in the call."
+msgstr "通話の経過時間を表示します。"
+
+#: src\plugins.rs:204
+msgid "Allows user volumes up to 400% (instead of 200%)."
+msgstr "ユーザー音量を最大400%(通常は200%)まで上げられます。"
+
+#: src\sounds.rs:29 src\ui\friends.rs:324 src\ui\menu.rs:274
+msgid "Message"
+msgstr "メッセージ"
+
+#: src\sounds.rs:30 src\ui\mod.rs:2000
+msgid "Deafen"
+msgstr "スピーカーミュート"
+
+#: src\sounds.rs:31 src\ui\mod.rs:2000
+msgid "Undeafen"
+msgstr "スピーカーミュート解除"
+
+#: src\sounds.rs:32 src\ui\mod.rs:1452 src\ui\mod.rs:2007
+msgid "Mute"
+msgstr "ミュート"
+
+#: src\sounds.rs:33 src\ui\mod.rs:2007
+msgid "Unmute"
+msgstr "ミュート解除"
+
+#: src\sounds.rs:35
+msgid "PTT Activate"
+msgstr "プッシュツートーク ON"
+
+#: src\sounds.rs:36
+msgid "PTT Deactivate"
+msgstr "プッシュツートーク OFF"
+
+#: src\sounds.rs:37
+msgid "User Join"
+msgstr "ユーザー参加音"
+
+#: src\sounds.rs:38
+msgid "User Leave"
+msgstr "ユーザー退出音"
+
+#: src\text.rs:28
+msgid "{h}:{mm} {ampm}"
+msgstr "{HH}:{mm}"
+
+#: src\text.rs:34
+msgid "{MM}/{DD}/{YYYY}"
+msgstr "{YYYY}/{MM}/{DD}"
+
+#: src\text.rs:46
+msgid "Today at {time}"
+msgstr "今日 {time}"
+
+#: src\text.rs:48
+msgid "Yesterday at {time}"
+msgstr "昨日 {time}"
+
+#: src\text.rs:90 src\ui\markdown.rs:408
+msgid "unknown-role"
+msgstr "不明なロール"
+
+#: src\text.rs:94 src\ui\markdown.rs:409
+msgid "unknown-user"
+msgstr "不明なユーザー"
+
+#: src\text.rs:98
+msgid "unknown"
+msgstr "不明"
+
+#: src\text.rs:159
+msgid "Monday"
+msgstr "月曜日"
+
+#: src\text.rs:159
+msgid "Tuesday"
+msgstr "火曜日"
+
+#: src\text.rs:159
+msgid "Wednesday"
+msgstr "水曜日"
+
+#: src\text.rs:159
+msgid "Thursday"
+msgstr "木曜日"
+
+#: src\text.rs:159
+msgid "Friday"
+msgstr "金曜日"
+
+#: src\text.rs:159
+msgid "Saturday"
+msgstr "土曜日"
+
+#: src\text.rs:159
+msgid "Sunday"
+msgstr "日曜日"
+
+#: src\text.rs:164
+msgid "{weekday}, {date} at {time}"
+msgstr "{date}{weekday} {time}"
+
+#: src\text.rs:186
+msgid "January"
+msgstr "1月"
+
+#: src\text.rs:186
+msgid "February"
+msgstr "2月"
+
+#: src\text.rs:186
+msgid "March"
+msgstr "3月"
+
+#: src\text.rs:186
+msgid "April"
+msgstr "4月"
+
+#: src\text.rs:186
+msgid "May"
+msgstr "5月"
+
+#: src\text.rs:186
+msgid "June"
+msgstr "6月"
+
+#: src\text.rs:187
+msgid "July"
+msgstr "7月"
+
+#: src\text.rs:187
+msgid "August"
+msgstr "8月"
+
+#: src\text.rs:187
+msgid "September"
+msgstr "9月"
+
+#: src\text.rs:187
+msgid "October"
+msgstr "10月"
+
+#: src\text.rs:187
+msgid "November"
+msgstr "11月"
+
+#: src\text.rs:187
+msgid "December"
+msgstr "12月"
+
+#: src\text.rs:192 src\text.rs:208
+msgid "{month} {day}, {year}"
+msgstr "{year}年{month}{day}日"
+
+#: src\text.rs:199
+msgid "Jan"
+msgstr "1月"
+
+#: src\text.rs:199
+msgid "Feb"
+msgstr "2月"
+
+#: src\text.rs:199
+msgid "Mar"
+msgstr "3月"
+
+#: src\text.rs:199
+msgid "Apr"
+msgstr "4月"
+
+#: src\text.rs:199
+msgid "May "
+msgstr "5月"
+
+#: src\text.rs:199
+msgid "Jun"
+msgstr "6月"
+
+#: src\text.rs:199
+msgid "Jul"
+msgstr "7月"
+
+#: src\text.rs:199
+msgid "Aug"
+msgstr "8月"
+
+#: src\text.rs:199
+msgid "Sep"
+msgstr "9月"
+
+#: src\text.rs:199
+msgid "Oct"
+msgstr "10月"
+
+#: src\text.rs:199
+msgid "Nov"
+msgstr "11月"
+
+#: src\text.rs:199
+msgid "Dec"
+msgstr "12月"
+
+#: src\text.rs:220
+msgid "{month} {year}"
+msgstr "{year}年{month}"
+
+#: src\text.rs:229
+msgctxt "thousands separator"
+msgid ","
+msgstr ","
+
+#: src\ui\activity.rs:60 src\ui\friends.rs:468
+msgid "by {artist}"
+msgstr "{artist}"
+
+#: src\ui\activity.rs:60
+msgid "on {album}"
+msgstr "アルバム: {album}"
+
+#: src\ui\activity.rs:72
+msgid "{time} elapsed"
+msgstr "{time} 経過"
+
+#: src\ui\activity.rs:101
+msgid "Watch"
+msgstr "視聴"
+
+#: src\ui\activity.rs:168
+msgid "Streaming Now"
+msgstr "配信中"
+
+#: src\ui\activity.rs:169
+msgid "Listening Now"
+msgstr "再生中"
+
+#: src\ui\activity.rs:170
+msgid "Watching Now"
+msgstr "視聴中"
+
+#: src\ui\activity.rs:171
+msgid "Competing Now"
+msgstr "対戦中"
+
+#: src\ui\activity.rs:172
+msgid "Playing Now"
+msgstr "プレイ中"
+
+#: src\ui\activity.rs:261
+msgid "Play on Spotify"
+msgstr "Spotifyで再生"
+
+#: src\ui\chat.rs:28
+msgid "Pick a channel  ·  Ctrl+K to search"
+msgstr "チャンネルを選択  ·  Ctrl+Kで検索"
+
+#: src\ui\chat.rs:129
+msgid "Hide Member List"
+msgstr "メンバーリストを非表示"
+
+#: src\ui\chat.rs:129
+msgid "Show Member List"
+msgstr "メンバーリストを表示"
+
+#: src\ui\chat.rs:140 src\ui\friends.rs:313
+msgid "Start Voice Call"
+msgstr "音声通話を開始"
+
+#: src\ui\chat.rs:149
+msgid "Hide User Profile"
+msgstr "ユーザープロフィールを非表示"
+
+#: src\ui\chat.rs:149
+msgid "Show User Profile"
+msgstr "ユーザープロフィールを表示"
+
+#: src\ui\chat.rs:190
+msgid "Leave Call"
+msgstr "通話から退出"
+
+#: src\ui\chat.rs:193
+msgid "Join Call"
+msgstr "通話に参加"
+
+#: src\ui\chat.rs:207
+msgid "automatic"
+msgstr "自動"
+
+#: src\ui\chat.rs:210 src\ui\mod.rs:1873
+msgid "Region: {region}"
+msgstr "地域: {region}"
+
+#: src\ui\chat.rs:214
+msgid "Best route ({region}, {ms} ms)"
+msgstr "最適なルート ({region}、{ms} ms)"
+
+#: src\ui\chat.rs:224
+msgid "Measuring latency…"
+msgstr "レイテンシを測定中…"
+
+#: src\ui\chat.rs:261
+msgid "Couldn't load: {error}"
+msgstr "読み込めませんでした: {error}"
+
+#: src\ui\chat.rs:262
+msgid "Try Again"
+msgstr "再試行"
+
+#: src\ui\chat.rs:271
+msgid "This is the beginning of the conversation."
+msgstr "これが会話の始まりです。"
+
+#: src\ui\chat.rs:310
+msgid "New"
+msgstr "新規"
+
+#: src\ui\chat.rs:347
+msgid "Message from someone you blocked"
+msgstr "ブロックした人からのメッセージ"
+
+#: src\ui\chat.rs:383
+msgid "Couldn't find the original message."
+msgstr "元のメッセージが見つかりませんでした。"
+
+#: src\ui\chat.rs:406
+msgid "{count} new message since {time}"
+msgid_plural "{count} new messages since {time}"
+msgstr[0] "{time}以降の新しいメッセージ {count}件"
+
+#: src\ui\chat.rs:409 src\ui\mod.rs:714 src\ui\mod.rs:1311 src\ui\mod.rs:1359
+msgid "Mark As Read"
+msgstr "既読にする"
+
+#: src\ui\chat.rs:424
+msgid "You're Viewing Older Messages"
+msgstr "以前のメッセージを表示しています"
+
+#: src\ui\chat.rs:425
+msgid "Jump To Present"
+msgstr "現在に移動"
+
+#: src\ui\chat.rs:561
+msgid "Forwarded"
+msgstr "転送されたメッセージ"
+
+#: src\ui\chat.rs:570
+msgid "(edited)"
+msgstr "(編集済)"
+
+#: src\ui\chat.rs:574
+msgid "(deleted)"
+msgstr "(削除済)"
+
+#: src\ui\chat.rs:602 src\ui\chat.rs:1049 src\ui\components.rs:208
+msgid "Spoiler"
+msgstr "ネタバレ"
+
+#: src\ui\chat.rs:703
+msgid "Click to react"
+msgstr "クリックしてリアクション"
+
+#: src\ui\chat.rs:710 src\ui\chat.rs:815
+msgid "Add Reaction"
+msgstr "リアクションを付ける"
+
+#: src\ui\chat.rs:714 src\ui\settings.rs:309
+msgid "Edit"
+msgstr "編集"
+
+#: src\ui\chat.rs:717 src\ui\chat.rs:724 src\ui\chat.rs:836
+msgid "Reply"
+msgstr "返信"
+
+#: src\ui\chat.rs:720 src\ui\chat.rs:840 src\ui\chat.rs:1242
+msgid "Forward"
+msgstr "転送"
+
+#: src\ui\chat.rs:727 src\ui\chat.rs:871
+msgid "Mark Unread"
+msgstr "未読にする"
+
+#: src\ui\chat.rs:736 src\ui\chat.rs:919 src\ui\guild.rs:530
+msgid "Delete"
+msgstr "削除"
+
+#: src\ui\chat.rs:741 src\ui\chat.rs:1245 src\ui\friends.rs:311 src\ui\profile.rs:187
+msgid "More"
+msgstr "その他"
+
+#: src\ui\chat.rs:824
+msgid "View More"
+msgstr "もっと見る"
+
+#: src\ui\chat.rs:832
+msgid "Edit Message"
+msgstr "メッセージを編集"
+
+#: src\ui\chat.rs:844 src\ui\chat.rs:2347
+msgid "Create Thread"
+msgstr "スレッドを作成"
+
+#: src\ui\chat.rs:849
+msgid "New Thread"
+msgstr "新しいスレッド"
+
+#: src\ui\chat.rs:853
+msgid "Copy Text"
+msgstr "テキストをコピー"
+
+#: src\ui\chat.rs:858
+msgid "Unpin Message"
+msgstr "メッセージのピン留めを外す"
+
+#: src\ui\chat.rs:858
+msgid "Pin Message"
+msgstr "メッセージをピン留め"
+
+#: src\ui\chat.rs:875
+msgid "Copy Message Link"
+msgstr "メッセージリンクをコピー"
+
+#: src\ui\chat.rs:880
+msgid "View Raw"
+msgstr "ソースを表示"
+
+#: src\ui\chat.rs:887
+msgid "Search Image (Google Lens)"
+msgstr "画像を検索 (Google レンズ)"
+
+#: src\ui\chat.rs:895 src\ui\chat.rs:917
+msgid "Delete Message"
+msgstr "メッセージを削除"
+
+#: src\ui\chat.rs:905
+msgid "Copy Message ID"
+msgstr "メッセージIDをコピー"
+
+#: src\ui\chat.rs:912 src\ui\chat.rs:914
+msgid "Are you sure you want to delete this message?"
+msgstr "メッセージを削除します。よろしいですか？"
+
+#: src\ui\chat.rs:918
+msgid "PROTIP: You can hold down shift when clicking delete message to bypass this confirmation entirely."
+msgstr "ヒント: Shiftキーを押しながらメッセージの削除をクリックすると、この確認をスキップできます。"
+
+#: src\ui\chat.rs:927
+msgid "{name} joined the party."
+msgstr "{name}がパーティーに参加しました。"
+
+#: src\ui\chat.rs:928
+msgid "{name} is here."
+msgstr "{name}がやってきました。"
+
+#: src\ui\chat.rs:929
+msgid "Welcome, {name}. We hope you brought pizza."
+msgstr "ようこそ、{name}さん。ピザを持ってきてくれたと信じています。"
+
+#: src\ui\chat.rs:930
+msgid "A wild {name} appeared."
+msgstr "野生の{name}が現れた。"
+
+#: src\ui\chat.rs:931
+msgid "{name} just landed."
+msgstr "{name}が着陸しました。"
+
+#: src\ui\chat.rs:932
+msgid "{name} just slid into the server."
+msgstr "{name}がサーバーに滑り込みました。"
+
+#: src\ui\chat.rs:933
+msgid "{name} just showed up!"
+msgstr "{name}が姿を現しました！"
+
+#: src\ui\chat.rs:934
+msgid "Welcome {name}. Say hi!"
+msgstr "ようこそ、{name}さん。挨拶してね！"
+
+#: src\ui\chat.rs:935
+msgid "{name} hopped into the server."
+msgstr "{name}がサーバーに飛び込みました。"
+
+#: src\ui\chat.rs:936
+msgid "Everyone welcome {name}!"
+msgstr "みんなで{name}さんを歓迎しましょう！"
+
+#: src\ui\chat.rs:937
+msgid "Glad you're here, {name}."
+msgstr "{name}さん、来てくれて嬉しいです。"
+
+#: src\ui\chat.rs:938
+msgid "Good to see you, {name}."
+msgstr "会えて嬉しいです、{name}さん。"
+
+#: src\ui\chat.rs:939
+msgid "Yay you made it, {name}!"
+msgstr "やった、{name}さんが来ました！"
+
+#: src\ui\chat.rs:944 src\ui\guild.rs:1281
+msgid "someone"
+msgstr "誰か"
+
+#: src\ui\chat.rs:947
+msgid "{name} added {other} to the group."
+msgstr "{name}が{other}をグループに追加しました。"
+
+#: src\ui\chat.rs:948
+msgid "{name} removed {other} from the group."
+msgstr "{name}が{other}をグループから削除しました。"
+
+#: src\ui\chat.rs:949
+msgid "{name} started a call."
+msgstr "{name}が通話を開始しました。"
+
+#: src\ui\chat.rs:950
+msgid "{name} changed the channel name: {channel}"
+msgstr "{name}がチャンネル名を変更しました: {channel}"
+
+#: src\ui\chat.rs:951
+msgid "{name} changed the channel icon."
+msgstr "{name}がチャンネルアイコンを変更しました。"
+
+#: src\ui\chat.rs:952
+msgid "{name} pinned a message to this channel."
+msgstr "{name}がこのチャンネルにメッセージをピン留めしました。"
+
+#: src\ui\chat.rs:957
+msgid "{name} just boosted the server!"
+msgstr "{name}がサーバーをブーストしました！"
+
+#: src\ui\chat.rs:958
+msgid "{name} just boosted the server! The server has achieved Level {level}!"
+msgstr "{name}がサーバーをブーストしました！サーバーがレベル{level}に到達しました！"
+
+#: src\ui\chat.rs:959
+msgid "{name} has added {channel} to this channel. Its most important updates will show up here."
+msgstr "{name}がこのチャンネルに{channel}を追加しました。重要な更新はここに表示されます。"
+
+#: src\ui\chat.rs:960
+msgid "{name} started a thread: {thread}"
+msgstr "{name}がスレッドを開始しました: {thread}"
+
+#: src\ui\chat.rs:961
+msgid "AutoMod has blocked a message."
+msgstr "AutoModがメッセージをブロックしました。"
+
+#: src\ui\chat.rs:962
+msgid "{name} started {stage}"
+msgstr "{name}が{stage}を開始しました"
+
+#: src\ui\chat.rs:963
+msgid "{name} ended {stage}"
+msgstr "{name}が{stage}を終了しました"
+
+#: src\ui\chat.rs:964
+msgid "{name} is now a speaker."
+msgstr "{name}がスピーカーになりました。"
+
+#: src\ui\chat.rs:965
+msgid "{name} changed the Stage topic: {topic}"
+msgstr "{name}がステージのトピックを変更しました: {topic}"
+
+#: src\ui\chat.rs:966
+msgid "{name}'s poll has closed."
+msgstr "{name}の投票が終了しました。"
+
+#: src\ui\chat.rs:967
+msgid "{name} added a new emoji."
+msgstr "{name}が新しい絵文字を追加しました。"
+
+#: src\ui\chat.rs:968
+msgid "You and {name} are now friends."
+msgstr "あなたと{name}はフレンドになりました。"
+
+#: src\ui\chat.rs:1061
+msgid "Spoiler Attachment"
+msgstr "添付ファイルをスポイラーにする"
+
+#: src\ui\chat.rs:1062 src\ui\chat.rs:2214
+msgid "Modify Attachment"
+msgstr "添付ファイルを編集"
+
+#: src\ui\chat.rs:1063
+msgid "Remove Attachment"
+msgstr "添付ファイルを削除"
+
+#: src\ui\chat.rs:1241
+msgid "Zoom Out"
+msgstr "縮小"
+
+#: src\ui\chat.rs:1241
+msgid "Zoom In"
+msgstr "拡大"
+
+#: src\ui\chat.rs:1243
+msgid "Save Image"
+msgstr "画像を保存"
+
+#: src\ui\chat.rs:1244
+msgid "Open in Browser"
+msgstr "ブラウザで開く"
+
+#: src\ui\chat.rs:1246 src\ui\chat.rs:1942
+msgid "Close"
+msgstr "閉じる"
+
+#: src\ui\chat.rs:1265
+msgid "Copy Image"
+msgstr "画像をコピー"
+
+#: src\ui\chat.rs:1269
+msgid "Copy Media Link"
+msgstr "メディアリンクをコピー"
+
+#: src\ui\chat.rs:1271
+msgid "Link Copied!"
+msgstr "リンクをコピーしました！"
+
+#: src\ui\chat.rs:1438
+msgid "Poll closed"
+msgstr "投票終了"
+
+#: src\ui\chat.rs:1440
+msgid "Select one or more answers"
+msgstr "回答を1件または複数選択"
+
+#: src\ui\chat.rs:1442
+msgid "Select one answer"
+msgstr "回答を1つ選択してください"
+
+#: src\ui\chat.rs:1458 src\ui\chat.rs:1480
+msgid "{count} vote"
+msgid_plural "{count} votes"
+msgstr[0] "{count}票"
+
+#: src\ui\chat.rs:1484
+msgid "ends {when}"
+msgstr "{when}に終了"
+
+#: src\ui\chat.rs:1500
+msgid "No active posts."
+msgstr "アクティブな投稿はありません。"
+
+#: src\ui\chat.rs:1519
+msgid "Last activity: {when}"
+msgstr "最後のアクティビティ: {when}"
+
+#: src\ui\chat.rs:1542
+msgid "Replying to {author}"
+msgstr "{author}に返信"
+
+#: src\ui\chat.rs:1628
+msgid "Message #{channel}"
+msgstr "#{channel}へメッセージを送信"
+
+#: src\ui\chat.rs:1630
+msgid "Message @{user}"
+msgstr "@{user}へメッセージを送信"
+
+#: src\ui\chat.rs:1646
+msgid "Upload a File (or drag it onto the window)"
+msgstr "ファイルをアップロード(ウィンドウにドラッグしても可)"
+
+#: src\ui\chat.rs:1686
+msgid "Open sticker picker"
+msgstr "スタンプピッカーを開く"
+
+#: src\ui\chat.rs:1693
+msgid "Open GIF picker"
+msgstr "GIFピッカーを開く"
+
+#: src\ui\chat.rs:1700
+msgid "Select emoji"
+msgstr "絵文字を選択"
+
+#: src\ui\chat.rs:1720
+msgid "Your message is too long: the limit is {limit} characters."
+msgstr "メッセージが長すぎます: 上限は{limit}文字です。"
+
+#: src\ui\chat.rs:1749
+msgid "{a} is typing…"
+msgstr "{a}が入力中…"
+
+#: src\ui\chat.rs:1750
+msgid "{a} and {b} are typing…"
+msgstr "{a}と{b}が入力中…"
+
+#: src\ui\chat.rs:1751
+msgid "{a}, {b}, and {c} are typing…"
+msgstr "{a}、{b}、{c}が入力中…"
+
+#: src\ui\chat.rs:1752
+msgid "Several people are typing…"
+msgstr "複数の人が入力中…"
+
+#: src\ui\chat.rs:1832 src\ui\chat.rs:2027 src\ui\chat.rs:2361 src\ui\friends.rs:343
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: src\ui\chat.rs:1862 src\ui\friends.rs:26 src\ui\friends.rs:130
+msgid "Online"
+msgstr "オンライン"
+
+#: src\ui\chat.rs:1863 src\ui\friends.rs:30
+msgid "Offline"
+msgstr "オフライン"
+
+#: src\ui\chat.rs:1949
+msgid "Search Messages"
+msgstr "メッセージを検索"
+
+#: src\ui\chat.rs:1970
+msgid "{count} Pinned Message"
+msgid_plural "{count} Pinned Messages"
+msgstr[0] "ピン留めされたメッセージ {count}件"
+
+#: src\ui\chat.rs:1971
+msgid "{count} Result"
+msgid_plural "{count} Results"
+msgstr[0] "{count}件の結果"
+
+#: src\ui\chat.rs:1998 src\ui\titlebar.rs:404
+msgid "{count} attachment"
+msgid_plural "{count} attachments"
+msgstr[0] "添付ファイル {count}件"
+
+#: src\ui\chat.rs:2003
+msgid "Jump to Channel"
+msgstr "チャンネルに移動"
+
+#: src\ui\chat.rs:2047
+msgid "PROTIP:"
+msgstr "ヒント:"
+
+#: src\ui\chat.rs:2054
+msgid "Don't ask again"
+msgstr "今後確認しない"
+
+#: src\ui\chat.rs:2070
+msgid "Forward To"
+msgstr "転送先"
+
+#: src\ui\chat.rs:2071
+msgid "Choose up to 5 conversations."
+msgstr "会話を5つまで選択してください。"
+
+#: src\ui\chat.rs:2132
+msgid "Add an optional message…"
+msgstr "メッセージを追加(任意)…"
+
+#: src\ui\chat.rs:2133
+msgid "Send"
+msgstr "送信"
+
+#: src\ui\chat.rs:2157
+msgid "Message forwarded."
+msgstr "メッセージを転送しました。"
+
+#: src\ui\chat.rs:2157
+msgid "Message forwarded to the conversations."
+msgstr "メッセージを会話に転送しました。"
+
+#: src\ui\chat.rs:2168
+msgid "Nickname"
+msgstr "ニックネーム"
+
+#: src\ui\chat.rs:2170
+msgid "Reset Nickname"
+msgstr "ニックネームをリセット"
+
+#: src\ui\chat.rs:2173 src\ui\chat.rs:2198 src\ui\chat.rs:2223 src\ui\chat.rs:2241
+msgid "Save"
+msgstr "保存"
+
+#: src\ui\chat.rs:2194
+msgid "Note"
+msgstr "メモ"
+
+#: src\ui\chat.rs:2195
+msgid "About @{name}, only visible to you"
+msgstr "@{name}についてのメモ(自分だけに表示)"
+
+#: src\ui\chat.rs:2197
+msgid "Click to add a note"
+msgstr "クリックしてメモを追加"
+
+#: src\ui\chat.rs:2216
+msgid "Filename"
+msgstr "ファイル名"
+
+#: src\ui\chat.rs:2219
+msgid "Description (Alt Text)"
+msgstr "概要（代替テキスト）"
+
+#: src\ui\chat.rs:2220
+msgid "Add a description"
+msgstr "説明を追加"
+
+#: src\ui\chat.rs:2222
+msgid "Mark as spoiler"
+msgstr "スポイラーとしてマーク"
+
+#: src\ui\chat.rs:2237 src\ui\mod.rs:1179
+msgid "Set a channel status"
+msgstr "チャンネルステータスを設定"
+
+#: src\ui\chat.rs:2238
+msgid "Everyone in the channel sees it under its name."
+msgstr "チャンネルの全員が名前の下に表示されます。"
+
+#: src\ui\chat.rs:2240
+msgid "What's going on?"
+msgstr "何してる？"
+
+#: src\ui\chat.rs:2256
+msgid "Join a Server"
+msgstr "サーバーに参加"
+
+#: src\ui\chat.rs:2257
+msgid "Paste an invite, such as discord.gg/abc123"
+msgstr "招待を貼り付けてください(例: discord.gg/abc123)"
+
+#: src\ui\chat.rs:2261 src\ui\profile.rs:452
+msgid "Join"
+msgstr "参加"
+
+#: src\ui\chat.rs:2272
+msgid "Create Your Server"
+msgstr "サーバーを作成"
+
+#: src\ui\chat.rs:2273 src\ui\guild.rs:175
+msgid "Server Name"
+msgstr "サーバー名"
+
+#: src\ui\chat.rs:2274 src\ui\chat.rs:2349
+msgid "Create"
+msgstr "作成"
+
+#: src\ui\chat.rs:2284
+msgid "Set a custom status"
+msgstr "カスタムステータスを設定"
+
+#: src\ui\chat.rs:2287
+msgid "What's cookin', {name}?"
+msgstr "何してる、{name}？"
+
+#: src\ui\chat.rs:2288
+msgid "Support has arrived!"
+msgstr "サポートが到着しました！"
+
+#: src\ui\chat.rs:2290
+msgid "Clear after"
+msgstr "クリアまで"
+
+#: src\ui\chat.rs:2292
+msgid "Today"
+msgstr "今日"
+
+#: src\ui\chat.rs:2293
+msgid "4 hours"
+msgstr "4時間"
+
+#: src\ui\chat.rs:2294 src\ui\guild.rs:200
+msgid "1 hour"
+msgstr "1時間"
+
+#: src\ui\chat.rs:2295 src\ui\guild.rs:200
+msgid "30 minutes"
+msgstr "30分"
+
+#: src\ui\chat.rs:2296
+msgid "Don't clear"
+msgstr "クリアしない"
+
+#: src\ui\chat.rs:2313
+msgid "Select Friends"
+msgstr "フレンドを選択"
+
+#: src\ui\chat.rs:2314
+msgid "You can add {count} more friend."
+msgid_plural "You can add {count} more friends."
+msgstr[0] "あと{count}人のフレンドを追加できます。"
+
+#: src\ui\chat.rs:2315
+msgid "Type the username of a friend"
+msgstr "フレンドのユーザー名を入力"
+
+#: src\ui\chat.rs:2341
+msgid "Create Group"
+msgstr "グループを作成"
+
+#: src\ui\chat.rs:2341 src\ui\mod.rs:1045
+msgid "Create DM"
+msgstr "DMを作成"
+
+#: src\ui\chat.rs:2402
+msgid "Play"
+msgstr "再生"
+
+#: src\ui\chat.rs:2439
+msgid "escape to"
+msgstr "Escキーで"
+
+#: src\ui\chat.rs:2440
+msgid "cancel"
+msgstr "キャンセル"
+
+#: src\ui\chat.rs:2444
+msgid "enter to"
+msgstr "Enterキーで"
+
+#: src\ui\chat.rs:2445
+msgid "save"
+msgstr "保存"
+
+#: src\ui\chat.rs:2497 src\ui\settings.rs:265
+msgid "About Me"
+msgstr "自己紹介"
+
+#: src\ui\chat.rs:2502 src\ui\guild.rs:824 src\ui\profile.rs:563
+msgid "Member Since"
+msgstr "メンバー歴"
+
+#: src\ui\chat.rs:2512 src\ui\profile.rs:657
+msgid "{count} Mutual Server"
+msgid_plural "{count} Mutual Servers"
+msgstr[0] "共通のサーバー {count}件"
+
+#: src\ui\chat.rs:2523 src\ui\profile.rs:651
+msgid "{count} Mutual Friend"
+msgid_plural "{count} Mutual Friends"
+msgstr[0] "共通のフレンド {count}人"
+
+#: src\ui\commands.rs:53 src\ui\mod.rs:1405
+msgid "Loading…"
+msgstr "読み込み中…"
+
+#: src\ui\commands.rs:94
+msgid "Commands Matching /{query}"
+msgstr "/{query} に一致するコマンド"
+
+#: src\ui\commands.rs:112
+msgid "Built-In"
+msgstr "ビルトイン"
+
+#: src\ui\commands.rs:347
+msgid "True"
+msgstr "True"
+
+#: src\ui\commands.rs:347
+msgid "False"
+msgstr "False"
+
+#: src\ui\commands.rs:508
+msgid "Fill in \"{option}\" to run the command."
+msgstr "コマンドを実行するには「{option}」を入力してください。"
+
+#: src\ui\commands.rs:543
+msgid "{name} used {command}"
+msgstr "{name}が{command}を使用しました"
+
+#: src\ui\components.rs:104
+msgid "Make a selection"
+msgstr "選択してください"
+
+#: src\ui\emoji.rs:195
+msgid "Tab or Enter picks the first"
+msgstr "TabまたはEnterで最初の候補を選択"
+
+#: src\ui\expressions.rs:36
+msgid "People"
+msgstr "人々"
+
+#: src\ui\expressions.rs:37
+msgid "Nature"
+msgstr "自然"
+
+#: src\ui\expressions.rs:38
+msgid "Food"
+msgstr "食べ物"
+
+#: src\ui\expressions.rs:39
+msgid "Activities"
+msgstr "アクティビティ"
+
+#: src\ui\expressions.rs:40
+msgid "Travel"
+msgstr "旅行"
+
+#: src\ui\expressions.rs:41
+msgid "Objects"
+msgstr "物"
+
+#: src\ui\expressions.rs:42
+msgid "Symbols"
+msgstr "記号"
+
+#: src\ui\expressions.rs:43
+msgid "Flags"
+msgstr "旗"
+
+#: src\ui\expressions.rs:152 src\ui\expressions.rs:193
+msgid "Favorites"
+msgstr "お気に入り"
+
+#: src\ui\expressions.rs:156 src\ui\expressions.rs:197
+msgid "Frequently Used"
+msgstr "よく使う絵文字"
+
+#: src\ui\expressions.rs:232
+msgid "GIFs"
+msgstr "GIF"
+
+#: src\ui\expressions.rs:232
+msgid "Stickers"
+msgstr "スタンプ"
+
+#: src\ui\expressions.rs:372
+msgid "Find the perfect sticker"
+msgstr "完璧なスタンプを見つけよう"
+
+#: src\ui\expressions.rs:374
+msgid "Find the perfect reaction"
+msgstr "完璧なリアクションを見つけよう"
+
+#: src\ui\expressions.rs:376
+msgid "Find the perfect emoji"
+msgstr "ぴったりの絵文字を探そう"
+
+#: src\ui\expressions.rs:442
+msgid "None of your servers have stickers."
+msgstr "スタンプがあるサーバーがありません。"
+
+#: src\ui\expressions.rs:442 src\ui\expressions.rs:732
+msgid "No results found"
+msgstr "一致する結果はありません"
+
+#: src\ui\expressions.rs:537
+msgid "from {guildName}"
+msgstr "{guildName}より"
+
+#: src\ui\expressions.rs:617
+msgid "Select emoji skin tone"
+msgstr "絵文字の肌の色を選択"
+
+#: src\ui\expressions.rs:645
+msgid "Search Tenor"
+msgstr "Tenorで検索"
+
+#: src\ui\expressions.rs:698
+msgid "Trending GIFs"
+msgstr "トレンドのGIF"
+
+#: src\ui\form.rs:411
+msgid "Careful — you have unsaved changes!"
+msgstr "注意：保存していない変更があります！"
+
+#: src\ui\form.rs:414 src\ui\guild.rs:776 src\ui\settings.rs:271
+msgid "Save Changes"
+msgstr "変更を保存"
+
+#: src\ui\form.rs:415 src\ui\settings.rs:759 src\ui\settings.rs:959
+msgid "Reset"
+msgstr "リセット"
+
+#: src\ui\friends.rs:27
+msgid "Idle"
+msgstr "退席中"
+
+#: src\ui\friends.rs:28
+msgid "Do Not Disturb"
+msgstr "取り込み中"
+
+#: src\ui\friends.rs:29
+msgid "Invisible"
+msgstr "オフライン表示"
+
+#: src\ui\friends.rs:92
+msgid "Online — {count}"
+msgstr "オンライン — {count}"
+
+#: src\ui\friends.rs:93
+msgid "Pending — {count}"
+msgstr "保留中 — {count}"
+
+#: src\ui\friends.rs:94
+msgid "All Friends — {count}"
+msgstr "すべてのフレンド — {count}"
+
+#: src\ui\friends.rs:99
+msgid "No one's around."
+msgstr "誰もいません。"
+
+#: src\ui\friends.rs:99
+msgid "No one by that name."
+msgstr "その名前の人はいません。"
+
+#: src\ui\friends.rs:107
+msgid "Blocked — {count}"
+msgstr "ブロック中 — {count}"
+
+#: src\ui\friends.rs:126 src\ui\mod.rs:1030 src\ui\titlebar.rs:120
+msgid "Friends"
+msgstr "フレンド"
+
+#: src\ui\friends.rs:130
+msgid "All"
+msgstr "全て"
+
+#: src\ui\friends.rs:130
+msgid "Pending"
+msgstr "保留中"
+
+#: src\ui\friends.rs:138 src\ui\friends.rs:214 src\ui\menu.rs:311
+msgid "Add Friend"
+msgstr "フレンドに追加"
+
+#: src\ui\friends.rs:154
+msgid "New Group DM"
+msgstr "新しいグループDM"
+
+#: src\ui\friends.rs:215 src\ui\friends.rs:221
+msgid "You can add friends with their Discord username."
+msgstr "Discordユーザー名でフレンドを追加できます。"
+
+#: src\ui\friends.rs:227
+msgid "Send Friend Request"
+msgstr "フレンドリクエストを送信"
+
+#: src\ui\friends.rs:286
+msgid "Incoming Friend Request"
+msgstr "受信したフレンドリクエスト"
+
+#: src\ui\friends.rs:287
+msgid "Outgoing Friend Request"
+msgstr "送信したフレンドリクエスト"
+
+#: src\ui\friends.rs:288
+msgid "Blocked"
+msgstr "ブロック中"
+
+#: src\ui\friends.rs:317 src\ui\menu.rs:292 src\ui\menu.rs:419
+msgid "Remove Friend"
+msgstr "フレンドを削除"
+
+#: src\ui\friends.rs:331
+msgid "Ignore"
+msgstr "無視"
+
+#: src\ui\friends.rs:336
+msgid "Accept"
+msgstr "承認"
+
+#: src\ui\friends.rs:343 src\ui\menu.rs:318 src\ui\settings.rs:457
+msgid "Unblock"
+msgstr "ブロック解除"
+
+#: src\ui\friends.rs:371
+msgid "just now"
+msgstr "たった今"
+
+#: src\ui\friends.rs:372
+msgid "{n}m"
+msgstr "{n}分"
+
+#: src\ui\friends.rs:373
+msgid "{n}h"
+msgstr "{n}時間"
+
+#: src\ui\friends.rs:374
+msgid "{n}d"
+msgstr "{n}日"
+
+#: src\ui\friends.rs:380
+msgid "Active Now"
+msgstr "アクティブなユーザー"
+
+#: src\ui\friends.rs:397
+msgid "It's quiet for now..."
+msgstr "今は静かなようです…"
+
+#: src\ui\friends.rs:398
+msgid "When a friend starts an activity—like playing a game or hanging out on voice—we'll show it here!"
+msgstr "フレンドがゲームをプレイしたりボイスチャットでくつろいだりすると、ここに表示されます！"
+
+#: src\ui\guild.rs:114
+msgid "Role saved."
+msgstr "ロールを保存しました。"
+
+#: src\ui\guild.rs:120
+msgid "Changes saved."
+msgstr "変更を保存しました。"
+
+#: src\ui\guild.rs:149
+msgid "Server Overview"
+msgstr "サーバー概要"
+
+#: src\ui\guild.rs:164
+msgid "Minimum Size: {size}x{size}"
+msgstr "最小サイズ: {size}x{size}"
+
+#: src\ui\guild.rs:168
+msgid "We recommend an image of at least 512x512."
+msgstr "推奨画像サイズは512x512以上です。"
+
+#: src\ui\guild.rs:170
+msgid "Upload Image"
+msgstr "画像をアップロード"
+
+#: src\ui\guild.rs:190
+msgid "Inactive Channel"
+msgstr "AFKチャンネル"
+
+#: src\ui\guild.rs:191
+msgid "No Inactive Channel"
+msgstr "AFKチャンネルなし"
+
+#: src\ui\guild.rs:199
+msgid "Inactive Timeout"
+msgstr "AFKタイムアウト"
+
+#: src\ui\guild.rs:200
+msgid "1 minute"
+msgstr "1分"
+
+#: src\ui\guild.rs:200
+msgid "5 minutes"
+msgstr "5分"
+
+#: src\ui\guild.rs:200
+msgid "15 minutes"
+msgstr "15分"
+
+#: src\ui\guild.rs:209
+msgid "Automatically move members to this channel and mute them when they have been idle for longer than the inactive timeout. This does not affect browsers."
+msgstr "AFKタイムアウトより長く非アクティブなメンバーを自動的にこのチャンネルに移動してミュートします。ブラウザには影響しません。"
+
+#: src\ui\guild.rs:213
+msgid "System Messages Channel"
+msgstr "システムメッセージチャンネル"
+
+#: src\ui\guild.rs:214
+msgid "No System Messages"
+msgstr "システムメッセージなし"
+
+#: src\ui\guild.rs:222
+msgid "This is the channel we send system event messages to. These can be turned off at any time."
+msgstr "ここはDiscordが自動システムメッセージを送信するチャンネルです。これはいつでもオフにすることができます。"
+
+#: src\ui\guild.rs:226
+msgid "Send a random welcome message when someone joins this server."
+msgstr "このサーバーに参加した人がいたら、ウェルカムメッセージをランダムに送信します。"
+
+#: src\ui\guild.rs:227
+msgid "Prompt members to reply to welcome messages with a sticker."
+msgstr "ウェルカムメッセージにスタンプで返信するようメンバーに促します。"
+
+#: src\ui\guild.rs:228
+msgid "Send a message when someone boosts this server."
+msgstr "このサーバーをブーストした人がいたら、メッセージを送信します。"
+
+#: src\ui\guild.rs:229
+msgid "Send helpful tips for server setup."
+msgstr "サーバー設定に役立つヒントをお寄せください。"
+
+#: src\ui\guild.rs:239
+msgid "Default Notification Settings"
+msgstr "デフォルトの通知設定"
+
+#: src\ui\guild.rs:240
+msgid "This will determine whether members who have not explicitly set their notification settings receive a notification for every message sent in this server or not."
+msgstr "通知設定を明確にしていないユーザーがこのサーバーでメッセージが送信される度に通知を受け取るかどうかを設定します。"
+
+#: src\ui\guild.rs:242
+msgid "We highly recommend setting this to only @mentions for a Community Server."
+msgstr "コミュニティサーバーでは、これを@mentionsのみに設定することを強くおすすめします。"
+
+#: src\ui\guild.rs:244 src\ui\menu.rs:187 src\ui\settings.rs:493
+msgid "All Messages"
+msgstr "すべてのメッセージ"
+
+#: src\ui\guild.rs:244 src\ui\menu.rs:187
+msgid "Only @mentions"
+msgstr "@メンションのみ"
+
+#: src\ui\guild.rs:250
+msgid "Server Description"
+msgstr "サーバーの説明"
+
+#: src\ui\guild.rs:251
+msgid "What's your server about?"
+msgstr "どんなサーバーですか？"
+
+#: src\ui\guild.rs:271
+msgid "Change\nIcon"
+msgstr "アイコンを\n変更"
+
+#: src\ui\guild.rs:284 src\ui\settings.rs:1202
+msgid "Remove"
+msgstr "削除"
+
+#: src\ui\guild.rs:299 src\ui\guild.rs:1101 src\ui\guild.rs:1135 src\ui\settings.rs:276
+msgid "Image"
+msgstr "画像"
+
+#: src\ui\guild.rs:302 src\ui\settings.rs:281
+msgid "Invalid image, or larger than 10 MB."
+msgstr "画像が無効か、10 MBを超えています。"
+
+#: src\ui\guild.rs:339
+msgid "Verification Level"
+msgstr "認証レベル"
+
+#: src\ui\guild.rs:340
+msgid "Members of the server must meet the following criteria before they can send messages in text channels or initiate a direct message conversation. If a member has an assigned role and server onboarding is not enabled, this does not apply. We recommend setting a verification level for a Community Server."
+msgstr "サーバーのメンバーは、テキストチャンネルでメッセージを送信する、あるいはダイレクトメッセージによる会話を開始する前に、 以下の基準を満たさなければなりません。メンバーに何らかのロールが割り当てられており、サーバーのオンボーディングが有効化されていない場合は、この限りではありません。 コミュニティサーバーでは、認証レベルを設定することをおすすめします。"
+
+#: src\ui\guild.rs:346 src\ui\settings.rs:1092
+msgid "None"
+msgstr "なし"
+
+#: src\ui\guild.rs:346
+msgid "Unrestricted"
+msgstr "制限なし"
+
+#: src\ui\guild.rs:347
+msgid "Low"
+msgstr "低"
+
+#: src\ui\guild.rs:347
+msgid "Must have a verified email on their Discord account."
+msgstr "メール認証がされているアカウントのみ"
+
+#: src\ui\guild.rs:348
+msgid "Medium"
+msgstr "中"
+
+#: src\ui\guild.rs:348
+msgid "Must also be registered on Discord for longer than {min} minutes."
+msgstr "Discordに登録してから{min}分以上経過したアカウントのみ"
+
+#: src\ui\guild.rs:349
+msgid "High"
+msgstr "高"
+
+#: src\ui\guild.rs:349
+msgid "Must also be a member of this server for longer than {min} minutes."
+msgstr "このサーバーのメンバーとなってから{min}分以上経過したメンバーのみ"
+
+#: src\ui\guild.rs:350
+msgid "Highest"
+msgstr "最高"
+
+#: src\ui\guild.rs:350
+msgid "Must have a verified phone on their Discord account."
+msgstr "電話認証がされているアカウントのみ"
+
+#: src\ui\guild.rs:356
+msgid "Sensitive content filters"
+msgstr "センシティブなコンテンツに対するフィルター"
+
+#: src\ui\guild.rs:357
+msgid "Choose if server members can share image-based media detected by Discord’s sensitive content filters. This setting will apply to channels that are not age-restricted."
+msgstr "サーバーのメンバーが、Discordのセンシティブなコンテンツに対するフィルターで検出された画像ベースのメディアを共有できるかどうかを選択します。 この設定は年齢制限のないチャンネルに適用されます。"
+
+#: src\ui\guild.rs:364
+msgid "Filter messages from all members"
+msgstr "全てのメンバーからのメッセージに対してフィルターする"
+
+#: src\ui\guild.rs:364
+msgid "All messages will be filtered for sensitive image-based media."
+msgstr "全てのメッセージはセンシティブな画像ベースのメディアに対してフィルターされます。"
+
+#: src\ui\guild.rs:365
+msgid "Filter messages from server members without roles"
+msgstr "サーバーのロールのないメンバーからのメッセージに対してフィルターする"
+
+#: src\ui\guild.rs:365
+msgid "Messages from server members without a role will be filtered for sensitive image-based media."
+msgstr "ロールのないサーバーメンバーからのメッセージは、センシティブな画像ベースのメディアに対してフィルターされます。"
+
+#: src\ui\guild.rs:366
+msgid "Do not filter"
+msgstr "フィルターしない"
+
+#: src\ui\guild.rs:366
+msgid "Messages will not be filtered for sensitive image-based media."
+msgstr "メッセージはセンシティブな画像ベースのメディアに対してフィルターされません。"
+
+#: src\ui\guild.rs:411
+msgid "Use roles to group your server members and assign permissions."
+msgstr "ロールを活用してサーバーのメンバーをグループ分けし、権限を割り当てましょう。"
+
+#: src\ui\guild.rs:420
+msgid "Default Permissions"
+msgstr "デフォルトの権限"
+
+#: src\ui\guild.rs:421
+msgid "@everyone • applies to all server members"
+msgstr "@everyone • サーバーの全メンバーに適用"
+
+#: src\ui\guild.rs:433
+msgid "Search Roles"
+msgstr "ロールを検索"
+
+#: src\ui\guild.rs:435
+msgid "Create Role"
+msgstr "ロールを作成"
+
+#: src\ui\guild.rs:438
+msgid "new role"
+msgstr "新しいロール"
+
+#: src\ui\guild.rs:438
+msgid "Role created."
+msgstr "ロールを作成しました。"
+
+#: src\ui\guild.rs:441
+msgid "Members use the color of the highest role they have on this list."
+msgstr "メンバーには、このリストで最上位のロールの色が使われます。"
+
+#: src\ui\guild.rs:445
+msgid "Roles — {count}"
+msgstr "ロール — {count}"
+
+#: src\ui\guild.rs:457
+msgid "Managed by an app"
+msgstr "アプリが管理"
+
+#: src\ui\guild.rs:490
+msgid "‹ Back"
+msgstr "‹ 戻る"
+
+#: src\ui\guild.rs:523
+msgid "Edit Role — {name}"
+msgstr "ロールを編集 — {name}"
+
+#: src\ui\guild.rs:526 src\ui\guild.rs:528
+msgid "Delete Role"
+msgstr "ロールを削除"
+
+#: src\ui\guild.rs:529
+msgid "Are you sure you want to delete the role {name}? This action cannot be undone."
+msgstr "本当にロール「{name}」を削除しますか？この操作は取り消せません。"
+
+#: src\ui\guild.rs:542
+msgid "Display"
+msgstr "表示"
+
+#: src\ui\guild.rs:542
+msgid "Permissions"
+msgstr "権限"
+
+#: src\ui\guild.rs:569
+msgid "Role Name"
+msgstr "ロール名"
+
+#: src\ui\guild.rs:573
+msgid "Role Color"
+msgstr "ロールの色"
+
+#: src\ui\guild.rs:574
+msgid "Members use the color of the highest role they have on the roles list."
+msgstr "メンバーには、ロールリストに割り当てられている最も高いロールの色が適用されます。"
+
+#: src\ui\guild.rs:578
+msgid "Display role members separately from online members"
+msgstr "オンラインメンバーとは別にロールメンバーを表示する"
+
+#: src\ui\guild.rs:579
+msgid "Allow anyone to @mention this role"
+msgstr "このロールに対して@mentionを許可する"
+
+#: src\ui\guild.rs:579
+msgid "Note: Members with the \"Mention @everyone, @here, and All Roles\" permission will always be able to ping this role."
+msgstr "注: 「@everyone、@here、全てのロールにメンション」権限のあるメンバーは、いつでもこのロールにpingできます。"
+
+#: src\ui\guild.rs:584
+msgid "Search permissions"
+msgstr "権限を検索"
+
+#: src\ui\guild.rs:585
+msgid "Clear permissions"
+msgstr "権限をクリア"
+
+#: src\ui\guild.rs:629 src\ui\settings.rs:996 src\ui\settings.rs:1100
+msgid "Default"
+msgstr "デフォルト"
+
+#: src\ui\guild.rs:635
+msgid "Custom Color"
+msgstr "カスタムカラー"
+
+#: src\ui\guild.rs:666
+msgid "Every channel of the server, in the list's order. Pick one to edit; to reorder them, drag them in the channel list."
+msgstr "サーバーのすべてのチャンネル(リストの順)。編集するチャンネルを選んでください。並べ替えはチャンネルリストでドラッグします。"
+
+#: src\ui\guild.rs:674
+msgid "new-channel"
+msgstr "新しいチャンネル"
+
+#: src\ui\guild.rs:675 src\ui\settings.rs:928
+msgid "Text"
+msgstr "テキスト"
+
+#: src\ui\guild.rs:675 src\ui\settings.rs:634
+msgid "Voice"
+msgstr "ボイス"
+
+#: src\ui\guild.rs:675
+msgid "Category"
+msgstr "カテゴリー"
+
+#: src\ui\guild.rs:675
+msgid "Announcement"
+msgstr "アナウンス"
+
+#: src\ui\guild.rs:675
+msgid "Forum"
+msgstr "フォーラム"
+
+#: src\ui\guild.rs:681 src\ui\mod.rs:683 src\ui\mod.rs:739
+msgid "Create Channel"
+msgstr "チャンネルを作成"
+
+#: src\ui\guild.rs:688
+msgid "Channel created."
+msgstr "チャンネルを作成しました。"
+
+#: src\ui\guild.rs:743
+msgid "Pick a channel to edit."
+msgstr "編集するチャンネルを選んでください。"
+
+#: src\ui\guild.rs:749
+msgid "Category Name"
+msgstr "カテゴリー名"
+
+#: src\ui\guild.rs:749
+msgid "Channel Name"
+msgstr "チャンネル名"
+
+#: src\ui\guild.rs:754
+msgid "Channel Topic"
+msgstr "チャンネルトピック"
+
+#: src\ui\guild.rs:755
+msgid "Let everyone know how to use this channel!"
+msgstr "皆にこのチャンネルの使い方を教えてあげましょう！"
+
+#: src\ui\guild.rs:757
+msgid "Slowmode"
+msgstr "低速モード"
+
+#: src\ui\guild.rs:759 src\ui\settings.rs:1178
+msgid "Off"
+msgstr "オフ"
+
+#: src\ui\guild.rs:768
+msgid "Members will be restricted to sending one message per this interval, unless they have Manage Channel or Manage Messages permissions."
+msgstr "「チャンネルの管理」または「メッセージの管理」権限がない限り、メンバーはこの間隔ごとに1件しかメッセージを送信できなくなります。"
+
+#: src\ui\guild.rs:770
+msgid "Age-Restricted Channel"
+msgstr "年齢制限チャンネル"
+
+#: src\ui\guild.rs:770
+msgid "Users will need to confirm they are of over legal age to view the content in this channel."
+msgstr "このチャンネルの内容を見るには、成人であることを確認する必要があります。"
+
+#: src\ui\guild.rs:783
+msgid "Channel saved."
+msgstr "チャンネルを保存しました。"
+
+#: src\ui\guild.rs:785
+msgid "Delete Category"
+msgstr "カテゴリーを削除"
+
+#: src\ui\guild.rs:785
+msgid "Delete Channel"
+msgstr "チャンネルを削除"
+
+#: src\ui\guild.rs:789
+msgid "Are you sure you want to delete {name}? This cannot be undone."
+msgstr "本当に{name}を削除しますか？元に戻せません。"
+
+#: src\ui\guild.rs:803
+msgid "Server Members"
+msgstr "サーバーメンバー"
+
+#: src\ui\guild.rs:809
+msgid "Search by username or ID"
+msgstr "ユーザー名またはIDで検索"
+
+#: src\ui\guild.rs:824 src\ui\guild.rs:1135
+msgid "Name"
+msgstr "名前"
+
+#: src\ui\guild.rs:824
+msgid "Joined Discord"
+msgstr "Discord登録日"
+
+#: src\ui\guild.rs:827
+msgid "No one found."
+msgstr "見つかりませんでした。"
+
+#: src\ui\guild.rs:845
+msgid "timed out"
+msgstr "タイムアウト中"
+
+#: src\ui\guild.rs:886 src\ui\menu.rs:257
+msgid "Profile"
+msgstr "プロフィール"
+
+#: src\ui\guild.rs:898
+msgid "Roles updated."
+msgstr "ロールを更新しました。"
+
+#: src\ui\guild.rs:906
+msgid "Remove Timeout"
+msgstr "タイムアウトを解除"
+
+#: src\ui\guild.rs:907
+msgid "Timeout removed."
+msgstr "タイムアウトを解除しました。"
+
+#: src\ui\guild.rs:911 src\ui\menu.rs:374
+msgid "Timeout {name}"
+msgstr "{name}をタイムアウト"
+
+#: src\ui\guild.rs:923 src\ui\menu.rs:389
+msgid "Kick {name}"
+msgstr "{name}をキック"
+
+#: src\ui\guild.rs:925 src\ui\menu.rs:391
+msgid "Kick '{name}' from Server"
+msgstr "「{name}」をサーバーからキック"
+
+#: src\ui\guild.rs:926 src\ui\menu.rs:392
+msgid "Are you sure you want to kick @{name} from the server? They will be able to rejoin with another invite."
+msgstr "本当に@{name}をサーバーからキックしますか？別の招待があれば再参加できます。"
+
+#: src\ui\guild.rs:927 src\ui\menu.rs:393
+msgid "Kick"
+msgstr "キック"
+
+#: src\ui\guild.rs:932 src\ui\menu.rs:398
+msgid "Ban {name}"
+msgstr "{name}をBAN"
+
+#: src\ui\guild.rs:934 src\ui\menu.rs:400
+msgid "Ban '{name}'"
+msgstr "「{name}」をBAN"
+
+#: src\ui\guild.rs:935 src\ui\menu.rs:401
+msgid "Are you sure you want to ban @{name}? They won't be able to return to the server until they are unbanned."
+msgstr "本当に@{name}をBANしますか？BANが解除されるまでサーバーに戻れません。"
+
+#: src\ui\guild.rs:936 src\ui\menu.rs:402
+msgid "Ban"
+msgstr "BAN"
+
+#: src\ui\guild.rs:942 src\ui\menu.rs:410 src\ui\mod.rs:2450
+msgid "Copy User ID"
+msgstr "ユーザーIDをコピー"
+
+#: src\ui\guild.rs:950
+msgid "Here's a list of all active invite links. You can revoke any one."
+msgstr "有効な招待リンクの全リストです。ここから取り消しができます。"
+
+#: src\ui\guild.rs:954
+msgid "Valid for 7 days, with no limit on uses"
+msgstr "7日間有効、使用回数の制限なし"
+
+#: src\ui\guild.rs:956
+msgid "Invite created."
+msgstr "招待を作成しました。"
+
+#: src\ui\guild.rs:965
+msgid "Inviter"
+msgstr "招待者"
+
+#: src\ui\guild.rs:965
+msgid "Invite Code"
+msgstr "招待コード"
+
+#: src\ui\guild.rs:965
+msgid "Uses"
+msgstr "使用回数"
+
+#: src\ui\guild.rs:965
+msgid "Expires"
+msgstr "有効期限"
+
+#: src\ui\guild.rs:968
+msgid "No active invites."
+msgstr "有効な招待はありません。"
+
+#: src\ui\guild.rs:980 src\ui\settings.rs:493
+msgid "Never"
+msgstr "なし"
+
+#: src\ui\guild.rs:998 src\ui\mod.rs:1368
+msgid "Copy Link"
+msgstr "リンクをコピー"
+
+#: src\ui\guild.rs:1000
+msgid "Link copied"
+msgstr "リンクをコピーしました"
+
+#: src\ui\guild.rs:1008
+msgid "Revoke Invite"
+msgstr "招待を取り消す"
+
+#: src\ui\guild.rs:1009
+msgid "Invite revoked."
+msgstr "招待を取り消しました。"
+
+#: src\ui\guild.rs:1019
+msgid "Expired"
+msgstr "期限切れ"
+
+#: src\ui\guild.rs:1029
+msgid "Bans — {count}"
+msgstr "BAN — {count}"
+
+#: src\ui\guild.rs:1030
+msgid "Bans by default are by account and IP. A user can circumvent an IP ban by using a proxy."
+msgstr "BANはデフォルトでアカウントとIPに適用されます。プロキシを使うとIP BANを回避できます。"
+
+#: src\ui\guild.rs:1034
+msgid "Search bans by username or ID"
+msgstr "ユーザー名またはIDでBANを検索"
+
+#: src\ui\guild.rs:1052
+msgid "No bans"
+msgstr "BANはありません"
+
+#: src\ui\guild.rs:1052
+msgid "No bans with that name"
+msgstr "その名前のBANはありません"
+
+#: src\ui\guild.rs:1054
+msgid "Banned people show up here."
+msgstr "BANされた人はここに表示されます。"
+
+#: src\ui\guild.rs:1078
+msgid "Revoke Ban"
+msgstr "BANを解除"
+
+#: src\ui\guild.rs:1080
+msgid "Ban revoked."
+msgstr "BANを解除しました。"
+
+#: src\ui\guild.rs:1089
+msgid "Add up to 50 custom emoji that anyone can use in this server. Animated GIF emoji may be used by members with Discord Nitro."
+msgstr "このサーバーで誰でも使えるカスタム絵文字を最大50個追加できます。アニメーションGIF絵文字はDiscord Nitroメンバーが使えます。"
+
+#: src\ui\guild.rs:1091
+msgid "Upload Requirements"
+msgstr "アップロードの要件"
+
+#: src\ui\guild.rs:1092
+msgid "File type: JPEG, PNG, GIF, WEBP"
+msgstr "ファイル形式: JPEG、PNG、GIF、WEBP"
+
+#: src\ui\guild.rs:1092
+msgid "Max file size: 256 KB"
+msgstr "最大ファイルサイズ: 256 KB"
+
+#: src\ui\guild.rs:1092
+msgid "Recommended dimensions: 128x128"
+msgstr "推奨サイズ: 128x128"
+
+#: src\ui\guild.rs:1092
+msgid "Naming: Emoji names must be at least 2 characters long and can only contain alphanumeric characters and underscores"
+msgstr "名称：絵文字の名前は 2 文字以上としてください。英数字と下線のみ使用可能です"
+
+#: src\ui\guild.rs:1100
+msgid "Upload Emoji"
+msgstr "絵文字をアップロード"
+
+#: src\ui\guild.rs:1109
+msgid "Emoji uploaded."
+msgstr "絵文字をアップロードしました。"
+
+#: src\ui\guild.rs:1110
+msgid "Invalid image, or too large."
+msgstr "画像が無効か、大きすぎます。"
+
+#: src\ui\guild.rs:1128
+msgid "Emoji — {count} slot available"
+msgid_plural "Emoji — {count} slots available"
+msgstr[0] "絵文字 — 残り{count}枠"
+
+#: src\ui\guild.rs:1130
+msgid "Animated: {animated} of {limit}"
+msgstr "アニメーション: {animated}/{limit}"
+
+#: src\ui\guild.rs:1135
+msgid "Uploaded By"
+msgstr "アップロードしたユーザー"
+
+#: src\ui\guild.rs:1139
+msgid "No emoji yet"
+msgstr "まだ絵文字はありません"
+
+#: src\ui\guild.rs:1140
+msgid "Upload the first one and it shows up here."
+msgstr "最初の絵文字をアップロードすると、ここに表示されます。"
+
+#: src\ui\guild.rs:1174
+msgid "Emoji renamed."
+msgstr "絵文字の名前を変更しました。"
+
+#: src\ui\guild.rs:1186
+msgid "Click to rename"
+msgstr "クリックして名前を変更"
+
+#: src\ui\guild.rs:1202
+msgid "Delete Emoji"
+msgstr "絵文字を削除"
+
+#: src\ui\guild.rs:1203
+msgid "Emoji deleted."
+msgstr "絵文字を削除しました。"
+
+#: src\ui\guild.rs:1248
+msgid "No logs yet"
+msgstr "まだログはありません"
+
+#: src\ui\guild.rs:1249
+msgid "Changes made to the server show up here."
+msgstr "サーバーへの変更はここに表示されます。"
+
+#: src\ui\guild.rs:1291
+msgid "Reason: {reason}"
+msgstr "理由: {reason}"
+
+#: src\ui\markdown.rs:274
+msgid "Channels & Roles"
+msgstr "チャンネル&ロール"
+
+#: src\ui\markdown.rs:275
+msgid "Browse Channels"
+msgstr "チャンネルを見る"
+
+#: src\ui\markdown.rs:276
+msgid "Server Guide"
+msgstr "サーバーガイド"
+
+#: src\ui\markdown.rs:277
+msgid "Home"
+msgstr "ホーム"
+
+#: src\ui\markdown.rs:278
+msgid "Linked Roles"
+msgstr "連携ロール"
+
+#: src\ui\markdown.rs:407
+msgid "unknown-channel"
+msgstr "不明なチャンネル"
+
+#: src\ui\menu.rs:136 src\ui\mod.rs:2351
+msgid "For 15 Minutes"
+msgstr "15分間"
+
+#: src\ui\menu.rs:137 src\ui\mod.rs:2352
+msgid "For 1 Hour"
+msgstr "1時間"
+
+#: src\ui\menu.rs:138
+msgid "For 3 Hours"
+msgstr "3時間"
+
+#: src\ui\menu.rs:139 src\ui\mod.rs:2353
+msgid "For 8 Hours"
+msgstr "8時間"
+
+#: src\ui\menu.rs:140 src\ui\mod.rs:2354
+msgid "For 24 Hours"
+msgstr "24時間"
+
+#: src\ui\menu.rs:141
+msgid "Until I turn it back on"
+msgstr "ミュート解除するまで"
+
+#: src\ui\menu.rs:159
+msgid "Mute Server"
+msgstr "サーバーをミュート"
+
+#: src\ui\menu.rs:159
+msgid "Unmute Server"
+msgstr "サーバーのミュートを解除"
+
+#: src\ui\menu.rs:160
+msgid "Mute Category"
+msgstr "カテゴリーをミュート"
+
+#: src\ui\menu.rs:160
+msgid "Unmute Category"
+msgstr "カテゴリーのミュートを解除"
+
+#: src\ui\menu.rs:161
+msgid "Mute Channel"
+msgstr "チャンネルをミュート"
+
+#: src\ui\menu.rs:161
+msgid "Unmute Channel"
+msgstr "チャンネルのミュートを解除"
+
+#: src\ui\menu.rs:162
+msgid "Mute Conversation"
+msgstr "会話をミュート"
+
+#: src\ui\menu.rs:162
+msgid "Unmute Conversation"
+msgstr "会話のミュートを解除"
+
+#: src\ui\menu.rs:169
+msgid "Muted until {time}"
+msgstr "{time}までミュート"
+
+#: src\ui\menu.rs:187
+msgid "Nothing"
+msgstr "なし"
+
+#: src\ui\menu.rs:196
+msgid "Use Category Default"
+msgstr "カテゴリーのデフォルトを使用"
+
+#: src\ui\menu.rs:197
+msgid "Use Server Default"
+msgstr "サーバーのデフォルトを使用"
+
+#: src\ui\menu.rs:200
+msgid "Notification Settings"
+msgstr "通知設定"
+
+#: src\ui\menu.rs:242
+msgid "60 Seconds"
+msgstr "60秒"
+
+#: src\ui\menu.rs:243
+msgid "5 Minutes"
+msgstr "5分"
+
+#: src\ui\menu.rs:244
+msgid "10 Minutes"
+msgstr "10分"
+
+#: src\ui\menu.rs:245
+msgid "1 Hour"
+msgstr "1時間"
+
+#: src\ui\menu.rs:246
+msgid "1 Day"
+msgstr "1日"
+
+#: src\ui\menu.rs:247
+msgid "1 Week"
+msgstr "1週間"
+
+#: src\ui\menu.rs:262
+msgid "Mention"
+msgstr "メンション"
+
+#: src\ui\menu.rs:278
+msgid "Call"
+msgstr "通話"
+
+#: src\ui\menu.rs:283
+msgid "Add Note"
+msgstr "メモを追加"
+
+#: src\ui\menu.rs:298
+msgid "Accept Friend Request"
+msgstr "フレンドリクエストを承認"
+
+#: src\ui\menu.rs:304
+msgid "Cancel Friend Request"
+msgstr "フレンドリクエストをキャンセル"
+
+#: src\ui\menu.rs:322
+msgid "Block"
+msgstr "ブロック"
+
+#: src\ui\menu.rs:417
+msgid "Remove '{name}'"
+msgstr "「{name}」を削除"
+
+#: src\ui\menu.rs:418
+msgid "Are you sure you want to remove {name} from your friends?"
+msgstr "本当に{name}をフレンドから削除してもよろしいですか？"
+
+#: src\ui\mod.rs:95
+msgid "Your voice has been disconnected because you connected at another location."
+msgstr "別のデバイスで接続されたため音声チャットの接続が切断されました。"
+
+#: src\ui\mod.rs:95
+msgid "Your voice has been disconnected."
+msgstr "ボイスが切断されました。"
+
+#: src\ui\mod.rs:97
+msgid "Reconnect"
+msgstr "再接続"
+
+#: src\ui\mod.rs:133
+msgid "You can type /tableflip and /unflip to spice up your messages."
+msgstr "/tableflip または /unflip とタイピングすると、メッセージが刺激的なお茶の間に。"
+
+#: src\ui\mod.rs:134
+msgid "You can type {asterisks} around your words to make them bold."
+msgstr "タイプした文字を {asterisks} で囲むと太字にできます。"
+
+#: src\ui\mod.rs:135
+msgid "{quickSwitcherHook} to quickly find a previous conversation or channel."
+msgstr "{quickSwitcherHook} で以前の会話やチャンネルを素早く見つけられます。"
+
+#: src\ui\mod.rs:136
+msgid "{markServerUnreadHook} to mark an entire server as read."
+msgstr "{markServerUnreadHook} でサーバー全体を既読にできます。"
+
+#: src\ui\mod.rs:137
+msgid "Use {keyboardShortcutsHook} to bring up the list of keyboard shortcuts."
+msgstr "{keyboardShortcutsHook} でキーボードショートカットの一覧を表示できます。"
+
+#: src\ui\mod.rs:138
+msgid "{messageNewlineHook} to make a new line without sending your message."
+msgstr "{messageNewlineHook} でメッセージを送らず改行できます。"
+
+#: src\ui\mod.rs:139
+msgid "You can press {upHook} to quickly edit your most recent message."
+msgstr "{upHook} を押すと、最新のメッセージを手早く編集できます。"
+
+#: src\ui\mod.rs:140
+msgid "You can drag and drop files onto Discord to upload them."
+msgstr "ファイルをDiscordにドラッグ＆ドロップしてアップロードできます。"
+
+#: src\ui\mod.rs:141
+msgid "Change each participant's volume by right-clicking them in a call."
+msgstr "通話中、参加者を右クリックすると個別に音量調節ができます。"
+
+#: src\ui\mod.rs:142
+msgid "Right click to pin messages in a channel or DM to save them for later."
+msgstr "チャンネルやDMでメッセージを右クリックすると、後から確認しやすいようにピン留めできます。"
+
+#: src\ui\mod.rs:143
+msgid "You can temporarily mute a server or channel by right-clicking it."
+msgstr "右クリックでサーバーやチャンネルを一時的に通知オフにできます。"
+
+#: src\ui\mod.rs:144
+msgid "Click your avatar in the lower-left corner to set a custom status."
+msgstr "左下に表示されている自分のアバターをクリックすると、カスタムステータスが設定できます。"
+
+#: src\ui\mod.rs:145
+msgid "The top-most role for a user defines that user's color."
+msgstr "ユーザーのカラーは、ユーザーに割り当てられたロールのうち最も高位のものに応じます。"
+
+#: src\ui\mod.rs:146
+msgid "You can type / to view bot commands and other built-in commands"
+msgstr "/ を入力するとBotコマンドなどのビルトインコマンドを表示できます"
+
+#: src\ui\mod.rs:147
+msgid "Click a server name in the emoji picker to hide that server's emoji."
+msgstr "絵文字ピッカーでサーバー名をクリックすると、そのサーバーの絵文字を非表示にできます。"
+
+#: src\ui\mod.rs:148
+msgid "Discord was almost called Bonfire before we picked our name. It was meant to be nice and cozy."
+msgstr "Discordのアプリ名の候補には「ボンファイア（焚火）」というのもありました。暖かくて居心地いい感じにしたかったんです。"
+
+#: src\ui\mod.rs:149
+msgid "Discord was almost called Wyvern before we picked our name. Not too proud of that one."
+msgstr "Discordのアプリ名の候補には「ワイバーン」というのもありました。今思い出すと恥ずかしいですね。"
+
+#: src\ui\mod.rs:150
+msgid "Discord started as a game company making a mobile game called Fates Forever."
+msgstr "会社としてのDiscordは、Fates Foreverというモバイルゲームの製作からスタートしました。"
+
+#: src\ui\mod.rs:151
+msgid "Discord’s official birthday is May 13, 2015."
+msgstr "Discordの正式な誕生日は2015年5月13日です。"
+
+#: src\ui\mod.rs:152
+msgid "We came up with the idea of Discord Nitro over morning breakfast potatoes."
+msgstr "Discord Nitroサブスクリプションのアイディアを思いついたのは、ブレックファストポテトを食べていたときでした。"
+
+#: src\ui\mod.rs:153
+msgid "Our mascot, Wumpus, was originally created as a character with no friends :("
+msgstr "Discordのマスコットキャラクター・ワンパスくんは、最初は友達がひとりもいない設定でした :("
+
+#: src\ui\mod.rs:154
+msgid "In Discord's early days, light theme was the only theme. Dark theme didn't arrive until August 2015."
+msgstr "初期のDiscordには「ライト」テーマしかありませんでした。「ダーク」テーマが登場したのは2015年8月です。"
+
+#: src\ui\mod.rs:155
+msgid "In the ancient days, Discord started as a browser-only app."
+msgstr "太古の昔、Discordはブラウザ専用アプリとしてスタートしました。"
+
+#: src\ui\mod.rs:156
+msgid "The character on our 404 page is a robot hamster named Nelly."
+msgstr "Discordの404ページのキャラクターは、Nelly（ネリー）というロボットハムスターです。"
+
+#: src\ui\mod.rs:186
+msgid "Did you know"
+msgstr "ワンポイントアドバイス"
+
+#: src\ui\mod.rs:195
+msgid "Connection problems? Let us know!"
+msgstr "接続上の問題ですか？ご連絡ください！"
+
+#: src\ui\mod.rs:196
+msgid "Tweet Us"
+msgstr "ツイートする"
+
+#: src\ui\mod.rs:196
+msgid "Server Status"
+msgstr "サーバーステータス"
+
+#: src\ui\mod.rs:257 src\ui\settings.rs:330
+msgid "Multi-Factor Authentication"
+msgstr "多要素認証"
+
+#: src\ui\mod.rs:260
+msgid "Enter the code sent by SMS to {phone}."
+msgstr "{phone}にSMSで送信されたコードを入力してください。"
+
+#: src\ui\mod.rs:261
+msgid "Sending the code by SMS…"
+msgstr "SMSでコードを送信中…"
+
+#: src\ui\mod.rs:263
+msgid "Enter one of your 8-digit backup codes."
+msgstr "8桁のバックアップコードを1つ入力してください。"
+
+#: src\ui\mod.rs:264
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr "認証アプリの6桁のコードを入力してください。"
+
+#: src\ui\mod.rs:268
+msgid "Code"
+msgstr "コード"
+
+#: src\ui\mod.rs:274
+msgid "Verifying…"
+msgstr "確認中…"
+
+#: src\ui\mod.rs:282
+msgid "Use your authenticator app"
+msgstr "認証アプリを使用"
+
+#: src\ui\mod.rs:282
+msgid "Receive the code by SMS"
+msgstr "SMSでコードを受け取る"
+
+#: src\ui\mod.rs:282
+msgid "Use a backup code"
+msgstr "バックアップコードを使用"
+
+#: src\ui\mod.rs:288
+msgid "Go Back"
+msgstr "戻る"
+
+#: src\ui\mod.rs:292
+msgid "Welcome back!"
+msgstr "おかえりなさい！"
+
+#: src\ui\mod.rs:293
+msgid "We're so excited to see you again!"
+msgstr "またお会いしましたね！"
+
+#: src\ui\mod.rs:295
+msgid "Email or Phone Number"
+msgstr "メールアドレスまたは電話番号"
+
+#: src\ui\mod.rs:297 src\ui\settings.rs:325
+msgid "Password"
+msgstr "パスワード"
+
+#: src\ui\mod.rs:300
+msgid "Forgot your password?"
+msgstr "パスワードをお忘れですか？"
+
+#: src\ui\mod.rs:305
+msgid "Logging In…"
+msgstr "ログイン中…"
+
+#: src\ui\mod.rs:305 src\ui\mod.rs:319
+msgid "Log In"
+msgstr "ログイン"
+
+#: src\ui\mod.rs:315
+msgid "or paste a token"
+msgstr "またはトークンを貼り付け"
+
+#: src\ui\mod.rs:342
+msgid "Check your phone!"
+msgstr "スマートフォンを確認してください！"
+
+#: src\ui\mod.rs:344
+msgid "Logging in as {name}"
+msgstr "{name}としてログイン中"
+
+#: src\ui\mod.rs:351
+msgid "Generate a New Code"
+msgstr "新しいコードを生成"
+
+#: src\ui\mod.rs:358
+msgid "Log in with QR Code"
+msgstr "QRコードでログイン"
+
+#: src\ui\mod.rs:359
+msgid "Scan this with the Discord mobile app to log in instantly."
+msgstr "こちらをDiscordモバイルアプリでスキャンすると、簡単ログインします。"
+
+#: src\ui\mod.rs:644
+msgid "Hide Muted Channels"
+msgstr "ミュートしたチャンネルを非表示"
+
+#: src\ui\mod.rs:673 src\ui\mod.rs:722 src\ui\mod.rs:1364
+msgid "Invite People"
+msgstr "友達を招待"
+
+#: src\ui\mod.rs:678 src\ui\mod.rs:733
+msgid "Server Settings"
+msgstr "サーバー設定"
+
+#: src\ui\mod.rs:683 src\ui\mod.rs:739
+msgid "Create Category"
+msgstr "カテゴリーを作成"
+
+#: src\ui\mod.rs:696 src\ui\mod.rs:749
+msgid "Leave Server"
+msgstr "サーバーから退出"
+
+#: src\ui\mod.rs:755
+msgid "Copy Server ID"
+msgstr "サーバーIDをコピー"
+
+#: src\ui\mod.rs:765 src\ui\mod.rs:935 src\ui\mod.rs:1040 src\ui\settings.rs:432
+msgid "Direct Messages"
+msgstr "ダイレクトメッセージ"
+
+#: src\ui\mod.rs:791
+msgid "Add a Server"
+msgstr "サーバーを追加"
+
+#: src\ui\mod.rs:813
+msgid "Folder"
+msgstr "フォルダ"
+
+#: src\ui\mod.rs:846
+msgid "Mark Folder As Read"
+msgstr "フォルダを既読にする"
+
+#: src\ui\mod.rs:1271
+msgid "You do not have permission to view this channel."
+msgstr "このチャンネルを見る権限がありません。"
+
+#: src\ui\mod.rs:1296
+msgid "Invite to Voice"
+msgstr "ボイスに招待"
+
+#: src\ui\mod.rs:1316
+msgid "Collapse Category"
+msgstr "カテゴリーを折りたたむ"
+
+#: src\ui\mod.rs:1323
+msgid "Collapse All Categories"
+msgstr "すべてのカテゴリーを折りたたむ"
+
+#: src\ui\mod.rs:1336
+msgid "Edit Category"
+msgstr "カテゴリーを編集"
+
+#: src\ui\mod.rs:1343
+msgid "Copy Category ID"
+msgstr "カテゴリーIDをコピー"
+
+#: src\ui\mod.rs:1355
+msgid "Join Voice Channel"
+msgstr "ボイスチャンネルに参加"
+
+#: src\ui\mod.rs:1382
+msgid "Edit Channel"
+msgstr "チャンネルを編集"
+
+#: src\ui\mod.rs:1389 src\ui\mod.rs:1568
+msgid "Copy Channel ID"
+msgstr "チャンネルIDをコピー"
+
+#: src\ui\mod.rs:1457 src\ui\profile.rs:596
+msgid "User Volume"
+msgstr "ユーザー音量"
+
+#: src\ui\mod.rs:1476
+msgid "Server Mute"
+msgstr "サーバーミュート"
+
+#: src\ui\mod.rs:1479
+msgid "Server Deafen"
+msgstr "サーバースピーカーミュート"
+
+#: src\ui\mod.rs:1482 src\ui\mod.rs:1891
+msgid "Disconnect"
+msgstr "切断"
+
+#: src\ui\mod.rs:1527
+msgid "{count} Member"
+msgid_plural "{count} Members"
+msgstr[0] "{count}人のメンバー"
+
+#: src\ui\mod.rs:1563
+msgid "Close DM"
+msgstr "DMを閉じる"
+
+#: src\ui\mod.rs:1665
+msgid "Windows Default"
+msgstr "Windowsの既定"
+
+#: src\ui\mod.rs:1665
+msgid "System Default"
+msgstr "システムの既定"
+
+#: src\ui\mod.rs:1728
+msgid "Input Device"
+msgstr "入力デバイス"
+
+#: src\ui\mod.rs:1728
+msgid "Output Device"
+msgstr "出力デバイス"
+
+#: src\ui\mod.rs:1747 src\ui\settings.rs:678
+msgid "Input Profile"
+msgstr "入力プロファイル"
+
+#: src\ui\mod.rs:1760
+msgid "Input Volume"
+msgstr "入力音量"
+
+#: src\ui\mod.rs:1760
+msgid "Output Volume"
+msgstr "出力音量"
+
+#: src\ui\mod.rs:1770
+msgid "Voice Settings"
+msgstr "音声設定"
+
+#: src\ui\mod.rs:1804
+msgid "Voice Isolation"
+msgstr "ボイスアイソレーション"
+
+#: src\ui\mod.rs:1805
+msgid "Studio"
+msgstr "スタジオ"
+
+#: src\ui\mod.rs:1806
+msgid "Custom"
+msgstr "カスタム"
+
+#: src\ui\mod.rs:1812
+msgid "Just your beautiful voice: let Discord cut through the noise"
+msgstr "Discordが雑音を取り除いて、残るのはあなたの美声だけです"
+
+#: src\ui\mod.rs:1813
+msgid "Pure audio: open mic with no processing"
+msgstr "処理なしのオープンマイクで、そのままの音声になります"
+
+#: src\ui\mod.rs:1814
+msgid "Advanced mode: give me all the buttons and dials!"
+msgstr "上級モード：すべてのボタンとダイヤルが必要！"
+
+#: src\ui\mod.rs:1848
+msgid "Voice Connected"
+msgstr "ボイス接続済み"
+
+#: src\ui\mod.rs:1852 src\ui\mod.rs:1879 src\ui\mod.rs:1985
+msgid "Connecting…"
+msgstr "接続中…"
+
+#: src\ui\mod.rs:1870
+msgid "Excellent"
+msgstr "非常に良好"
+
+#: src\ui\mod.rs:1870
+msgid "Good"
+msgstr "良好"
+
+#: src\ui\mod.rs:1870
+msgid "Bad"
+msgstr "不良"
+
+#: src\ui\mod.rs:1871
+msgid "Average ping: {ms} ms"
+msgstr "平均ping: {ms} ms"
+
+#: src\ui\mod.rs:1872
+msgid "Connection: {quality}"
+msgstr "接続品質: {quality}"
+
+#: src\ui\mod.rs:1876
+msgid "Measuring the ping…"
+msgstr "pingを測定中…"
+
+#: src\ui\mod.rs:1879
+msgid "End-to-end encrypted"
+msgstr "エンドツーエンド暗号化"
+
+#: src\ui\mod.rs:1908
+msgid "Noise Suppression On"
+msgstr "ノイズ抑制オン"
+
+#: src\ui\mod.rs:1908
+msgid "Noise Suppression Off"
+msgstr "ノイズ抑制オフ"
+
+#: src\ui\mod.rs:1932 src\ui\settings.rs:701
+msgid "Noise Suppression"
+msgstr "ノイズ抑制"
+
+#: src\ui\mod.rs:1932
+msgid "Make some noise—like clapping your hands—while speaking. Your friends will hear nothing but your beautiful voice."
+msgstr "話し中に手を叩いたり音を出してみてください。友達はあなたの美声しか聞こえないはずです。"
+
+#: src\ui\mod.rs:1937
+msgid "Mic Test"
+msgstr "マイクテスト"
+
+#: src\ui\mod.rs:1940
+msgid "Stop"
+msgstr "停止"
+
+#: src\ui\mod.rs:1940
+msgid "Test"
+msgstr "テスト"
+
+#: src\ui\mod.rs:1986
+msgid "No connection"
+msgstr "接続なし"
+
+#: src\ui\mod.rs:1995
+msgid "User Settings"
+msgstr "ユーザー設定"
+
+#: src\ui\mod.rs:2000
+msgid "Output Options"
+msgstr "出力オプション"
+
+#: src\ui\mod.rs:2007
+msgid "Input Options"
+msgstr "入力オプション"
+
+#: src\ui\mod.rs:2042
+msgid "is calling you…"
+msgstr "から着信中…"
+
+#: src\ui\mod.rs:2054
+msgid "Decline"
+msgstr "拒否"
+
+#: src\ui\mod.rs:2054
+msgctxt "call"
+msgid "Accept"
+msgstr "応答"
+
+#: src\ui\mod.rs:2091
+msgid "Where would you like to go?"
+msgstr "どこに行きたいですか？"
+
+#: src\ui\mod.rs:2092
+msgid "Channel, server or conversation"
+msgstr "チャンネル、サーバー、会話"
+
+#: src\ui\mod.rs:2285
+msgid "Update ready ({version}): restart"
+msgstr "アップデートの準備完了 ({version}): 再起動"
+
+#: src\ui\mod.rs:2286
+msgid "Downloading version {version}: {percent}%"
+msgstr "バージョン{version}をダウンロード中: {percent}%"
+
+#: src\ui\mod.rs:2355
+msgid "For 3 Days"
+msgstr "3日間"
+
+#: src\ui\mod.rs:2356
+msgid "Forever"
+msgstr "無期限"
+
+#: src\ui\mod.rs:2387
+msgid "You will not receive desktop notifications"
+msgstr "デスクトップ通知が届かなくなります"
+
+#: src\ui\mod.rs:2388
+msgid "You will not appear online, but will have full access to Discord"
+msgstr "オンラインとして表示されませんが、Discordのすべての機能を使えます"
+
+#: src\ui\mod.rs:2410
+msgid "Switch Accounts"
+msgstr "アカウントを切り替え"
+
+#: src\ui\mod.rs:2434
+msgid "Remove From This List"
+msgstr "このリストから削除"
+
+#: src\ui\mod.rs:2441
+msgid "Add an Account"
+msgstr "アカウントを追加"
+
+#: src\ui\mod.rs:2445
+msgid "Log Out of This Account"
+msgstr "このアカウントからログアウト"
+
+#: src\ui\mod.rs:2452
+msgid "ID copied"
+msgstr "IDをコピーしました"
+
+#: src\ui\profile.rs:153
+msgid "Add Status"
+msgstr "ステータスを追加"
+
+#: src\ui\profile.rs:297
+msgid "Server Tag"
+msgstr "サーバータグ"
+
+#: src\ui\profile.rs:407
+msgid "{number} Online"
+msgstr "{number} オンライン"
+
+#: src\ui\profile.rs:408
+msgid "{number} Member"
+msgid_plural "{number} Members"
+msgstr[0] "{number} メンバー"
+
+#: src\ui\profile.rs:416
+msgid "Est. {date}"
+msgstr "{date}設立"
+
+#: src\ui\profile.rs:446
+msgid "+ {count} more"
+msgid_plural "+ {count} more"
+msgstr[0] "他 {count} 件"
+
+#: src\ui\profile.rs:452
+msgid "Go to Server"
+msgstr "サーバーへ移動"
+
+#: src\ui\profile.rs:568
+msgid "Friends Since"
+msgstr "フレンドになった日"
+
+#: src\ui\profile.rs:584 src\ui\settings.rs:1193
+msgid "Connections"
+msgstr "接続"
+
+#: src\ui\profile.rs:717
+msgid "No servers in common."
+msgstr "共通のサーバーはありません。"
+
+#: src\ui\profile.rs:742
+msgid "No friends in common."
+msgstr "共通のフレンドはいません。"
+
+#: src\ui\profile.rs:777
+msgid "Edit Profile"
+msgstr "プロフィールを編集"
+
+#: src\ui\profile.rs:795
+msgid "Message @{name}"
+msgstr "@{name}へメッセージを送信"
+
+#: src\ui\settings.rs:39
+msgid "Experience"
+msgstr "体験"
+
+#: src\ui\settings.rs:46
+msgid "Games & Apps"
+msgstr "ゲームとアプリ"
+
+#: src\ui\settings.rs:94 src\ui\settings.rs:95 src\ui\settings.rs:134 src\ui\settings.rs:134
+msgid "Log Out"
+msgstr "ログアウト"
+
+#: src\ui\settings.rs:134
+msgid "Are you sure you want to logout?"
+msgstr "本当にログアウトしますか？"
+
+#: src\ui\settings.rs:153
+msgid "Edit Profiles"
+msgstr "プロフィールを編集"
+
+#: src\ui\settings.rs:253
+msgid "Profiles"
+msgstr "プロフィール"
+
+#: src\ui\settings.rs:259
+msgid "Display Name"
+msgstr "表示名"
+
+#: src\ui\settings.rs:262
+msgid "Pronouns"
+msgstr "代名詞"
+
+#: src\ui\settings.rs:263
+msgid "Add your pronouns"
+msgstr "あなたの代名詞を追加"
+
+#: src\ui\settings.rs:275
+msgid "Change Avatar"
+msgstr "アバターを変更"
+
+#: src\ui\settings.rs:284
+msgid "View My Profile"
+msgstr "マイプロフィールを表示"
+
+#: src\ui\settings.rs:302 src\ui\settings.rs:26
+msgid "Account"
+msgstr "アカウント"
+
+#: src\ui\settings.rs:308
+msgid "Account Info"
+msgstr "アカウント情報"
+
+#: src\ui\settings.rs:309
+msgid "Username"
+msgstr "ユーザー名"
+
+#: src\ui\settings.rs:314
+msgid "Email"
+msgstr "メールアドレス"
+
+#: src\ui\settings.rs:314 src\ui\settings.rs:319
+msgid "Hide"
+msgstr "非表示"
+
+#: src\ui\settings.rs:314 src\ui\settings.rs:319
+msgid "Reveal"
+msgstr "表示"
+
+#: src\ui\settings.rs:318
+msgid "You haven't added a phone number yet."
+msgstr "まだ電話番号が追加されていません。"
+
+#: src\ui\settings.rs:319
+msgid "Phone Number"
+msgstr "電話番号"
+
+#: src\ui\settings.rs:324
+msgid "Password & Security"
+msgstr "パスワードとセキュリティ"
+
+#: src\ui\settings.rs:325
+msgid "Change Password"
+msgstr "パスワードを変更"
+
+#: src\ui\settings.rs:329
+msgid "Enabled"
+msgstr ""
+
+#: src\ui\settings.rs:329
+msgid "Disabled"
+msgstr ""
+
+#: src\ui\settings.rs:330
+msgid "Manage"
+msgstr "管理"
+
+#: src\ui\settings.rs:335
+msgid "Logged-in Devices"
+msgstr "ログインしたデバイス"
+
+#: src\ui\settings.rs:335
+msgid "These are all the devices that are currently logged-in with your Discord account. Log out of devices that you don't recognize."
+msgstr "これらはお使いのDiscordアカウントで現在ログインしている全デバイスです。ご認識のないデバイスからはログアウトしてください。"
+
+#: src\ui\settings.rs:343
+msgid "Unknown"
+msgstr "不明"
+
+#: src\ui\settings.rs:347
+msgid "Log out of all known devices"
+msgstr "全ての既知のデバイスからログアウト"
+
+#: src\ui\settings.rs:355 src\ui\settings.rs:356
+msgid "Account Standing"
+msgstr "アカウントの状態"
+
+#: src\ui\settings.rs:356 src\ui\settings.rs:361 src\ui\settings.rs:756
+msgid "Open"
+msgstr "開く"
+
+#: src\ui\settings.rs:360 src\ui\settings.rs:361
+msgid "Family Center"
+msgstr "ファミリーセンター"
+
+#: src\ui\settings.rs:367
+msgid "Disable your account"
+msgstr "アカウントを無効にする"
+
+#: src\ui\settings.rs:367
+msgid "Temporarily disable your account."
+msgstr "アカウントを一時的に無効にします。"
+
+#: src\ui\settings.rs:367
+msgid "Disable Account"
+msgstr "アカウントを無効にする"
+
+#: src\ui\settings.rs:370
+msgid "Close your account"
+msgstr "アカウントを閉鎖"
+
+#: src\ui\settings.rs:370
+msgid "Permanently close your account."
+msgstr "アカウントを永久に閉鎖します。"
+
+#: src\ui\settings.rs:370
+msgid "Delete Account"
+msgstr "アカウントを削除する"
+
+#: src\ui\settings.rs:378 src\ui\settings.rs:27
+msgid "Data & Privacy"
+msgstr "データ&プライバシー"
+
+#: src\ui\settings.rs:379
+msgid "How Discord Uses My Data"
+msgstr "Discordによる個人データの利用方法"
+
+#: src\ui\settings.rs:381
+msgid "Use data to make Discord work"
+msgstr "Discordを機能させるためにデータを使用"
+
+#: src\ui\settings.rs:381
+msgid "Discord needs to store and process some data in order to provide you the basic Discord service, such as your messages, what servers you’re in and your Direct Messages. By using Discord, you allow Discord to provide this basic service. You can stop this by Disabling or Deleting your account."
+msgstr "Discordの基本的なサービスの提供のため、Discordはいくつかのデータを保存し処理する必要があります。たとえば、あなたのメッセージ、参加しているサーバー、そしてダイレクトメッセージです。Discordを使用することにより、あなたはDiscordに、この基本的なサービスの提供を許可したとみなされます。これを停止するには、アカウントを無効化または削除してください。"
+
+#: src\ui\settings.rs:384
+msgid "Use data to improve Discord"
+msgstr "Discordを改善するためにデータを使用"
+
+#: src\ui\settings.rs:384
+msgid "Allow Discord to use and process my information to understand and improve Discord’s services."
+msgstr ""
+
+#: src\ui\settings.rs:385
+msgid "Use data to customize my Discord experience"
+msgstr ""
+
+#: src\ui\settings.rs:385
+msgid "Allow Discord to use and process my information to customize my Discord experience."
+msgstr ""
+
+#: src\ui\settings.rs:398
+msgid "Request my data"
+msgstr "個人データをリクエスト"
+
+#: src\ui\settings.rs:398
+msgid "Get a copy of the data Discord has about you. It can take up to 30 days to arrive by email."
+msgstr ""
+
+#: src\ui\settings.rs:398
+msgid "Request Data"
+msgstr "データをリクエストする"
+
+#: src\ui\settings.rs:403
+msgid "Profile Privacy"
+msgstr "プロフィールのプライバシー"
+
+#: src\ui\settings.rs:403
+msgid "Control who can see your profile info — like your bio and connected accounts."
+msgstr "誰がプロフィール情報（プロフィールや連携済みアカウントなど）を閲覧できるかを管理します。"
+
+#: src\ui\settings.rs:404
+msgid "Share my full profile with"
+msgstr "プロフィールの全てを共有する相手"
+
+#: src\ui\settings.rs:406
+msgid "Friends & All Servers"
+msgstr "フレンドおよび全サーバー"
+
+#: src\ui\settings.rs:406
+msgid "Your full profile is visible to friends and any server you join."
+msgstr "プロフィールの全てが、フレンドおよび参加している全てのサーバーに表示されます。"
+
+#: src\ui\settings.rs:407
+msgid "Friends & Small Servers Only"
+msgstr "フレンドおよび小規模サーバーのみ"
+
+#: src\ui\settings.rs:407
+msgid "Your full profile is visible to friends and any server you join with 200 or fewer members. Everyone else sees a limited version."
+msgstr "プロフィールの全てが、フレンドおよび参加しているメンバー200人以下のサーバーに表示されます。その他のユーザーには制限されたバージョンが表示されます。"
+
+#: src\ui\settings.rs:408
+msgid "Friends Only"
+msgstr "フレンドのみ"
+
+#: src\ui\settings.rs:408
+msgid "Your full profile is visible to friends. Everyone else sees a limited version."
+msgstr "プロフィールの全てがフレンドに表示されます。その他のユーザーには制限されたバージョンが表示されます。"
+
+#: src\ui\settings.rs:411
+msgid "Share my profile updates with friends"
+msgstr ""
+
+#: src\ui\settings.rs:416 src\ui\settings.rs:28
+msgid "Messaging Permissions"
+msgstr "メッセージの権限"
+
+#: src\ui\settings.rs:417
+msgid "Content Filters"
+msgstr "コンテンツフィルター"
+
+#: src\ui\settings.rs:418
+msgid "Allow access to age-restricted commands from apps in DMs"
+msgstr "DM内のアプリから年齢制限付きコマンドへのアクセスを許可します"
+
+#: src\ui\settings.rs:418
+msgid "Allows people 18+ to access commands marked as age-restricted in DMs. Applies to all apps."
+msgstr "18歳以上の人がDMで年齢制限付きのコマンドにアクセスできるようにします。すべてのアプリに適用されます。"
+
+#: src\ui\settings.rs:419
+msgid "Allow access to age-restricted servers on iOS"
+msgstr "iOSで年齢制限のあるサーバーへのアクセスを許可する"
+
+#: src\ui\settings.rs:419
+msgid "Access age-restricted servers (18+) on iOS devices, after joining them on desktop."
+msgstr "デスクトップで参加した後、iOSデバイスから年齢制限付きサーバー（18歳以上）にアクセスできます。"
+
+#: src\ui\settings.rs:421
+msgid "Spam Filters"
+msgstr "スパムフィルター"
+
+#: src\ui\settings.rs:422
+msgid "Automatically filter suspected spam messages"
+msgstr "疑わしいスパムメッセージを自動でフィルター"
+
+#: src\ui\settings.rs:422
+msgid "Discord can filter out some messages that contain spam. These messages go to your Spam inbox."
+msgstr "Discordでは、スパムを含む一部のメッセージをフィルターできます。これらのメッセージはスパム受信ボックスに送られます。"
+
+#: src\ui\settings.rs:427
+msgid "Filter all spam"
+msgstr "すべてのスパムをフィルター"
+
+#: src\ui\settings.rs:427
+msgid "Filter messages from non-friends (Recommended)"
+msgstr "フレンド以外からのメッセージをフィルター（推奨）"
+
+#: src\ui\settings.rs:427
+msgid "Don't filter spam"
+msgstr "スパムをフィルターしない"
+
+#: src\ui\settings.rs:431
+msgid "Direct Message (DM) Permissions"
+msgstr "ダイレクトメッセージ（DM）権限"
+
+#: src\ui\settings.rs:432
+msgid "Allow DMs from other server members"
+msgstr "サーバーの他のメンバーからのDMを許可"
+
+#: src\ui\settings.rs:433
+msgid "Message requests"
+msgstr "メッセージ・リクエスト"
+
+#: src\ui\settings.rs:433
+msgid "Filter messages from server members you may not know."
+msgstr "知らない可能性のあるサーバーメンバーからのメッセージをフィルターします。"
+
+#: src\ui\settings.rs:435
+msgid "Friend Request Permissions"
+msgstr "フレンド申請の権限"
+
+#: src\ui\settings.rs:435
+msgid "Control who can send you friend requests and how they appear."
+msgstr "あなたにフレンド申請を送信できるユーザーと、その表示方法を管理します。"
+
+#: src\ui\settings.rs:436
+msgid "Allow Friend Requests from..."
+msgstr "フレンド申請を許可："
+
+#: src\ui\settings.rs:443
+msgid "Everyone"
+msgstr "全員"
+
+#: src\ui\settings.rs:444
+msgid "Friend of friends"
+msgstr "フレンドのフレンド"
+
+#: src\ui\settings.rs:445
+msgid "Server members"
+msgstr "サーバーのメンバー"
+
+#: src\ui\settings.rs:445
+msgid "Server members can only send you friend requests from servers where you also allow Direct Messages."
+msgstr "サーバーメンバーからのフレンド申請は、ダイレクトメッセージを許可しているサーバーのメンバーからのみ受け付ける。"
+
+#: src\ui\settings.rs:451
+msgid "Ignore & Block"
+msgstr "無視設定とブロック"
+
+#: src\ui\settings.rs:451
+msgid "You’re in control. To compare your options for reducing unwanted interactions, explore our feature guide"
+msgstr "望まないコミュニケーションを減らす方法はいろいろあります。機能ガイドで確認できます"
+
+#: src\ui\settings.rs:454
+msgid "You haven't blocked anyone."
+msgstr ""
+
+#: src\ui\settings.rs:480 src\ui\settings.rs:29
+msgid "Notifications"
+msgstr "通知"
+
+#: src\ui\settings.rs:483
+msgid "Enable Desktop Notifications"
+msgstr "デスクトップ通知を有効にする"
+
+#: src\ui\settings.rs:483
+msgid "If you're looking for per-channel or per-server notifications, right-click the desired server icon and select Notification Settings."
+msgstr "チャンネルごと、サーバーごとに通知設定を変えたい場合、目的のサーバーのアイコンで右クリックして、通知設定を選択してください。"
+
+#: src\ui\settings.rs:485
+msgid "Mentions and Replies"
+msgstr "メンションと返信"
+
+#: src\ui\settings.rs:485
+msgid "Follows the channels and servers you muted in Discord."
+msgstr "Discordでミュートしたチャンネルとサーバーに従います。"
+
+#: src\ui\settings.rs:486
+msgid "Show Message Text"
+msgstr "メッセージの本文を表示"
+
+#: src\ui\settings.rs:487
+msgid "Notify me when..."
+msgstr "通知のタイミング"
+
+#: src\ui\settings.rs:488
+msgid "People I know start streaming in small servers"
+msgstr "私の知っているユーザーが小規模サーバーで配信を開始"
+
+#: src\ui\settings.rs:489
+msgid "A friend and I reach a friendship anniversary"
+msgstr "フレンドとのフレンド記念日が訪れます"
+
+#: src\ui\settings.rs:490
+msgid "Friends come online"
+msgstr "フレンドがオンライン"
+
+#: src\ui\settings.rs:491
+msgid "A server has an upcoming event"
+msgstr "サーバーに開催予定のイベントがあります"
+
+#: src\ui\settings.rs:492
+msgid "Friends update their profile"
+msgstr "フレンドがプロフィールを更新"
+
+#: src\ui\settings.rs:493
+msgid "Only Direct Messages"
+msgstr "ダイレクトメッセージのみ"
+
+#: src\ui\settings.rs:495
+msgid "Someone reacts to my messages"
+msgstr "誰かが私のメッセージにリアクション"
+
+#: src\ui\settings.rs:499 src\ui\settings.rs:716
+msgid "Sounds"
+msgstr "サウンド"
+
+#: src\ui\settings.rs:502
+msgid "Disable All Notification Sounds"
+msgstr "通知音を全て無効にする"
+
+#: src\ui\settings.rs:502
+msgid "Disables all notification sounds, including voice & video sound effects. Your individual sound preferences will be saved and restored if you turn this on."
+msgstr "音声や動画のサウンドエフェクトを含む、全ての通知サウンドを無効にします。個別のサウンド設定は保存され、オンにした際に復元されます。"
+
+#: src\ui\settings.rs:509 src\ui\settings.rs:30
+msgid "Clips"
+msgstr "クリップ"
+
+#: src\ui\settings.rs:510
+msgid "Clipping needs screen sharing, which isn't in CordFast yet."
+msgstr ""
+
+#: src\ui\settings.rs:511
+msgid "Clipping"
+msgstr "クリッピング"
+
+#: src\ui\settings.rs:511
+msgid "Clip any fun or amazing gaming moments by saving them directly to your computer."
+msgstr ""
+
+#: src\ui\settings.rs:513
+msgid "Enable Clipping"
+msgstr "クリッピングを有効化"
+
+#: src\ui\settings.rs:520 src\ui\settings.rs:524 src\ui\settings.rs:33
+msgid "Nitro"
+msgstr "Nitro"
+
+#: src\ui\settings.rs:523
+msgid "Nitro Classic"
+msgstr "Nitro Classic"
+
+#: src\ui\settings.rs:525
+msgid "Nitro Basic"
+msgstr "Nitro Basic"
+
+#: src\ui\settings.rs:536
+msgid "Your subscription is managed on Discord."
+msgstr ""
+
+#: src\ui\settings.rs:539
+msgid "You don't have Nitro"
+msgstr ""
+
+#: src\ui\settings.rs:540
+msgid "CordFast shows your plan but sells nothing: subscriptions are made on Discord."
+msgstr ""
+
+#: src\ui\settings.rs:545
+msgid "Open on Discord"
+msgstr ""
+
+#: src\ui\settings.rs:551 src\ui\settings.rs:34
+msgid "Server Boost"
+msgstr "サーバーブースト"
+
+#: src\ui\settings.rs:553
+msgid "Your Boosts"
+msgstr ""
+
+#: src\ui\settings.rs:555
+msgid "You don't have any Boosts."
+msgstr ""
+
+#: src\ui\settings.rs:559
+msgid "Unused Boost"
+msgstr "未使用のブースト"
+
+#: src\ui\settings.rs:561
+msgid "Cooldown ends {when}"
+msgstr ""
+
+#: src\ui\settings.rs:568 src\ui\settings.rs:35
+msgid "Subscriptions"
+msgstr "サブスクリプション"
+
+#: src\ui\settings.rs:571
+msgid "You don't have any subscriptions."
+msgstr ""
+
+#: src\ui\settings.rs:577
+msgid "Ends {when}"
+msgstr ""
+
+#: src\ui\settings.rs:577
+msgid "Renews {when}"
+msgstr ""
+
+#: src\ui\settings.rs:578
+msgid "Plan"
+msgstr "プラン"
+
+#: src\ui\settings.rs:583 src\ui\settings.rs:36
+msgid "Gift Inventory"
+msgstr "ギフトインベントリ"
+
+#: src\ui\settings.rs:587
+msgid "You don't have any gifts."
+msgstr ""
+
+#: src\ui\settings.rs:592
+msgid "Gift"
+msgstr "ギフト"
+
+#: src\ui\settings.rs:597 src\ui\settings.rs:32 src\ui\settings.rs:37
+msgid "Billing"
+msgstr "請求"
+
+#: src\ui\settings.rs:598
+msgid "Payment Methods"
+msgstr "お支払い方法"
+
+#: src\ui\settings.rs:601
+msgid "You don't have any payment methods."
+msgstr ""
+
+#: src\ui\settings.rs:607
+msgid "Expires {date}"
+msgstr "有効期限：{date}"
+
+#: src\ui\settings.rs:613
+msgid "Transaction History"
+msgstr "取引履歴"
+
+#: src\ui\settings.rs:616
+msgid "No transactions yet."
+msgstr ""
+
+#: src\ui\settings.rs:632 src\ui\settings.rs:40
+msgid "Voice & Video"
+msgstr "音声・ビデオ"
+
+#: src\ui\settings.rs:646
+msgid "Microphone"
+msgstr "マイク"
+
+#: src\ui\settings.rs:647
+msgid "Speaker"
+msgstr "スピーカー"
+
+#: src\ui\settings.rs:651
+msgid "Microphone Volume"
+msgstr "マイク音量"
+
+#: src\ui\settings.rs:652
+msgid "Speaker Volume"
+msgstr "スピーカー音量"
+
+#: src\ui\settings.rs:658
+msgid "Stop Testing"
+msgstr "テストを停止"
+
+#: src\ui\settings.rs:658
+msgid "Let's Check"
+msgstr "確認しましょう"
+
+#: src\ui\settings.rs:663
+msgid "Test Audio Output"
+msgstr "オーディオ出力をテスト"
+
+#: src\ui\settings.rs:675
+msgid "Speak and hear yourself the way others hear you."
+msgstr "他の人に聞こえるとおりに自分の声を聞いてみましょう。"
+
+#: src\ui\settings.rs:687
+msgid "Automatically Adjust Input Sensitivity"
+msgstr "入力感度を自動調整"
+
+#: src\ui\settings.rs:698
+msgid "Input Sensitivity"
+msgstr "入力感度"
+
+#: src\ui\settings.rs:701
+msgid "Reduces background noise from your mic."
+msgstr "マイクからのバックグラウンドノイズを低減します。"
+
+#: src\ui\settings.rs:702
+msgid "Echo Cancellation"
+msgstr "エコー除去"
+
+#: src\ui\settings.rs:703
+msgid "Push to Talk"
+msgstr "プッシュトゥトーク"
+
+#: src\ui\settings.rs:703
+msgid "Activates your mic only when you hold down a designated key."
+msgstr "指定したキーを押している間のみ、マイクが有効になります。"
+
+#: src\ui\settings.rs:709
+msgid "Camera"
+msgstr "カメラ"
+
+#: src\ui\settings.rs:710
+msgid "Camera and screen sharing aren't available yet."
+msgstr "カメラと画面共有はまだ利用できません。"
+
+#: src\ui\settings.rs:711
+msgid "Always preview video"
+msgstr "常にビデオのプレビューを確認する"
+
+#: src\ui\settings.rs:711
+msgid "Pops up preview modal every time you turn on video"
+msgstr "ビデオをオンにするたび、プレビュー・モーダルが表示されます"
+
+#: src\ui\settings.rs:713
+msgid "Streaming"
+msgstr ""
+
+#: src\ui\settings.rs:714
+msgid "Show Stream Previews"
+msgstr "配信プレビューを表示"
+
+#: src\ui\settings.rs:714
+msgid "Allows others to see a preview of your stream before they join."
+msgstr "他のユーザーが参加前に配信のプレビューを閲覧できるようにします。"
+
+#: src\ui\settings.rs:716
+msgid "Enable/disable sounds that play when you’re in a call, like Mute, Unmute, Deafen, and more."
+msgstr "通話中のサウンド再生を有効化または無効化します（ミュート、ミュート解除、スピーカーミュートなど）。"
+
+#: src\ui\settings.rs:720
+msgid "Voice Region"
+msgstr "ボイス地域"
+
+#: src\ui\settings.rs:720
+msgid "Calls always use the region with the lowest ping."
+msgstr "通話は常にpingが最も低い地域を使います。"
+
+#: src\ui\settings.rs:722
+msgid "best route"
+msgstr "最適なルート"
+
+#: src\ui\settings.rs:730
+msgid "Measure Again"
+msgstr "もう一度測定"
+
+#: src\ui\settings.rs:738 src\ui\settings.rs:808
+msgid "Advanced"
+msgstr "詳細設定"
+
+#: src\ui\settings.rs:747
+msgid "Recording… {seconds} s"
+msgstr "録音中… {seconds}秒"
+
+#: src\ui\settings.rs:749
+msgid "Diagnostic audio recording is used for analyzing audio problems. The last 20 seconds of the call are saved beside the logs."
+msgstr ""
+
+#: src\ui\settings.rs:751
+msgid "Diagnostic Audio Recording"
+msgstr "診断用録音"
+
+#: src\ui\settings.rs:751
+msgid "Record 20 s of what you hear"
+msgstr "聞こえている音を20秒録音"
+
+#: src\ui\settings.rs:756
+msgid "Open Logs Folder"
+msgstr "ログフォルダを開く"
+
+#: src\ui\settings.rs:759
+msgid "Reset all Voice & Video settings"
+msgstr "全ての音声・ビデオ設定をリセット"
+
+#: src\ui\settings.rs:759
+msgid "Return to the default set of Voice & Video settings."
+msgstr "音声・ビデオ設定がデフォルトに戻ります。"
+
+#: src\ui\settings.rs:784
+msgid "Push to Talk Keybind"
+msgstr "プッシュトゥトークのキー割り当て"
+
+#: src\ui\settings.rs:786
+msgid "Press a key…"
+msgstr "キーを押してください…"
+
+#: src\ui\settings.rs:791
+msgid "Stop Recording"
+msgstr "録音を停止"
+
+#: src\ui\settings.rs:791 src\ui\settings.rs:1094
+msgid "Record Keybind"
+msgstr "キー割り当てを記録"
+
+#: src\ui\settings.rs:821
+msgid "Automatic Gain Control"
+msgstr "自動ゲイン調整"
+
+#: src\ui\settings.rs:821
+msgid "Automatically adjust microphone volume to keep it clear and consistent."
+msgstr "マイクのボリュームを自動的に調整して、クリアで安定した音質を保つことができます。"
+
+#: src\ui\settings.rs:824
+msgid "Advanced Voice Activity"
+msgstr "高度な音声検出"
+
+#: src\ui\settings.rs:824
+msgid "Turning this off may help if your voice is not being detected by the automatic input sensitivity."
+msgstr "あなたの声が入力感度自動調整で検出されない場合、こちらの設定をオフにしてみてください。"
+
+#: src\ui\settings.rs:826
+msgid "Switch Voice Channel Warning"
+msgstr "ボイスチャンネル切り替えの警告"
+
+#: src\ui\settings.rs:826
+msgid "Show a confirmation prompt before switching to a different voice channel."
+msgstr "別のボイスチャンネルに切り替える前に、確認プロンプトを表示します。"
+
+#: src\ui\settings.rs:834 src\ui\settings.rs:41
+msgid "Appearance"
+msgstr "テーマ"
+
+#: src\ui\settings.rs:835
+msgid "Theme"
+msgstr "テーマ"
+
+#: src\ui\settings.rs:854
+msgid "Open Themes Folder"
+msgstr "テーマフォルダを開く"
+
+#: src\ui\settings.rs:859
+msgid "Reload Themes"
+msgstr "テーマを再読み込み"
+
+#: src\ui\settings.rs:866
+msgid "Customize"
+msgstr "カスタマイズ"
+
+#: src\ui\settings.rs:866
+msgid "Make any theme your own: change its colors and save it as a new theme."
+msgstr ""
+
+#: src\ui\settings.rs:868
+msgid "Use My Own Accent Color"
+msgstr ""
+
+#: src\ui\settings.rs:890
+msgid "Messages"
+msgstr "メッセージ"
+
+#: src\ui\settings.rs:891
+msgid "Show images, videos, and lolcats..."
+msgstr "画像・動画などを表示..."
+
+#: src\ui\settings.rs:892
+msgid "When posted as links to chat"
+msgstr "チャットにリンクが投稿されたとき"
+
+#: src\ui\settings.rs:893
+msgid "When uploaded directly to Discord"
+msgstr "Discordに直接アップロードされたとき"
+
+#: src\ui\settings.rs:894
+msgid "Show embeds and link previews"
+msgstr "埋め込みとリンクのプレビューを表示"
+
+#: src\ui\settings.rs:895
+msgid "Show emoji reactions"
+msgstr "絵文字リアクションを表示"
+
+#: src\ui\settings.rs:896
+msgid "On click"
+msgstr "クリックで"
+
+#: src\ui\settings.rs:896
+msgid "Always"
+msgstr "常に表示"
+
+#: src\ui\settings.rs:896
+msgid "On servers I moderate"
+msgstr "私が管理するサーバーで"
+
+#: src\ui\settings.rs:899
+msgid "Show spoiler content"
+msgstr "ネタバレコンテンツを表示"
+
+#: src\ui\settings.rs:902
+msgid "Open threads in split view"
+msgstr "スレッドを分割ビューで表示"
+
+#: src\ui\settings.rs:903
+msgid "Show user avatars"
+msgstr "ユーザーのアバターを表示"
+
+#: src\ui\settings.rs:905
+msgid "Chat Box"
+msgstr "チャットボックス"
+
+#: src\ui\settings.rs:906
+msgid "Automatically convert emoticons in your messages to emoji"
+msgstr "メッセージを自動的に絵文字に変換します"
+
+#: src\ui\settings.rs:906
+msgid "For example, when you type :) Discord will convert it to 🙂"
+msgstr "たとえば、:)と入力するとDiscordでは🙂に変換されます"
+
+#: src\ui\settings.rs:907
+msgid "Show stickers in autocomplete results"
+msgstr "オートコンプリート結果にスタンプを表示する"
+
+#: src\ui\settings.rs:908
+msgid "Expression picker"
+msgstr "絵文字・GIF・スタンプピッカー"
+
+#: src\ui\settings.rs:909
+msgid "Show emoji button"
+msgstr "絵文字ボタンを表示"
+
+#: src\ui\settings.rs:910
+msgid "Show GIF button"
+msgstr "GIFボタンを表示"
+
+#: src\ui\settings.rs:911
+msgid "Show sticker button"
+msgstr "スタンプボタンを表示"
+
+#: src\ui\settings.rs:922
+msgid "Server List"
+msgstr ""
+
+#: src\ui\settings.rs:923
+msgid "Channel List"
+msgstr ""
+
+#: src\ui\settings.rs:924
+msgid "Chat"
+msgstr "チャット"
+
+#: src\ui\settings.rs:925
+msgid "Message Box"
+msgstr ""
+
+#: src\ui\settings.rs:926
+msgid "Hover"
+msgstr ""
+
+#: src\ui\settings.rs:927
+msgid "Selected"
+msgstr "選択済み"
+
+#: src\ui\settings.rs:929
+msgid "Headings"
+msgstr ""
+
+#: src\ui\settings.rs:930
+msgid "Muted Text"
+msgstr ""
+
+#: src\ui\settings.rs:931
+msgid "Accent"
+msgstr "アクセント"
+
+#: src\ui\settings.rs:932
+msgid "Links"
+msgstr "リンク"
+
+#: src\ui\settings.rs:933 src\ui\titlebar.rs:224
+msgid "Mentions"
+msgstr "メンション"
+
+#: src\ui\settings.rs:934
+msgid "Borders"
+msgstr ""
+
+#: src\ui\settings.rs:948
+msgid "Theme name"
+msgstr ""
+
+#: src\ui\settings.rs:949
+msgid "Save as New Theme"
+msgstr ""
+
+#: src\ui\settings.rs:954
+msgid "Theme saved."
+msgstr ""
+
+#: src\ui\settings.rs:992 src\ui\settings.rs:42
+msgid "Accessibility"
+msgstr "ユーザー補助"
+
+#: src\ui\settings.rs:993
+msgid "Visual Density"
+msgstr "ビジュアル密度"
+
+#: src\ui\settings.rs:994
+msgid "Chat Message Display"
+msgstr "チャットメッセージ表示"
+
+#: src\ui\settings.rs:994
+msgid "Change the appearance of chat messages."
+msgstr "チャットメッセージの外観を変更します。"
+
+#: src\ui\settings.rs:996
+msgid "Compact"
+msgstr "コンパクト"
+
+#: src\ui\settings.rs:1001
+msgid "Zoom level"
+msgstr "拡大率"
+
+#: src\ui\settings.rs:1001
+msgid "Adjust the size of the interface. You can also change this with {modKey} +/-."
+msgstr "インターフェースのサイズを調整します。{modKey} +/- でも変更できます。"
+
+#: src\ui\settings.rs:1003
+msgid "Color & Contrast"
+msgstr "色・コントラスト"
+
+#: src\ui\settings.rs:1004
+msgid "In names"
+msgstr "名前の中"
+
+#: src\ui\settings.rs:1004
+msgid "Next to names"
+msgstr "名前の横"
+
+#: src\ui\settings.rs:1004
+msgid "Don't show role colors"
+msgstr "ロールの色を表示しない"
+
+#: src\ui\settings.rs:1006
+msgid "Role Colors"
+msgstr "ロールの色"
+
+#: src\ui\settings.rs:1006
+msgid "Choose how you would like role colors to be displayed."
+msgstr "ロールの色の表示方法を選択できます。"
+
+#: src\ui\settings.rs:1010
+msgid "Reduced Motion"
+msgstr "視差効果を減らす設定"
+
+#: src\ui\settings.rs:1011
+msgid "Play GIFs when Discord is focused"
+msgstr "Discordにフォーカスした際にGIFを自動再生"
+
+#: src\ui\settings.rs:1012
+msgid "Play animated emoji"
+msgstr "アニメ絵文字を再生する"
+
+#: src\ui\settings.rs:1013
+msgid "Play sticker animations"
+msgstr "スタンプアニメーションを再生"
+
+#: src\ui\settings.rs:1014
+msgid "Always animate"
+msgstr "常にアニメーションを再生"
+
+#: src\ui\settings.rs:1014
+msgid "Animate on interaction"
+msgstr "スタンプとインタラクト時に再生"
+
+#: src\ui\settings.rs:1014
+msgid "On the desktop client, stickers will animate on hover or focus. On mobile clients, stickers will animate on long-press."
+msgstr "デスクトップ版では、スタンプにカーソルを重ねたりフォーカスしたりすると再生されます。モバイル版では、長押しで再生されます。"
+
+#: src\ui\settings.rs:1014
+msgid "Never animate"
+msgstr "アニメーションを再生しない"
+
+#: src\ui\settings.rs:1016
+msgid "Audio & Screen Reader"
+msgstr "音声・スクリーンリーダー"
+
+#: src\ui\settings.rs:1017
+msgid "Show image descriptions"
+msgstr "画像の概要を表示"
+
+#: src\ui\settings.rs:1017
+msgid "Image descriptions are used to describe images for screen readers."
+msgstr "画像の概要はスクリーンリーダーで画像を説明するために使用されます。"
+
+#: src\ui\settings.rs:1022 src\ui\settings.rs:43
+msgid "System"
+msgstr "システム"
+
+#: src\ui\settings.rs:1023
+msgid "General"
+msgstr "一般"
+
+#: src\ui\settings.rs:1029
+msgid "Unavailable on this system."
+msgstr "このシステムでは利用できません。"
+
+#: src\ui\settings.rs:1035
+msgid "Automatically open Discord when your computer starts up"
+msgstr "コンピューターの起動時にDiscordを自動で開く"
+
+#: src\ui\settings.rs:1037
+msgid "Start Discord minimized"
+msgstr "Discordを最小化して起動する"
+
+#: src\ui\settings.rs:1037
+msgid "Start Discord in the background, out of your way."
+msgstr "邪魔にならないようにバックグラウンドでDiscordを起動します。"
+
+#: src\ui\settings.rs:1046
+msgid "Minimize Discord to System Tray"
+msgstr "Discordをシステムトレイに最小化する"
+
+#: src\ui\settings.rs:1046
+msgid "Clicking X minimizes Discord instead of closing it completely."
+msgstr "Xをクリックすると、Discordが完全に終了せずに最小化されます。"
+
+#: src\ui\settings.rs:1048
+msgid "Use the System Title Bar"
+msgstr "システムのタイトルバーを使用"
+
+#: src\ui\settings.rs:1048
+msgid "Windows' frame instead of Discord's bar."
+msgstr "DiscordのバーではなくWindowsの枠を使います。"
+
+#: src\ui\settings.rs:1055
+msgid "Custom Keybinds"
+msgstr "カスタムキー割り当て"
+
+#: src\ui\settings.rs:1055
+msgid "Keybinds are custom keyboard shortcuts that let you perform specific actions in Discord without needing to click through menus."
+msgstr "キー割り当ては、メニューをクリックせずにDiscordで特定の操作を実行できるカスタムキーボードショートカットです。"
+
+#: src\ui\settings.rs:1056
+msgid "Default Keybinds"
+msgstr "デフォルトのキー割り当て"
+
+#: src\ui\settings.rs:1092
+msgid "Press the keys…"
+msgstr "キーを押してください…"
+
+#: src\ui\settings.rs:1101
+msgid "Back to {keys}"
+msgstr "{keys}に戻す"
+
+#: src\ui\settings.rs:1128 src\ui\settings.rs:44
+msgid "Language & Time"
+msgstr "言語・時間"
+
+#: src\ui\settings.rs:1129
+msgid "Language"
+msgstr "言語"
+
+#: src\ui\settings.rs:1145
+msgid "Time format"
+msgstr "時間形式"
+
+#: src\ui\settings.rs:1146
+msgid "Auto"
+msgstr "自動"
+
+#: src\ui\settings.rs:1146
+msgid "12-hour"
+msgstr "12時間"
+
+#: src\ui\settings.rs:1146
+msgid "24-hour"
+msgstr "24時間"
+
+#: src\ui\settings.rs:1154 src\ui\settings.rs:47
+msgid "Registered Games"
+msgstr "登録済みのゲーム"
+
+#: src\ui\settings.rs:1155
+msgid "Current Game"
+msgstr "現在のゲーム"
+
+#: src\ui\settings.rs:1158
+msgid "Now: Playing {game}"
+msgstr "現在: {game}をプレイ中"
+
+#: src\ui\settings.rs:1160
+msgid "No game detected"
+msgstr "ゲームを検出できません"
+
+#: src\ui\settings.rs:1164 src\ui\settings.rs:1172
+msgid "Share my activity"
+msgstr "アクティビティを共有"
+
+#: src\ui\settings.rs:1164
+msgid "Games found running and apps that report through Discord's local pipe, as rich presence."
+msgstr ""
+
+#: src\ui\settings.rs:1170 src\ui\settings.rs:48
+msgid "Activity Privacy"
+msgstr "アクティビティのプライバシー"
+
+#: src\ui\settings.rs:1171
+msgid "What Activity I Share"
+msgstr "共有しているアクティビティ"
+
+#: src\ui\settings.rs:1172
+msgid "Show the game or app you're using as your status."
+msgstr ""
+
+#: src\ui\settings.rs:1173
+msgid "Share when I come online"
+msgstr "自分のオンライン状態を共有"
+
+#: src\ui\settings.rs:1173
+msgid "Allow friends to receive a push notification when you come online."
+msgstr "自分がオンラインになった時にフレンドがプッシュ通知を受け取れるようにします。"
+
+#: src\ui\settings.rs:1174
+msgid "Share when I start streaming"
+msgstr "配信開始時に共有"
+
+#: src\ui\settings.rs:1174
+msgid "Allow members that you interact with the most to get a notification when you start streaming in small servers."
+msgstr "あなたが小規模サーバーで配信を開始したときに、最も交流の多いメンバーに通知を送信することを許可します。"
+
+#: src\ui\settings.rs:1176
+msgid "Where I Share Activity"
+msgstr "アクティビティを共有する場所"
+
+#: src\ui\settings.rs:1177
+msgid "Automatically share my activity when joining a server"
+msgstr "サーバー参加時にアクティビティを自動で共有"
+
+#: src\ui\settings.rs:1177
+msgid "Your activity is always shared with your friends."
+msgstr "常にアクティビティをフレンドに共有します。"
+
+#: src\ui\settings.rs:1178
+msgid "On for large servers"
+msgstr ""
+
+#: src\ui\settings.rs:1178
+msgid "On"
+msgstr "オン"
+
+#: src\ui\settings.rs:1180
+msgid "Activity Joining"
+msgstr "アクティビティ参加"
+
+#: src\ui\settings.rs:1180
+msgid "Some games allow users to join the game you're playing when viewing your activity."
+msgstr "一部のゲームでは、あなたの「プレイ中」のアクティビティを閲覧しているユーザーが、あなたのゲームプレイに参加できます。"
+
+#: src\ui\settings.rs:1181
+msgid "Allow friends to join my game"
+msgstr "フレンドのゲームへの参加を許可"
+
+#: src\ui\settings.rs:1181
+msgid "Allows friends to join without sending a request."
+msgstr "フレンドがリクエストを送信せずに自分のゲームに参加できるようにします。"
+
+#: src\ui\settings.rs:1182
+msgid "Allow voice channel participants to join my game"
+msgstr "ボイスチャンネル参加者のゲームへの参加を許可"
+
+#: src\ui\settings.rs:1182
+msgid "Allow anyone in a shared voice channel to join my game without sending a request. This feature only works in non-Community enabled servers."
+msgstr "共有ボイスチャンネルの全員がリクエストを送信せずに自分のゲームに参加できるようにします。この機能はコミュニティが有効でないサーバーでのみ機能します。"
+
+#: src\ui\settings.rs:1187 src\ui\settings.rs:49
+msgid "Game Overlay"
+msgstr "ゲーム オーバーレイ"
+
+#: src\ui\settings.rs:1188
+msgid "The game overlay isn't in CordFast yet."
+msgstr ""
+
+#: src\ui\settings.rs:1192 src\ui\settings.rs:50
+msgid "Connected Apps"
+msgstr "連携済みアプリ"
+
+#: src\ui\settings.rs:1193
+msgid "These are accounts from other platforms. Connecting them here can unlock new features on Discord, like the ability to share what you're currently listening to, get paid safely and securely, and more."
+msgstr "これらは他のプラットフォームのアカウントです。ここで連携すると、聴いている音楽の共有や安全・確実な支払いなど、Discordで新しい機能をアンロックできます。"
+
+#: src\ui\settings.rs:1196
+msgid "You haven't connected any accounts."
+msgstr ""
+
+#: src\ui\settings.rs:1208
+msgid "Authorized Apps"
+msgstr "連携済アプリケーション"
+
+#: src\ui\settings.rs:1208
+msgid "These include third-party services you've given permission to access your Discord account. You can review what each app can do and revoke access anytime."
+msgstr "これらには、Discordアカウントへのアクセス権限を付与したサードパーティのサービスが含まれます。各アプリが実行できる内容の確認およびアクセスの取り消しはいつでも可能です。"
+
+#: src\ui\settings.rs:1211
+msgid "You haven't authorized any apps."
+msgstr ""
+
+#: src\ui\settings.rs:1217
+msgid "Deauthorize"
+msgstr "認証解除"
+
+#: src\ui\settings.rs:1228 src\ui\settings.rs:56
+msgid "Developer"
+msgstr ""
+
+#: src\ui\settings.rs:1230
+msgid "Developer Mode"
+msgstr "開発者モード"
+
+#: src\ui\settings.rs:1230
+msgid "Developer Mode exposes context menu items helpful for people writing apps using the Discord API."
+msgstr "開発者モードをオンにすると、Discord APIを使用したBotを作成するのに役に立つコンテキストメニューが使用可能になります。"
+
+#: src\ui\settings.rs:1237 src\ui\settings.rs:1239 src\ui\settings.rs:53
+msgid "Plugins"
+msgstr "プラグイン"
+
+#: src\ui\settings.rs:1239
+msgid "Required Plugins"
+msgstr ""
+
+#: src\ui\settings.rs:1285 src\ui\settings.rs:54
+msgid "About CordFast"
+msgstr "CordFastについて"
+
+#: src\ui\settings.rs:1286
+msgid "A native, light and fast Discord."
+msgstr "ネイティブで軽くて速いDiscord。"
+
+#: src\ui\settings.rs:1289
+msgid "You're on the latest version."
+msgstr "最新バージョンです。"
+
+#: src\ui\settings.rs:1290
+msgid "Downloading version {version}… {percent}%"
+msgstr "バージョン{version}をダウンロード中… {percent}%"
+
+#: src\ui\settings.rs:1292
+msgid "Version {version} is ready."
+msgstr "バージョン{version}の準備ができました。"
+
+#: src\ui\settings.rs:1294
+msgid "Restart and Update"
+msgstr "再起動してアップデート"
+
+#: src\ui\settings.rs:1297
+msgid "Version {version} is out, but this copy does not update itself."
+msgstr "バージョン{version}が公開されましたが、このコピーは自動でアップデートされません。"
+
+#: src\ui\settings.rs:1298
+msgid "Download on GitHub"
+msgstr "GitHubでダウンロード"
+
+#: src\ui\settings.rs:1303
+msgid "The update failed: {error}"
+msgstr "アップデートに失敗しました: {error}"
+
+#: src\ui\settings.rs:1310
+msgid "Third-party clients break Discord's terms of service. Use at your own risk."
+msgstr "サードパーティ製クライアントはDiscordの利用規約に違反します。自己責任でご利用ください。"
+
+#: src\ui\titlebar.rs:55
+msgctxt "navigation"
+msgid "Back"
+msgstr "戻る"
+
+#: src\ui\titlebar.rs:55
+msgctxt "navigation"
+msgid "Forward"
+msgstr "転送"
+
+#: src\ui\titlebar.rs:224
+msgid "Unreads"
+msgstr "未読"
+
+#: src\ui\titlebar.rs:311
+msgid "You're all caught up!"
+msgstr "すべて確認済みです！"
+
+#: src\ui\titlebar.rs:312
+msgid "You have no unread messages."
+msgstr "未読のメッセージはありません。"
+
+#: src\ui\titlebar.rs:349
+msgid "Mark as Read"
+msgstr "既読にする"
+
+#: src\ui\titlebar.rs:372
+msgid "No recent mentions"
+msgstr "最近のメンションはありません"
+
+#: src\ui\titlebar.rs:373
+msgid "When someone mentions you, it shows up here."
+msgstr "誰かがあなたにメンションすると、ここに表示されます。"
+
+#: src\voice.rs:991
+msgid "Left Mouse Button"
+msgstr "マウスの左ボタン"
+
+#: src\voice.rs:992
+msgid "Right Mouse Button"
+msgstr "マウスの右ボタン"
+
+#: src\voice.rs:993
+msgid "Middle Mouse Button"
+msgstr "マウスの中央ボタン"
+
+#: src\voice.rs:994
+msgid "Mouse Button 4"
+msgstr "マウスボタン4"
+
+#: src\voice.rs:995
+msgid "Mouse Button 5"
+msgstr "マウスボタン5"
+
+#: src\voice.rs:1015
+msgid "Key {code}"
+msgstr "キー {code}"

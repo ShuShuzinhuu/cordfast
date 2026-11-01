@@ -1,0 +1,1892 @@
+{
+ "ready": {
+  "user": {
+   "id": "100000000000000100",
+   "username": "alex",
+   "global_name": "Alex",
+   "avatar": null,
+   "discriminator": "0"
+  },
+  "users": [
+   {
+    "id": "100000000000000200",
+    "username": "emma",
+    "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+    "global_name": "Emma",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000201",
+    "username": "Rythm",
+    "global_name": null,
+    "avatar": null,
+    "discriminator": "3533",
+    "bot": true,
+    "public_flags": 65536
+   },
+   {
+    "id": "100000000000000202",
+    "username": "liam",
+    "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+    "global_name": "Liam",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000210",
+    "username": "olivia",
+    "global_name": "Olivia",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000211",
+    "username": "noah",
+    "global_name": "Noah",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000212",
+    "username": "mia",
+    "global_name": "Mia",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000213",
+    "username": "lucas",
+    "global_name": "Lucas",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000214",
+    "username": "jack",
+    "global_name": "Jack",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   {
+    "id": "100000000000000215",
+    "username": "spammer99",
+    "global_name": "Spam",
+    "avatar": null,
+    "discriminator": "0"
+   }
+  ],
+  "guilds": [
+   {
+    "id": "100000000000000300",
+    "name": "Game Night",
+    "owner_id": "100000000000000100",
+    "icon": null,
+    "roles": [
+     {
+      "id": "100000000000000300",
+      "name": "@everyone",
+      "permissions": "1071698660929",
+      "position": 0,
+      "color": 0
+     },
+     {
+      "id": "100000000000000301",
+      "name": "Member",
+      "permissions": "0",
+      "position": 1,
+      "color": 9807270,
+      "hoist": true
+     },
+     {
+      "id": "100000000000000302",
+      "name": "DJ",
+      "permissions": "0",
+      "position": 2,
+      "color": 15277667,
+      "hoist": true,
+      "mentionable": true
+     },
+     {
+      "id": "100000000000000303",
+      "name": "Moderator",
+      "permissions": "1099511639046",
+      "position": 3,
+      "color": 3447003,
+      "hoist": true,
+      "mentionable": false
+     },
+     {
+      "id": "100000000000000304",
+      "name": "Rythm",
+      "permissions": "0",
+      "position": 2,
+      "color": 0,
+      "managed": true
+     }
+    ],
+    "channels": [
+     {
+      "id": "100000000000000310",
+      "name": "Text Channels",
+      "type": 4,
+      "position": 0,
+      "permission_overwrites": []
+     },
+     {
+      "id": "100000000000000311",
+      "name": "general",
+      "type": 0,
+      "position": 0,
+      "permission_overwrites": [],
+      "parent_id": "100000000000000310",
+      "last_message_id": "1564966964428800000"
+     },
+     {
+      "id": "100000000000000312",
+      "name": "music",
+      "type": 0,
+      "position": 1,
+      "permission_overwrites": [],
+      "parent_id": "100000000000000310"
+     },
+     {
+      "id": "100000000000000313",
+      "name": "clips",
+      "type": 0,
+      "position": 2,
+      "permission_overwrites": [],
+      "parent_id": "100000000000000310"
+     },
+     {
+      "id": "100000000000000320",
+      "name": "Voice Channels",
+      "type": 4,
+      "position": 1,
+      "permission_overwrites": []
+     },
+     {
+      "id": "100000000000000321",
+      "name": "Lounge",
+      "type": 2,
+      "position": 0,
+      "permission_overwrites": [],
+      "parent_id": "100000000000000320"
+     },
+     {
+      "id": "100000000000000322",
+      "name": "Music",
+      "type": 2,
+      "position": 1,
+      "permission_overwrites": [],
+      "parent_id": "100000000000000320",
+      "status": "🎶 lo-fi to study to"
+     }
+    ],
+    "emojis": [],
+    "stickers": [],
+    "threads": [],
+    "voice_states": [
+     { "user_id": "100000000000000200", "channel_id": "100000000000000321", "self_mute": false, "self_deaf": false },
+     { "user_id": "100000000000000202", "channel_id": "100000000000000321", "self_mute": true, "self_deaf": false },
+     { "user_id": "100000000000000201", "channel_id": "100000000000000322", "self_mute": false, "self_deaf": false }
+    ]
+   }
+  ],
+  "merged_members": [
+   [
+    {
+     "user_id": "100000000000000100",
+     "roles": [
+      "100000000000000301"
+     ]
+    }
+   ]
+  ],
+  "private_channels": [
+   {
+    "id": "100000000000000400",
+    "type": 1,
+    "recipients": [
+     {
+      "id": "100000000000000200",
+      "username": "emma",
+      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+      "global_name": "Emma",
+      "avatar": null,
+      "discriminator": "0"
+     }
+    ],
+    "last_message_id": "1564972249251840000"
+   }
+  ],
+  "relationships": [
+   {
+    "id": "100000000000000200",
+    "type": 1,
+    "user": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000202",
+    "type": 1,
+    "user": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000210",
+    "type": 1,
+    "user": {
+     "id": "100000000000000210",
+     "username": "olivia",
+     "global_name": "Olivia",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000211",
+    "type": 1,
+    "user": {
+     "id": "100000000000000211",
+     "username": "noah",
+     "global_name": "Noah",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000212",
+    "type": 1,
+    "user": {
+     "id": "100000000000000212",
+     "username": "mia",
+     "global_name": "Mia",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000213",
+    "type": 1,
+    "user": {
+     "id": "100000000000000213",
+     "username": "lucas",
+     "global_name": "Lucas",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000214",
+    "type": 3,
+    "user": {
+     "id": "100000000000000214",
+     "username": "jack",
+     "global_name": "Jack",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000215",
+    "type": 2,
+    "user": {
+     "id": "100000000000000215",
+     "username": "spammer99",
+     "global_name": "Spam",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   }
+  ],
+  "read_state": [
+   {
+    "id": "100000000000000311",
+    "last_message_id": "1564958659706880000",
+    "mention_count": 1
+   }
+  ],
+  "user_settings": {
+   "status": "online"
+  },
+  "session_id": "demo",
+  "presences": [
+   {
+    "user_id": "100000000000000200",
+    "status": "online",
+    "activities": [
+     {
+      "type": 4,
+      "name": "Custom Status",
+      "state": "having coffee",
+      "emoji": {
+       "name": "☕"
+      }
+     },
+     {
+      "type": 0,
+      "name": "Minecraft",
+      "application_id": "356875570916753438",
+      "timestamps": {
+       "start": 1793190000000
+      },
+      "details": "Playing survival",
+      "state": "In Emma's world"
+     },
+     {
+      "type": 2,
+      "name": "Spotify",
+      "details": "One Step Closer",
+      "state": "Linkin Park",
+      "sync_id": "1N4ZnPp3sPgmUc9Q5dEJ3v",
+      "timestamps": {
+       "start": 1793316500000,
+       "end": 1793316657000
+      },
+      "assets": {
+       "large_text": "Hybrid Theory"
+      }
+     }
+    ]
+   },
+   {
+    "user_id": "100000000000000202",
+    "status": "online",
+    "activities": [
+     {
+      "type": 0,
+      "name": "Grand Theft Auto V",
+      "application_id": "356876176465199104",
+      "timestamps": {
+       "start": 1793309400000
+      }
+     }
+    ]
+   },
+   {
+    "user_id": "100000000000000210",
+    "status": "idle",
+    "activities": [
+     {
+      "type": 4,
+      "name": "Custom Status",
+      "state": "Chilling",
+      "emoji": {
+       "name": "☕"
+      }
+     }
+    ]
+   },
+   {
+    "user_id": "100000000000000211",
+    "status": "dnd",
+    "activities": [
+     {
+      "type": 0,
+      "name": "VALORANT",
+      "application_id": "700136079562375258",
+      "timestamps": {
+       "start": 1793313000000
+      },
+      "details": "Competitive",
+      "state": "Ascent 7 - 5"
+     }
+    ]
+   },
+   {
+    "user_id": "100000000000000212",
+    "status": "online",
+    "activities": [
+     {
+      "type": 2,
+      "name": "Spotify",
+      "details": "Rain on the Window",
+      "state": "Imaginary Band",
+      "timestamps": {
+       "start": 1793316500000,
+       "end": 1793316720000
+      },
+      "assets": {
+       "large_text": "Dias Cinzentos"
+      }
+     }
+    ]
+   },
+   {
+    "user_id": "100000000000000201",
+    "status": "online",
+    "activities": [
+     {
+      "type": 2,
+      "name": "/play",
+      "details": "Rain on the Window"
+     }
+    ]
+   }
+  ]
+ },
+ "messages": {
+  "100000000000000311": [
+   {"id": "1564967800000000000", "channel_id": "100000000000000311", "guild_id": "100000000000000300", "author": {"id": "100000000000000201", "username": "Rythm", "global_name": null, "avatar": null, "discriminator": "3533", "bot": true, "public_flags": 65536}, "content": "@everyone", "mention_everyone": true, "type": 0, "timestamp": "", "edited_timestamp": null, "attachments": [], "embeds": [{"type": "rich", "title": "Lo-fi beats to relax and study to 🎧", "url": "https://www.youtube.com/watch?v=demo", "color": 16711680, "author": {"name": "Lo-fi Radio", "icon_url": "https://yt3.ggpht.com/demo.png"}, "image": {"url": "https://i.ytimg.com/vi/demo/maxresdefault.jpg", "width": 1280, "height": 720}, "timestamp": "2026-10-28T22:30:00.000Z"}], "components": [{"type": 1, "components": [{"type": 2, "style": 5, "label": "Watch on YouTube", "url": "https://www.youtube.com/watch?v=demo", "emoji": {"name": "▶️"}}]}], "mentions": [], "mention_roles": [], "pinned": false},
+   {
+    "id": "1564966964428800000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "agreed, it looks great",
+    "type": 19,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false,
+    "message_reference": {
+     "message_id": "1564959414681600000",
+     "channel_id": "100000000000000311",
+     "guild_id": "100000000000000300"
+    },
+    "referenced_message": {
+     "id": "1564959414681600000",
+     "channel_id": "100000000000000311",
+     "guild_id": "100000000000000300",
+     "author": {
+      "id": "100000000000000200",
+      "username": "emma",
+      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+      "global_name": "Emma",
+      "avatar": null,
+      "discriminator": "0"
+     },
+     "content": "the new map looks great",
+     "type": 0,
+     "timestamp": "",
+     "edited_timestamp": null,
+     "attachments": [],
+     "embeds": [],
+     "mentions": [],
+     "mention_roles": [],
+     "pinned": false
+    }
+   },
+   {
+    "id": "1564964699504640000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "let's go",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564964447846400000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "nice",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564964196188160000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "love this one",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564963944529920000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000201",
+     "username": "Rythm",
+     "global_name": null,
+     "avatar": null,
+     "discriminator": "3533",
+     "bot": true,
+     "public_flags": 65536
+    },
+    "content": "🎶 Now playing: **Rain on the Window**",
+    "type": 20,
+    "interaction": { "id": "1564963944529920001", "type": 2, "name": "play", "user": { "id": "100000000000000100", "username": "alex", "global_name": "Alex", "avatar": null, "discriminator": "0" } },
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564963692871680000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "quick",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564963441213440000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "wait for me",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564963189555200000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "coming",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564962937896960000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "<@100000000000000100> come play",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [
+     {
+      "id": "100000000000000100",
+      "username": "alex",
+      "global_name": "Alex",
+      "avatar": null,
+      "discriminator": "0"
+     }
+    ],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564962686238720000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "thanks!",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564962434580480000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "noting it down",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564962182922240000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "I think so, at 10",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564961931264000000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "is there a meeting tomorrow?",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564961679605760000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "thanks",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564961427947520000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "use the GPU encoder",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564961176289280000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "I know, DM me",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564960924631040000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "anyone knows how to set up OBS?",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564960672972800000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "lol",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564960421314560000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "turn it up",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564960169656320000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "this one's good",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564959917998080000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000201",
+     "username": "Rythm",
+     "global_name": null,
+     "avatar": null,
+     "discriminator": "3533",
+     "bot": true,
+     "public_flags": 65536
+    },
+    "content": "🎶 Now playing: **Night Synthwave**",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564959666339840000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "but matchmaking got worse",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564959414681600000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "the new map looks great",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564959163023360000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "yeah, they changed everything",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564958911365120000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "did anyone see the new patch?",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564958659706880000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "I'll bring coffee ☕",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564958408048640000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "deal, I'm in",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564958156390400000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "around 9pm",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564957904732160000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "sure! what time?",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564957653073920000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "play later?",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564957401415680000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000201",
+     "username": "Rythm",
+     "global_name": null,
+     "avatar": null,
+     "discriminator": "3533",
+     "bot": true,
+     "public_flags": 65536
+    },
+    "content": "🎶 Now playing: **Lo-fi to Study**",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564957149757440000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "someone put some music on",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   },
+   {
+    "id": "1564956898099200000",
+    "channel_id": "100000000000000311",
+    "guild_id": "100000000000000300",
+    "author": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "content": "good afternoon!",
+    "type": 0,
+    "timestamp": "",
+    "edited_timestamp": null,
+    "attachments": [],
+    "embeds": [],
+    "mentions": [],
+    "mention_roles": [],
+    "pinned": false
+   }
+  ]
+ },
+ "profiles": {
+  "100000000000000200": {
+   "user": {
+    "id": "100000000000000200",
+    "username": "emma",
+    "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+    "global_name": "Emma",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   "user_profile": {
+    "bio": "Drawing, coffee and loud music.\nDon't call me before noon.",
+    "pronouns": "she/her",
+    "accent_color": 5793266
+   },
+   "mutual_guilds": [
+    {
+     "id": "100000000000000300",
+     "nick": null
+    }
+   ],
+   "mutual_friends_count": 3,
+   "mutual_friends": [
+    {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    {
+     "id": "100000000000000201",
+     "username": "Rythm",
+     "global_name": null,
+     "avatar": null,
+     "discriminator": "3533",
+     "bot": true,
+     "public_flags": 65536
+    },
+    {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   ],
+   "connected_accounts": [
+    {
+     "type": "steam",
+     "name": "emma",
+     "verified": true
+    }
+   ],
+   "guild_member": {
+    "roles": [
+     "100000000000000301"
+    ],
+    "joined_at": "2025-03-14T10:00:00.000000+00:00"
+   },
+   "badges": [
+    {
+     "id": "b0",
+     "description": "Subscriber since Oct 2023",
+     "icon": "00000000000000000000000000000000"
+    },
+    {
+     "id": "b1",
+     "description": "Server boosting",
+     "icon": "00000000000000000000000000000001"
+    },
+    {
+     "id": "b2",
+     "description": "HypeSquad Brilliance",
+     "icon": "00000000000000000000000000000002"
+    },
+    {
+     "id": "b3",
+     "description": "Active Developer",
+     "icon": "00000000000000000000000000000003"
+    },
+    {
+     "id": "b4",
+     "description": "Completed a Quest",
+     "icon": "00000000000000000000000000000004"
+    },
+    {
+     "id": "b5",
+     "description": "Originally known as emma#1234",
+     "icon": "00000000000000000000000000000005"
+    },
+    {
+     "id": "b6",
+     "description": "Bug Hunter",
+     "icon": "00000000000000000000000000000006"
+    },
+    {
+     "id": "b7",
+     "description": "Moderator Programs Alumni",
+     "icon": "00000000000000000000000000000007"
+    },
+    {
+     "id": "b8",
+     "description": "Early supporter",
+     "icon": "00000000000000000000000000000008"
+    },
+    {
+     "id": "b010",
+     "description": "Subscriber since Oct 2023",
+     "icon": "00000000000000000000000000000000"
+    },
+    {
+     "id": "b011",
+     "description": "Subscriber since Oct 2023",
+     "icon": "00000000000000000000000000000000"
+    },
+    {
+     "id": "b012",
+     "description": "Subscriber since Oct 2023",
+     "icon": "00000000000000000000000000000000"
+    }
+   ]
+  },
+  "100000000000000202": {
+   "user": {
+    "id": "100000000000000202",
+    "username": "liam",
+    "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+    "global_name": "Liam",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   "user_profile": {
+    "bio": "",
+    "pronouns": "",
+    "accent_color": null
+   },
+   "mutual_guilds": [
+    {
+     "id": "100000000000000300",
+     "nick": null
+    }
+   ],
+   "mutual_friends_count": 1,
+   "mutual_friends": [
+    {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   ],
+   "connected_accounts": [
+    {
+     "type": "steam",
+     "name": "liam",
+     "verified": true
+    }
+   ],
+   "guild_member": {
+    "roles": [
+     "100000000000000301"
+    ],
+    "joined_at": "2025-03-14T10:00:00.000000+00:00"
+   },
+   "badges": []
+  },
+  "100000000000000201": {
+   "user": {
+    "id": "100000000000000201",
+    "username": "Rythm",
+    "global_name": null,
+    "avatar": null,
+    "discriminator": "3533",
+    "bot": true,
+    "public_flags": 65536
+   },
+   "user_profile": {
+    "bio": "Music in your server.",
+    "pronouns": "",
+    "accent_color": 15277667
+   },
+   "mutual_guilds": [
+    {
+     "id": "100000000000000300",
+     "nick": null
+    }
+   ],
+   "mutual_friends_count": 0,
+   "mutual_friends": [],
+   "connected_accounts": [
+    {
+     "type": "steam",
+     "name": "Rythm",
+     "verified": true
+    }
+   ],
+   "guild_member": {
+    "roles": [
+     "100000000000000301"
+    ],
+    "joined_at": "2025-03-14T10:00:00.000000+00:00"
+   },
+   "badges": []
+  },
+  "100000000000000100": {
+   "user": {
+    "id": "100000000000000100",
+    "username": "alex",
+    "global_name": "Alex",
+    "avatar": null,
+    "discriminator": "0"
+   },
+   "user_profile": {
+    "bio": "Building a native Discord.",
+    "pronouns": "",
+    "accent_color": null
+   },
+   "mutual_guilds": [
+    {
+     "id": "100000000000000300",
+     "nick": null
+    }
+   ],
+   "mutual_friends_count": 0,
+   "mutual_friends": [],
+   "connected_accounts": [
+    {
+     "type": "steam",
+     "name": "alex",
+     "verified": true
+    }
+   ],
+   "guild_member": {
+    "roles": [
+     "100000000000000301"
+    ],
+    "joined_at": "2025-03-14T10:00:00.000000+00:00"
+   },
+   "badges": []
+  }
+ },
+ "typing": [
+  {
+   "channel": "100000000000000311",
+   "user": "100000000000000200"
+  },
+  {
+   "channel": "100000000000000311",
+   "user": "100000000000000202"
+  }
+ ],
+ "member_list": {
+  "guild_id": "100000000000000300",
+  "id": "everyone",
+  "online_count": 4,
+  "member_count": 4,
+  "groups": [
+   {
+    "id": "online",
+    "count": 4
+   }
+  ],
+  "ops": [
+   {
+    "op": "SYNC",
+    "range": [
+     0,
+     99
+    ],
+    "items": [
+     {
+      "group": {
+       "id": "online",
+       "count": 4
+      }
+     },
+     {
+      "member": {
+       "user": {
+        "id": "100000000000000200",
+        "username": "emma",
+        "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+        "global_name": "Emma",
+        "avatar": null,
+        "discriminator": "0"
+       },
+       "roles": [
+        "100000000000000302"
+       ],
+       "presence": {
+        "status": "online",
+        "activities": [
+         {
+          "type": 4,
+          "name": "Custom Status",
+          "state": "having coffee",
+          "emoji": {
+           "name": "☕"
+          }
+         },
+         {
+          "type": 0,
+          "name": "Minecraft",
+          "application_id": "356875570916753438",
+          "timestamps": {
+           "start": 1793190000000
+          },
+          "details": "Playing survival",
+          "state": "In Emma's world"
+         },
+         {
+          "type": 2,
+          "name": "Spotify",
+          "details": "One Step Closer",
+          "state": "Linkin Park",
+          "sync_id": "1N4ZnPp3sPgmUc9Q5dEJ3v",
+          "timestamps": {
+           "start": 1793316500000,
+           "end": 1793316657000
+          },
+          "assets": {
+           "large_text": "Hybrid Theory"
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "member": {
+       "user": {
+        "id": "100000000000000202",
+        "username": "liam",
+        "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+        "global_name": "Liam",
+        "avatar": null,
+        "discriminator": "0"
+       },
+       "roles": [
+        "100000000000000301"
+       ],
+       "presence": {
+        "status": "online",
+        "activities": [
+         {
+          "type": 0,
+          "name": "Grand Theft Auto V",
+          "application_id": "356876176465199104",
+          "timestamps": {
+           "start": 1793309400000
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "member": {
+       "user": {
+        "id": "100000000000000201",
+        "username": "Rythm",
+        "global_name": null,
+        "avatar": null,
+        "discriminator": "3533",
+        "bot": true,
+        "public_flags": 65536
+       },
+       "roles": [],
+       "presence": {
+        "status": "online",
+        "activities": [
+         {
+          "type": 2,
+          "name": "/play",
+          "details": "Rain on the Window"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "member": {
+       "user": {
+        "id": "100000000000000100",
+        "username": "alex",
+        "global_name": "Alex",
+        "avatar": null,
+        "discriminator": "0"
+       },
+       "roles": [
+        "100000000000000301"
+       ],
+       "presence": {
+        "status": "online",
+        "activities": []
+       }
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "autocomplete": ["Rain on the Window", "Synthwave noturno", "Lo-fi para estudar", "One Step Closer", "Numb"],
+ "api": {
+  "frecency": { "settings": "MogDCh0KA2pveRIWCBQSEoCUg7mXNIDc6Y+XNICk0OaWNAofCgVoZWFydBIWCBMSEoCUg7mXNIDc6Y+XNICk0OaWNAoiCgh0aHVtYnN1cBIWCBISEoCUg7mXNIDc6Y+XNICk0OaWNAoeCgRmaXJlEhYIERISgJSDuZc0gNzpj5c0gKTQ5pY0Ch0KA3NvYhIWCBASEoCUg7mXNIDc6Y+XNICk0OaWNAofCgVza3VsbBIWCA8SEoCUg7mXNIDc6Y+XNICk0OaWNAoeCgRleWVzEhYIDhISgJSDuZc0gNzpj5c0gKTQ5pY0Ch4KBHByYXkSFggNEhKAlIO5lzSA3OmPlzSApNDmljQKIgoIc3BhcmtsZXMSFggMEhKAlIO5lzSA3OmPlzSApNDmljQKHQoDMTAwEhYICxISgJSDuZc0gNzpj5c0gKTQ5pY0Ch4KBHJvZmwSFggKEhKAlIO5lzSA3OmPlzSApNDmljQKHwoFc21pbGUSFggJEhKAlIO5lzSA3OmPlzSApNDmljQqDQoFaGVhcnQKBGZpcmU=" },
+  "guild-profile:1200000000000000000": { "id": "1200000000000000000", "name": "Pixel Artists", "icon_hash": null, "member_count": 17826, "online_count": 1650,
+   "description": "A community for pixel artists: contests, feedback and weekly events.",
+   "brand_color_primary": "#7a4fbf", "tag": "ART", "badge_hash": "b1", "game_application_ids": ["363445589247131668"],
+   "traits": [{ "emoji_name": "✨", "label": "Pixel Art", "position": 0 }, { "emoji_name": "", "label": "Roblox", "position": 1 },
+              { "emoji_name": "", "label": "Contests", "position": 2 }, { "emoji_name": "", "label": "Community", "position": 3 },
+              { "emoji_name": "🎀", "label": "Design", "position": 4 }] },
+  "guild-profile:100000000000000300": { "id": "100000000000000300", "name": "Game Night", "member_count": 5, "online_count": 4,
+   "description": "Where the squad hangs out.", "tag": "GAME", "badge_hash": "", "traits": [], "game_application_ids": [] },
+  "command-index:100000000000000300": {
+   "applications": [{ "id": "100000000000000201", "name": "Rythm", "icon": null }],
+   "application_commands": [
+    { "id": "100000000000000901", "application_id": "100000000000000201", "version": "1", "type": 1, "name": "play", "description": "Plays a song or adds it to the queue",
+      "options": [{ "type": 3, "name": "query", "description": "A song name or link", "required": true, "autocomplete": true },
+                  { "type": 5, "name": "next", "description": "Plays it next" }] },
+    { "id": "100000000000000902", "application_id": "100000000000000201", "version": "1", "type": 1, "name": "skip", "description": "Skips the song playing" },
+    { "id": "100000000000000903", "application_id": "100000000000000201", "version": "1", "type": 1, "name": "loop", "description": "Loops the song or the queue",
+      "options": [{ "type": 3, "name": "mode", "description": "What to loop", "required": true, "choices": [{ "name": "Song", "value": "song" }, { "name": "Queue", "value": "queue" }, { "name": "Off", "value": "off" }] }] },
+    { "id": "100000000000000904", "application_id": "100000000000000201", "version": "1", "type": 1, "name": "queue", "description": "The queue",
+      "options": [{ "type": 1, "name": "show", "description": "Shows the queue" },
+                  { "type": 1, "name": "remove", "description": "Removes a song", "options": [{ "type": 4, "name": "position", "description": "Its place in the queue", "required": true }] }] }
+   ]
+  },
+  "guild": {
+   "id": "100000000000000300",
+   "name": "Game Night",
+   "icon": null,
+   "description": "A server to hang out and play.",
+   "afk_channel_id": "100000000000000321",
+   "afk_timeout": 300,
+   "system_channel_id": "100000000000000311",
+   "system_channel_flags": 4,
+   "default_message_notifications": 1,
+   "verification_level": 1,
+   "explicit_content_filter": 1,
+   "premium_tier": 1,
+   "features": [
+    "COMMUNITY"
+   ]
+  },
+  "members": {
+   "members": [
+    {
+     "member": {
+      "user": {
+       "id": "100000000000000200",
+       "username": "emma",
+       "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+       "global_name": "Emma",
+       "avatar": null,
+       "discriminator": "0"
+      },
+      "roles": [
+       "100000000000000302",
+       "100000000000000301"
+      ],
+      "joined_at": "2025-03-14T18:20:00+00:00",
+      "nick": null
+     }
+    },
+    {
+     "member": {
+      "user": {
+       "id": "100000000000000202",
+       "username": "liam",
+       "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+       "global_name": "Liam",
+       "avatar": null,
+       "discriminator": "0"
+      },
+      "roles": [
+       "100000000000000303",
+       "100000000000000301"
+      ],
+      "joined_at": "2025-04-02T10:00:00+00:00",
+      "nick": "Liam"
+     }
+    },
+    {
+     "member": {
+      "user": {
+       "id": "100000000000000201",
+       "username": "Rythm",
+       "global_name": null,
+       "avatar": null,
+       "discriminator": "3533",
+       "bot": true,
+       "public_flags": 65536
+      },
+      "roles": [
+       "100000000000000304"
+      ],
+      "joined_at": "2025-05-20T22:10:00+00:00"
+     }
+    },
+    {
+     "member": {
+      "user": {
+       "id": "100000000000000100",
+       "username": "alex",
+       "global_name": "Alex",
+       "avatar": null,
+       "discriminator": "0"
+      },
+      "roles": [
+       "100000000000000301"
+      ],
+      "joined_at": "2025-03-01T09:00:00+00:00",
+      "communication_disabled_until": null
+     }
+    },
+    {
+     "member": {
+      "user": {
+       "id": "100000000000000210",
+       "username": "olivia",
+       "global_name": "Olivia",
+       "avatar": null,
+       "discriminator": "0"
+      },
+      "roles": [],
+      "joined_at": "2026-10-01T12:00:00+00:00",
+      "communication_disabled_until": "2026-12-31T00:00:00+00:00"
+     }
+    }
+   ],
+   "page_result_count": 5,
+   "total_result_count": 5
+  },
+  "invites": [
+   {
+    "code": "gamenight",
+    "uses": 12,
+    "max_uses": 0,
+    "max_age": 0,
+    "inviter": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "channel": {
+     "id": "100000000000000311",
+     "name": "general"
+    }
+   },
+   {
+    "code": "Xy7Kq2Pz",
+    "uses": 3,
+    "max_uses": 10,
+    "max_age": 604800,
+    "expires_at": "2026-11-04T18:00:00+00:00",
+    "inviter": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "channel": {
+     "id": "100000000000000312",
+     "name": "music"
+    }
+   }
+  ],
+  "bans": [
+   {
+    "user": {
+     "id": "100000000000000215",
+     "username": "spammer99",
+     "global_name": "Spam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    "reason": "Scam links"
+   }
+  ],
+  "emojis": [
+   {
+    "id": "100000000000000400",
+    "name": "pepe_ok",
+    "animated": false,
+    "user": {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000401",
+    "name": "happy_cat",
+    "animated": false,
+    "user": {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   },
+   {
+    "id": "100000000000000402",
+    "name": "dance",
+    "animated": true,
+    "user": {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   }
+  ],
+  "audit": {
+   "audit_log_entries": [
+    {
+     "id": "1436100000000000000",
+     "user_id": "100000000000000100",
+     "target_id": null,
+     "action_type": 10,
+     "reason": null
+    },
+    {
+     "id": "1436000000000000000",
+     "user_id": "100000000000000202",
+     "target_id": "100000000000000215",
+     "action_type": 22,
+     "reason": "Scam links"
+    },
+    {
+     "id": "1435900000000000000",
+     "user_id": "100000000000000100",
+     "target_id": null,
+     "action_type": 31
+    },
+    {
+     "id": "1435800000000000000",
+     "user_id": "100000000000000200",
+     "target_id": null,
+     "action_type": 40
+    }
+   ],
+   "users": [
+    {
+     "id": "100000000000000100",
+     "username": "alex",
+     "global_name": "Alex",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    {
+     "id": "100000000000000200",
+     "username": "emma",
+     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
+     "global_name": "Emma",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    {
+     "id": "100000000000000202",
+     "username": "liam",
+     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
+     "global_name": "Liam",
+     "avatar": null,
+     "discriminator": "0"
+    },
+    {
+     "id": "100000000000000215",
+     "username": "spammer99",
+     "global_name": "Spam",
+     "avatar": null,
+     "discriminator": "0"
+    }
+   ]
+  }
+ }
+}
