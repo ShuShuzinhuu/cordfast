@@ -128,6 +128,10 @@ pub async fn rank_regions(http: &reqwest::Client) -> Vec<(String, u32)> {
 struct MicBuffer {
     samples: Mutex<VecDeque<f32>>,
     ready: Condvar,
+    /// Diagnostics: samples sent as silence because the microphone was
+    /// late, and samples the limiter had to bring down.
+    late: std::sync::atomic::AtomicU64,
+    limited: std::sync::atomic::AtomicU64,
 }
 
 /// The live track's source: reads the microphone buffer as raw f32, waiting
@@ -148,6 +152,10 @@ impl Read for MicSource {
                 .wait_timeout(samples, Duration::from_millis(30))
                 .unwrap_or_else(|e| e.into_inner())
                 .0;
+        }
+        let missing = wanted.saturating_sub(samples.len());
+        if missing > 0 {
+            self.0.late.fetch_add(missing as u64, std::sync::atomic::Ordering::Relaxed);
         }
         for i in 0..wanted {
             let sample = samples.pop_front().unwrap_or(0.0);
@@ -581,6 +589,20 @@ fn audio_thread(shared: Arc<Shared>, gate: mpsc::UnboundedSender<Gate>, stop: st
                 output.drain(..excess);
             }
             if sending && !shared.muted.load(std::sync::atomic::Ordering::Relaxed) {
+                // A soft limiter last: the volume (up to 200%) and the
+                // automatic gain may push peaks past full scale, which Opus
+                // turns into harsh clipping.
+                let mut limited = 0u64;
+                for s in &mut mono {
+                    let a = s.abs();
+                    if a > 0.9 {
+                        limited += 1;
+                        *s = s.signum() * (0.9 + 0.1 * ((a - 0.9) / 0.1).tanh());
+                    }
+                }
+                if limited > 0 {
+                    shared.mic.limited.fetch_add(limited, std::sync::atomic::Ordering::Relaxed);
+                }
                 let mut samples = shared.mic.samples.lock().unwrap_or_else(|e| e.into_inner());
                 for s in mono {
                     samples.push_back(s);
@@ -1547,7 +1569,7 @@ pub async fn run(
                     use std::sync::atomic::Ordering::Relaxed;
                     let queued = shared.output.lock().unwrap_or_else(|e| e.into_inner()).len();
                     log::info!(
-                        "voice: queue {} ms, playback underruns {}, ticks {}, ticks with loss {}; mic opened {} times, speaking {}, muted {}",
+                        "voice: queue {} ms, playback underruns {}, ticks {}, ticks with loss {}; mic opened {} times, speaking {}, muted {}, mic late {} ms, mic limited {} samples",
                         queued * 1000 / (RATE as usize * 2),
                         shared.underruns.swap(0, Relaxed),
                         shared.ticks.swap(0, Relaxed),
@@ -1555,6 +1577,8 @@ pub async fn run(
                         std::mem::take(&mut gate_opens),
                         me_speaking,
                         mute,
+                        shared.mic.late.swap(0, Relaxed) / 96,
+                        shared.mic.limited.swap(0, Relaxed),
                     );
                 }
             }
