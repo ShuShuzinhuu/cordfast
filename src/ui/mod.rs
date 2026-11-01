@@ -2140,7 +2140,7 @@ fn shortcuts(app: &mut App, ui: &mut egui::Ui) {
             }
         }
     }
-    if pressed(ui, &app.settings, Shortcut::ReturnToVoice)
+    if (pressed(ui, &app.settings, Shortcut::ReturnToVoice) | pressed(ui, &app.settings, Shortcut::JumpToCall))
         && let Some((guild, channel)) = app.voice.channel
     {
         app.actions.push(Action::SelectGuild(guild));
@@ -2155,6 +2155,40 @@ fn shortcuts(app: &mut App, ui: &mut egui::Ui) {
         && let Some(channel) = app.selected_channel.filter(|c| app.channel(*c).is_some_and(|ch| ch.guild_id.is_none()))
     {
         app.actions.push(Action::JoinVoice { guild: None, channel, ring: true });
+    }
+    if pressed(ui, &app.settings, Shortcut::CopyChannelLink)
+        && let Some(channel) = app.selected_channel
+    {
+        let place = app.channel(channel).and_then(|c| c.guild_id).map_or_else(|| "@me".to_owned(), |g| g.to_string());
+        ui.ctx().copy_text(format!("https://discord.com/channels/{place}/{channel}"));
+        app.notify(t!("Link copied"));
+    }
+    // Discord's: collapse every category of the open server, or open them
+    // all again when they already are.
+    if pressed(ui, &app.settings, Shortcut::ToggleCategories)
+        && let Some(guild) = app.selected_guild.and_then(|g| app.guild(g))
+    {
+        let categories: Vec<Id> = guild.channels.iter().filter(|c| c.kind == ChannelKind::Category).map(|c| c.id).collect();
+        if categories.iter().any(|c| !app.collapsed.contains(c)) {
+            app.collapsed.extend(categories);
+        } else {
+            for c in categories {
+                app.collapsed.remove(&c);
+            }
+        }
+    }
+    let zoom = app.settings.zoom;
+    if pressed(ui, &app.settings, Shortcut::ZoomIn) {
+        app.settings.zoom = (zoom + 0.1).min(2.0);
+    }
+    if pressed(ui, &app.settings, Shortcut::ZoomOut) {
+        app.settings.zoom = (zoom - 0.1).max(0.6);
+    }
+    if pressed(ui, &app.settings, Shortcut::ZoomReset) {
+        app.settings.zoom = 1.0;
+    }
+    if app.settings.zoom != zoom {
+        app.actions.push(Action::SettingsChanged);
     }
     if pressed(ui, &app.settings, Shortcut::Pins) {
         app.toggle_pins();

@@ -1155,15 +1155,29 @@ fn games(app: &mut App, ui: &mut egui::Ui) {
     form::category(ui, t!("Current Game"), "", |ui| {
         match &app.activity {
             Some(game) => {
-                ui.label(RichText::new(t!("Now: Playing {game}", game = game)).color(p.green));
+                item_row(ui, game, t!("Playing"), None);
             }
-            None => form::note(ui, t!("No game detected")),
+            None => {
+                item_row(ui, t!("No game detected"), t!("What are you playing?!"), None);
+            }
         }
         ui.add_space(12.0);
         let mut on = app.rich_presence();
         form::switch_row(ui, &mut on, t!("Share my activity"), t!("Games found running and apps that report through Discord's local pipe, as rich presence."));
         app.settings.plugins.insert("rich-presence".into(), on);
     });
+    form::category(ui, t!("Added Games"), "", |ui| {
+        let games = app.settings.played_games.clone();
+        let playing = app.activity.clone();
+        for game in &games {
+            let detail = if playing.as_deref() == Some(game.name.as_str()) { t!("Playing").to_owned() } else { t!("Last played {when}", when = crate::text::time(game.last_played)) };
+            item_row(ui, &game.name, &detail, None);
+        }
+        if games.is_empty() {
+            form::note(ui, t!("No game detected"));
+        }
+    });
+    let _ = p;
 }
 
 fn activity_privacy(app: &mut App, ui: &mut egui::Ui) {

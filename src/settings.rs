@@ -76,6 +76,9 @@ pub struct Settings {
     pub sticker_button: bool,
     /// Role colours: 0 in names, 1 next to names, 2 not shown.
     pub role_colors: u8,
+    /// Games played on this computer, for Settings → Registered Games
+    /// (Discord keeps the same list on each machine).
+    pub played_games: Vec<PlayedGame>,
     /// The emoji picker's skin tone: 0 none, 1 light to 5 dark.
     pub skin_tone: u8,
     /// The expression picker's sections hidden by clicking their name
@@ -84,6 +87,15 @@ pub struct Settings {
     /// Accounts signed in on this computer (their tokens are in the
     /// credential store), for switching as Discord does.
     pub accounts: Vec<Account>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PlayedGame {
+    /// The game's application id.
+    pub id: String,
+    pub name: String,
+    /// When it last ran, in Unix milliseconds.
+    pub last_played: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -134,6 +146,7 @@ impl Default for Settings {
             gif_button: true,
             sticker_button: true,
             role_colors: 0,
+            played_games: Vec::new(),
             skin_tone: 0,
             collapsed_expressions: Vec::new(),
             accounts: Vec::new(),

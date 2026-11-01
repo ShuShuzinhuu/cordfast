@@ -217,7 +217,7 @@ msgstr "Amministratore"
 msgid "Discord is indexing the members. Try again in a moment."
 msgstr "Discord sta indicizzando i membri. Riprova tra un momento."
 
-#: src\admin.rs:300 src\app.rs:2125 src\ui\settings.rs:400
+#: src\admin.rs:300 src\app.rs:2152 src\ui\settings.rs:400
 msgid "Done."
 msgstr "Fatto."
 
@@ -489,241 +489,241 @@ msgstr "Ruolo eliminato."
 msgid "Channel deleted."
 msgstr "Canale eliminato."
 
-#: src\app.rs:1115
+#: src\app.rs:1133
 msgid "Unmute Microphone"
 msgstr "Riattiva il microfono"
 
-#: src\app.rs:1115 src\main.rs:63
+#: src\app.rs:1133 src\main.rs:63
 msgid "Mute Microphone"
 msgstr "Disattiva il microfono"
 
-#: src\app.rs:1119
+#: src\app.rs:1137
 msgid "CordFast — {count} mention"
 msgid_plural "CordFast — {count} mentions"
 msgstr[0] "CordFast — {count} menzione"
 msgstr[1] "CordFast — {count} menzioni"
 
-#: src\app.rs:1124 src\main.rs:62
+#: src\app.rs:1142 src\main.rs:62
 msgid "Open CordFast"
 msgstr "Apri CordFast"
 
-#: src\app.rs:1125 src\main.rs:65
+#: src\app.rs:1143 src\main.rs:65
 msgid "Quit CordFast"
 msgstr "Esci da CordFast"
 
-#: src\app.rs:1178
+#: src\app.rs:1196
 msgid "Message not sent: {error}"
 msgstr "Messaggio non inviato: {error}"
 
-#: src\app.rs:1284 src\sounds.rs:34
+#: src\app.rs:1311 src\sounds.rs:34
 msgid "Voice Disconnected"
 msgstr "Voce disconnessa"
 
-#: src\app.rs:1367
+#: src\app.rs:1394
 msgid "The session expired. Log in again."
 msgstr "La sessione è scaduta. Accedi di nuovo."
 
-#: src\app.rs:1463
+#: src\app.rs:1490
 msgid "Server"
 msgstr "Server"
 
-#: src\app.rs:1463
+#: src\app.rs:1490
 msgid "You are no longer in {name}"
 msgstr "Non sei più in {name}"
 
-#: src\app.rs:1511
+#: src\app.rs:1538
 msgid "The application did not respond."
 msgstr "L'applicazione non ha risposto."
 
-#: src\app.rs:1610
+#: src\app.rs:1637
 msgid "Friendship"
 msgstr "Amicizia"
 
-#: src\app.rs:1610
+#: src\app.rs:1637
 msgid "{name} is no longer your friend"
 msgstr "{name} non è più tuo amico"
 
-#: src\app.rs:1701 src\ui\guild.rs:987 src\ui\guild.rs:1266 src\ui\mod.rs:2021
+#: src\app.rs:1728 src\ui\guild.rs:987 src\ui\guild.rs:1266 src\ui\mod.rs:2021
 msgid "Someone"
 msgstr "Qualcuno"
 
-#: src\app.rs:1703
+#: src\app.rs:1730
 msgid "Incoming Call"
 msgstr "Chiamata in arrivo"
 
-#: src\app.rs:1703
+#: src\app.rs:1730
 msgid "{name} is calling you"
 msgstr "{name} ti sta chiamando"
 
-#: src\app.rs:2050
+#: src\app.rs:2077
 msgid "Discord asked for a captcha: opening the invite in the browser."
 msgstr "Discord ha chiesto un captcha: apro l'invito nel browser."
 
-#: src\app.rs:2073
+#: src\app.rs:2100
 msgid "This server has no public profile."
 msgstr "Questo server non ha un profilo pubblico."
 
-#: src\app.rs:2088
+#: src\app.rs:2115
 msgid "Discord is still indexing this channel. Try again in a moment."
 msgstr "Discord sta ancora indicizzando questo canale. Riprova tra un momento."
 
-#: src\app.rs:2103 src\app.rs:2202
+#: src\app.rs:2130 src\app.rs:2229
 msgid "the server"
 msgstr "il server"
 
-#: src\app.rs:2104 src\app.rs:2203
+#: src\app.rs:2131 src\app.rs:2230
 msgid "You joined {name}."
 msgstr "Sei entrato in {name}."
 
-#: src\app.rs:2108
+#: src\app.rs:2135
 msgid "Server created."
 msgstr "Server creato."
 
-#: src\app.rs:2174
+#: src\app.rs:2201
 msgid "Invite copied: discord.gg/{code}"
 msgstr "Invito copiato: discord.gg/{code}"
 
-#: src\app.rs:2178
+#: src\app.rs:2205
 msgid "Profile saved."
 msgstr "Profilo salvato."
 
-#: src\app.rs:2179
+#: src\app.rs:2206
 msgid "Member kicked."
 msgstr "Membro espulso."
 
-#: src\app.rs:2180 src\ui\guild.rs:915
+#: src\app.rs:2207 src\ui\guild.rs:915
 msgid "Member timed out."
 msgstr "Membro in timeout."
 
-#: src\app.rs:2181
+#: src\app.rs:2208
 msgid "Member banned."
 msgstr "Membro bandito."
 
-#: src\app.rs:2182
+#: src\app.rs:2209
 msgid "Nickname changed."
 msgstr "Nickname cambiato."
 
-#: src\app.rs:2183
+#: src\app.rs:2210
 msgid "Note saved."
 msgstr "Nota salvata."
 
-#: src\app.rs:2198
+#: src\app.rs:2225
 msgid "Image saved to {path}"
 msgstr "Immagine salvata in {path}"
 
-#: src\app.rs:2200
+#: src\app.rs:2227
 msgid "Image copied."
 msgstr "Immagine copiata."
 
-#: src\app.rs:2406 src\app.rs:2413
+#: src\app.rs:2433 src\app.rs:2440
 msgid "New message"
 msgstr "Nuovo messaggio"
 
-#: src\app.rs:2411
+#: src\app.rs:2438
 msgid "Attachment"
 msgstr "Allegato"
 
-#: src\app.rs:2733
+#: src\app.rs:2760
 msgid "Fill in the email and the password."
 msgstr "Inserisci l'e-mail e la password."
 
-#: src\app.rs:2839
+#: src\app.rs:2866
 msgid "Open a conversation with them before calling."
 msgstr "Apri una conversazione con questa persona prima di chiamare."
 
-#: src\app.rs:2852
+#: src\app.rs:2879
 msgid "Looks like you're in another voice channel. Are you sure you want to switch to {channel}?"
 msgstr "Sembra che tu sia in un altro canale vocale. Vuoi davvero passare a {channel}?"
 
-#: src\app.rs:2853
+#: src\app.rs:2880
 msgid "You sure?"
 msgstr "Confermi?"
 
-#: src\app.rs:2853 src\ui\mod.rs:274
+#: src\app.rs:2880 src\ui\mod.rs:274
 msgid "Confirm"
 msgstr "Conferma"
 
-#: src\app.rs:2955
+#: src\app.rs:2982
 msgid "Upload Files"
 msgstr "Carica file"
 
-#: src\app.rs:3126
+#: src\app.rs:3153
 msgid "Couldn't update: {error}"
 msgstr "Impossibile aggiornare: {error}"
 
-#: src\backend.rs:483 src\discord\rpc.rs:221
+#: src\backend.rs:484 src\discord\rpc.rs:222
 msgid "Game"
 msgstr "Gioco"
 
-#: src\backend.rs:615
+#: src\backend.rs:616
 msgid "This account needs to log in again."
 msgstr "Questo account deve accedere di nuovo."
 
-#: src\backend.rs:710 src\backend.rs:721
+#: src\backend.rs:711 src\backend.rs:722
 msgid "The interaction failed: {error}"
 msgstr "L'interazione non è riuscita: {error}"
 
-#: src\backend.rs:732 src\backend.rs:754
+#: src\backend.rs:733 src\backend.rs:755
 msgid "Couldn't save the status: {error}"
 msgstr "Impossibile salvare lo stato: {error}"
 
-#: src\backend.rs:742
+#: src\backend.rs:743
 msgid "Couldn't save the setting: {error}"
-msgstr ""
+msgstr "Impossibile salvare l'impostazione: {error}"
 
-#: src\backend.rs:817
+#: src\backend.rs:818
 msgid "Couldn't edit the message"
 msgstr "Impossibile modificare il messaggio"
 
-#: src\backend.rs:822
+#: src\backend.rs:823
 msgid "Couldn't delete the message"
 msgstr "Impossibile eliminare il messaggio"
 
-#: src\backend.rs:827
+#: src\backend.rs:828
 msgid "Couldn't react"
 msgstr "Impossibile reagire"
 
-#: src\backend.rs:837
+#: src\backend.rs:838
 msgid "Couldn't mark as read"
 msgstr "Impossibile segnare come letto"
 
-#: src\backend.rs:853
+#: src\backend.rs:854
 msgid "Couldn't open the conversation"
 msgstr "Impossibile aprire la conversazione"
 
-#: src\backend.rs:857
+#: src\backend.rs:858
 msgid "Couldn't load the forum"
 msgstr "Impossibile caricare il forum"
 
-#: src\backend.rs:864
+#: src\backend.rs:865
 msgid "Friend request sent to {name}."
 msgstr "Richiesta di amicizia inviata a {name}."
 
-#: src\backend.rs:865
+#: src\backend.rs:866
 msgid "Couldn't send the request"
 msgstr "Impossibile inviare la richiesta"
 
-#: src\backend.rs:869
+#: src\backend.rs:870
 msgid "Couldn't finish"
 msgstr "Impossibile completare"
 
-#: src\backend.rs:874
+#: src\backend.rs:875
 msgid "Couldn't mute"
 msgstr "Impossibile silenziare"
 
-#: src\backend.rs:879
+#: src\backend.rs:880
 msgid "Couldn't change the notifications"
 msgstr "Impossibile cambiare le notifiche"
 
-#: src\backend.rs:884
+#: src\backend.rs:885
 msgid "Couldn't close the conversation"
 msgstr "Impossibile chiudere la conversazione"
 
-#: src\backend.rs:889
+#: src\backend.rs:890
 msgid "Couldn't leave the server"
 msgstr "Impossibile lasciare il server"
 
-#: src\backend.rs:901
+#: src\backend.rs:902
 msgid "Couldn't change the region"
 msgstr "Impossibile cambiare regione"
 
@@ -767,7 +767,7 @@ msgstr "Sta guardando {name}"
 msgid "Competing in {name}"
 msgstr "In gara su {name}"
 
-#: src\discord\gateway.rs:242
+#: src\discord\gateway.rs:242 src\ui\settings.rs:1158 src\ui\settings.rs:1173
 msgid "Playing"
 msgstr "Sta giocando"
 
@@ -867,205 +867,229 @@ msgstr "Russo"
 msgid "Japanese"
 msgstr "Giapponese"
 
-#: src\keybinds.rs:51
+#: src\keybinds.rs:57
 msgid "Toggle Mute"
 msgstr "Attiva/disattiva microfono"
 
-#: src\keybinds.rs:52
+#: src\keybinds.rs:58
 msgid "Toggle Deafen"
 msgstr "Attiva/disattiva audio"
 
-#: src\keybinds.rs:53
+#: src\keybinds.rs:59
 msgid "Return to Connected Voice Channel"
 msgstr "Torna al canale vocale connesso"
 
-#: src\keybinds.rs:54
+#: src\keybinds.rs:60
+msgid "Navigate to current call"
+msgstr "Vai alla chiamata attuale"
+
+#: src\keybinds.rs:61
 msgid "Answer Incoming Call"
 msgstr "Rispondi alla chiamata in arrivo"
 
-#: src\keybinds.rs:55
+#: src\keybinds.rs:62
 msgid "Start Call in Conversation"
 msgstr "Avvia una chiamata nella conversazione"
 
-#: src\keybinds.rs:56
+#: src\keybinds.rs:63
 msgid "Quick Switcher"
 msgstr "Selettore rapido"
 
-#: src\keybinds.rs:57
+#: src\keybinds.rs:64
 msgid "Navigate Back"
 msgstr "Vai indietro"
 
-#: src\keybinds.rs:58
+#: src\keybinds.rs:65
 msgid "Navigate Forward"
 msgstr "Vai avanti"
 
-#: src\keybinds.rs:59
+#: src\keybinds.rs:66
 msgid "Previous Server"
 msgstr "Server precedente"
 
-#: src\keybinds.rs:60
+#: src\keybinds.rs:67
 msgid "Next Server"
 msgstr "Server successivo"
 
-#: src\keybinds.rs:61
+#: src\keybinds.rs:68
 msgid "Toggle Between Last Server and DMs"
 msgstr "Passa tra l'ultimo server e i messaggi diretti"
 
-#: src\keybinds.rs:62
+#: src\keybinds.rs:69
 msgid "Previous Channel"
 msgstr "Canale precedente"
 
-#: src\keybinds.rs:63
+#: src\keybinds.rs:70
 msgid "Next Channel"
 msgstr "Canale successivo"
 
-#: src\keybinds.rs:64
+#: src\keybinds.rs:71
 msgid "Previous Unread Channel"
 msgstr "Canale non letto precedente"
 
-#: src\keybinds.rs:65
+#: src\keybinds.rs:72
 msgid "Next Unread Channel"
 msgstr "Canale non letto successivo"
 
-#: src\keybinds.rs:66
+#: src\keybinds.rs:73
 msgid "Previous Channel with Mentions"
 msgstr "Canale precedente con menzioni"
 
-#: src\keybinds.rs:67
+#: src\keybinds.rs:74
 msgid "Next Channel with Mentions"
 msgstr "Canale successivo con menzioni"
 
-#: src\keybinds.rs:68
+#: src\keybinds.rs:75
 msgid "Jump to Oldest Unread Message"
 msgstr "Vai al messaggio non letto più vecchio"
 
-#: src\keybinds.rs:69 src\ui\chat.rs:122 src\ui\chat.rs:1937
+#: src\keybinds.rs:76 src\ui\chat.rs:122 src\ui\chat.rs:1937
 msgid "Pinned Messages"
 msgstr "Messaggi fissati"
 
-#: src\keybinds.rs:70 src\ui\titlebar.rs:81 src\ui\titlebar.rs:219
+#: src\keybinds.rs:77 src\ui\titlebar.rs:81 src\ui\titlebar.rs:219
 msgid "Inbox"
 msgstr "Posta in arrivo"
 
-#: src\keybinds.rs:71
+#: src\keybinds.rs:78
 msgid "Member List"
 msgstr "Elenco dei membri"
 
-#: src\keybinds.rs:72 src\ui\chat.rs:116 src\ui\chat.rs:1938 src\ui\chat.rs:2073
+#: src\keybinds.rs:79 src\ui\chat.rs:116 src\ui\chat.rs:1938 src\ui\chat.rs:2073
 msgid "Search"
 msgstr "Cerca"
 
-#: src\keybinds.rs:73
+#: src\keybinds.rs:80
 msgid "Emoji Picker"
 msgstr "Selettore emoji"
 
-#: src\keybinds.rs:74
+#: src\keybinds.rs:81
 msgid "GIF Picker"
 msgstr "Selettore GIF"
 
-#: src\keybinds.rs:75
+#: src\keybinds.rs:82
 msgid "Sticker Picker"
 msgstr "Selettore sticker"
 
-#: src\keybinds.rs:76
+#: src\keybinds.rs:83
 msgid "Upload a File"
 msgstr "Carica un file"
 
-#: src\keybinds.rs:77
+#: src\keybinds.rs:84
 msgid "Create or Join a Server"
 msgstr "Crea o unisciti a un server"
 
-#: src\keybinds.rs:78
+#: src\keybinds.rs:85
 msgid "Create a Private Group"
 msgstr "Crea un gruppo privato"
 
-#: src\keybinds.rs:79 src\ui\titlebar.rs:74
+#: src\keybinds.rs:86 src\ui\titlebar.rs:74
 msgid "Help"
 msgstr "Aiuto"
 
-#: src\keybinds.rs:80
+#: src\keybinds.rs:87
 msgid "Keyboard Shortcuts"
 msgstr "Scorciatoie da tastiera"
 
-#: src\keybinds.rs:85
+#: src\keybinds.rs:88
+msgid "Copy channel link"
+msgstr "Copia il link del canale"
+
+#: src\keybinds.rs:89
+msgid "Collapse or Expand All Categories"
+msgstr "Comprimi o espandi tutte le categorie"
+
+#: src\keybinds.rs:90 src\ui\chat.rs:1241
+msgid "Zoom In"
+msgstr "Aumenta zoom"
+
+#: src\keybinds.rs:91 src\ui\chat.rs:1241
+msgid "Zoom Out"
+msgstr "Riduci zoom"
+
+#: src\keybinds.rs:92
+msgid "Reset Zoom"
+msgstr "Reimposta zoom"
+
+#: src\keybinds.rs:97
 msgid "Voice and Calls"
 msgstr "Voce e chiamate"
 
-#: src\keybinds.rs:87
+#: src\keybinds.rs:99
 msgid "Navigation"
 msgstr "Navigazione"
 
-#: src\keybinds.rs:104
+#: src\keybinds.rs:117
 msgid "Chat and Panels"
 msgstr "Chat e pannelli"
 
-#: src\keybinds.rs:105
+#: src\keybinds.rs:118
 msgid "Other"
 msgstr "Altro"
 
-#: src\keybinds.rs:110
+#: src\keybinds.rs:123
 msgid "Send Message"
 msgstr "Invia messaggio"
 
-#: src\keybinds.rs:111
+#: src\keybinds.rs:124
 msgid "New Line"
 msgstr "Nuova riga"
 
-#: src\keybinds.rs:112
+#: src\keybinds.rs:125
 msgid "Edit Your Last Message (empty box)"
 msgstr "Modifica il tuo ultimo messaggio (casella vuota)"
 
-#: src\keybinds.rs:113
+#: src\keybinds.rs:126
 msgid "Mark Channel as Read, Cancel a Reply or Decline a Call"
 msgstr "Segna il canale come letto, annulla una risposta o rifiuta una chiamata"
 
-#: src\keybinds.rs:114
+#: src\keybinds.rs:127
 msgid "Mark Server as Read"
 msgstr "Segna il server come letto"
 
-#: src\keybinds.rs:115
+#: src\keybinds.rs:128
 msgid "Paste Text or Image"
 msgstr "Incolla testo o immagine"
 
-#: src\keybinds.rs:116
+#: src\keybinds.rs:129
 msgid "Mouse Side Buttons"
 msgstr "Tasti laterali del mouse"
 
-#: src\keybinds.rs:116
+#: src\keybinds.rs:129
 msgid "Back and Forward"
 msgstr "Indietro e avanti"
 
-#: src\main.rs:97
+#: src\main.rs:98
 msgid "The update did not start; the previous version was restored."
 msgstr "L'aggiornamento non è partito; è stata ripristinata la versione precedente."
 
 #: src\plugins.rs:87
 msgid "Extract components that have been concatenated by the bundler"
-msgstr ""
+msgstr "Estrae i componenti concatenati dal bundler"
 
 #: src\plugins.rs:88
 msgid "Disables Discord's stupid deep linking feature which tries to force you to use their Desktop App"
-msgstr ""
+msgstr "Disattiva i deep link di Discord che cercano di costringerti a usare l'app desktop"
 
 #: src\plugins.rs:89
 msgid "Fixes Discord's css lag"
-msgstr ""
+msgstr "Corregge il ritardo del CSS di Discord"
 
 #: src\plugins.rs:90
 msgid "Adds Settings UI and debug info"
-msgstr ""
+msgstr "Aggiunge l'interfaccia delle impostazioni e le informazioni di debug"
 
 #: src\plugins.rs:91
 msgid "Helps us provide support to you"
-msgstr ""
+msgstr "Ci aiuta a darti supporto"
 
 #: src\plugins.rs:92
 msgid "Re-adds context menus missing in the web version of Discord: Links & Images (Copy/Open Link/Image), Text Area (Copy, Cut, Paste, SpellCheck)"
-msgstr ""
+msgstr "Ripristina i menu contestuali assenti nella versione web di Discord: link e immagini (copia/apri link/immagine), area di testo (copia, taglia, incolla, ortografia)"
 
 #: src\plugins.rs:96
 msgid "Disable Discord's tracking (analytics/'science'), metrics and Sentry crash reporting"
-msgstr ""
+msgstr "Disattiva il tracciamento di Discord (analytics/'science'), le metriche e i report di crash di Sentry"
 
 #: src\plugins.rs:102
 msgid "Keeps deleted messages (in red) and the earlier text of edited ones."
@@ -1717,14 +1741,6 @@ msgstr "Modifica allegato"
 #: src\ui\chat.rs:1063
 msgid "Remove Attachment"
 msgstr "Rimuovi allegato"
-
-#: src\ui\chat.rs:1241
-msgid "Zoom Out"
-msgstr "Riduci zoom"
-
-#: src\ui\chat.rs:1241
-msgid "Zoom In"
-msgstr "Aumenta zoom"
 
 #: src\ui\chat.rs:1243
 msgid "Save Image"
@@ -2436,7 +2452,7 @@ msgstr "Di cosa parla il tuo server?"
 msgid "Change\nIcon"
 msgstr "Cambia\nicona"
 
-#: src\ui\guild.rs:284 src\ui\settings.rs:1202
+#: src\ui\guild.rs:284 src\ui\settings.rs:1216
 msgid "Remove"
 msgstr "Rimuovi"
 
@@ -2692,7 +2708,7 @@ msgstr "Fai sapere a tutti come utilizzare questo canale!"
 msgid "Slowmode"
 msgstr "Modalità lenta"
 
-#: src\ui\guild.rs:759 src\ui\settings.rs:1178
+#: src\ui\guild.rs:759 src\ui\settings.rs:1192
 msgid "Off"
 msgstr "Disattivata"
 
@@ -2800,7 +2816,7 @@ msgstr "Vuoi davvero bandire @{name}? Non potrà tornare nel server finché il b
 msgid "Ban"
 msgstr "Bandisci"
 
-#: src\ui\guild.rs:942 src\ui\menu.rs:410 src\ui\mod.rs:2450
+#: src\ui\guild.rs:942 src\ui\menu.rs:410 src\ui\mod.rs:2484
 msgid "Copy User ID"
 msgstr "Copia ID utente"
 
@@ -2844,7 +2860,7 @@ msgstr "Mai"
 msgid "Copy Link"
 msgstr "Copia link"
 
-#: src\ui\guild.rs:1000
+#: src\ui\guild.rs:1000 src\ui\mod.rs:2164
 msgid "Link copied"
 msgstr "Link copiato"
 
@@ -3002,11 +3018,11 @@ msgstr "Ruoli collegati"
 msgid "unknown-channel"
 msgstr "canale-sconosciuto"
 
-#: src\ui\menu.rs:136 src\ui\mod.rs:2351
+#: src\ui\menu.rs:136 src\ui\mod.rs:2385
 msgid "For 15 Minutes"
 msgstr "Per 15 minuti"
 
-#: src\ui\menu.rs:137 src\ui\mod.rs:2352
+#: src\ui\menu.rs:137 src\ui\mod.rs:2386
 msgid "For 1 Hour"
 msgstr "Per 1 ora"
 
@@ -3014,11 +3030,11 @@ msgstr "Per 1 ora"
 msgid "For 3 Hours"
 msgstr "Per 3 ore"
 
-#: src\ui\menu.rs:139 src\ui\mod.rs:2353
+#: src\ui\menu.rs:139 src\ui\mod.rs:2387
 msgid "For 8 Hours"
 msgstr "Per 8 ore"
 
-#: src\ui\menu.rs:140 src\ui\mod.rs:2354
+#: src\ui\menu.rs:140 src\ui\mod.rs:2388
 msgid "For 24 Hours"
 msgstr "Per 24 ore"
 
@@ -3613,47 +3629,47 @@ msgstr "Dove vorresti andare?"
 msgid "Channel, server or conversation"
 msgstr "Canale, server o conversazione"
 
-#: src\ui\mod.rs:2285
+#: src\ui\mod.rs:2319
 msgid "Update ready ({version}): restart"
 msgstr "Aggiornamento pronto ({version}): riavvia"
 
-#: src\ui\mod.rs:2286
+#: src\ui\mod.rs:2320
 msgid "Downloading version {version}: {percent}%"
 msgstr "Download della versione {version}: {percent}%"
 
-#: src\ui\mod.rs:2355
+#: src\ui\mod.rs:2389
 msgid "For 3 Days"
 msgstr "Per 3 giorni"
 
-#: src\ui\mod.rs:2356
+#: src\ui\mod.rs:2390
 msgid "Forever"
 msgstr "Per sempre"
 
-#: src\ui\mod.rs:2387
+#: src\ui\mod.rs:2421
 msgid "You will not receive desktop notifications"
 msgstr "Non riceverai notifiche sul desktop"
 
-#: src\ui\mod.rs:2388
+#: src\ui\mod.rs:2422
 msgid "You will not appear online, but will have full access to Discord"
 msgstr "Non apparirai online, ma avrai pieno accesso a Discord"
 
-#: src\ui\mod.rs:2410
+#: src\ui\mod.rs:2444
 msgid "Switch Accounts"
 msgstr "Cambia account"
 
-#: src\ui\mod.rs:2434
+#: src\ui\mod.rs:2468
 msgid "Remove From This List"
 msgstr "Rimuovi da questo elenco"
 
-#: src\ui\mod.rs:2441
+#: src\ui\mod.rs:2475
 msgid "Add an Account"
 msgstr "Aggiungi un account"
 
-#: src\ui\mod.rs:2445
+#: src\ui\mod.rs:2479
 msgid "Log Out of This Account"
 msgstr "Esci da questo account"
 
-#: src\ui\mod.rs:2452
+#: src\ui\mod.rs:2486
 msgid "ID copied"
 msgstr "ID copiato"
 
@@ -3693,7 +3709,7 @@ msgstr "Vai al server"
 msgid "Friends Since"
 msgstr "Amici dal"
 
-#: src\ui\profile.rs:584 src\ui\settings.rs:1193
+#: src\ui\profile.rs:584 src\ui\settings.rs:1207
 msgid "Connections"
 msgstr "Collegamenti"
 
@@ -3799,11 +3815,11 @@ msgstr "Cambia password"
 
 #: src\ui\settings.rs:329
 msgid "Enabled"
-msgstr ""
+msgstr "Attivato"
 
 #: src\ui\settings.rs:329
 msgid "Disabled"
-msgstr ""
+msgstr "Disattivato"
 
 #: src\ui\settings.rs:330
 msgid "Manage"
@@ -3831,7 +3847,7 @@ msgstr "Stato dell'account"
 
 #: src\ui\settings.rs:356 src\ui\settings.rs:361 src\ui\settings.rs:756
 msgid "Open"
-msgstr ""
+msgstr "Apri"
 
 #: src\ui\settings.rs:360 src\ui\settings.rs:361
 msgid "Family Center"
@@ -3883,15 +3899,15 @@ msgstr "Permetti a Discord di utilizzare le tue informazioni per migliorare il s
 
 #: src\ui\settings.rs:384
 msgid "Allow Discord to use and process my information to understand and improve Discord’s services."
-msgstr ""
+msgstr "Consenti a Discord di usare ed elaborare le mie informazioni per capire e migliorare i suoi servizi."
 
 #: src\ui\settings.rs:385
 msgid "Use data to customize my Discord experience"
-msgstr ""
+msgstr "Usa i dati per personalizzare la mia esperienza su Discord"
 
 #: src\ui\settings.rs:385
 msgid "Allow Discord to use and process my information to customize my Discord experience."
-msgstr ""
+msgstr "Consenti a Discord di usare ed elaborare le mie informazioni per personalizzare la mia esperienza."
 
 #: src\ui\settings.rs:398
 msgid "Request my data"
@@ -3899,7 +3915,7 @@ msgstr "Richiedi i miei dati"
 
 #: src\ui\settings.rs:398
 msgid "Get a copy of the data Discord has about you. It can take up to 30 days to arrive by email."
-msgstr ""
+msgstr "Ricevi una copia dei dati che Discord ha su di te. Può impiegare fino a 30 giorni per arrivare via email."
 
 #: src\ui\settings.rs:398
 msgid "Request Data"
@@ -3943,7 +3959,7 @@ msgstr "Il tuo profilo completo è visibile agli amici. Chiunque altro ne vede u
 
 #: src\ui\settings.rs:411
 msgid "Share my profile updates with friends"
-msgstr ""
+msgstr "Condividi gli aggiornamenti del mio profilo con gli amici"
 
 #: src\ui\settings.rs:416 src\ui\settings.rs:28
 msgid "Messaging Permissions"
@@ -4047,7 +4063,7 @@ msgstr "Sei tu ad avere il controllo. Per confrontare le opzioni a tua disposizi
 
 #: src\ui\settings.rs:454
 msgid "You haven't blocked anyone."
-msgstr ""
+msgstr "Non hai bloccato nessuno."
 
 #: src\ui\settings.rs:480 src\ui\settings.rs:29
 msgid "Notifications"
@@ -4123,7 +4139,7 @@ msgstr "Clip"
 
 #: src\ui\settings.rs:510
 msgid "Clipping needs screen sharing, which isn't in CordFast yet."
-msgstr ""
+msgstr "Le clip richiedono la condivisione dello schermo, che CordFast non ha ancora."
 
 #: src\ui\settings.rs:511
 msgid "Clipping"
@@ -4131,7 +4147,7 @@ msgstr "Creazione di clip"
 
 #: src\ui\settings.rs:511
 msgid "Clip any fun or amazing gaming moments by saving them directly to your computer."
-msgstr ""
+msgstr "Salva i momenti di gioco divertenti o incredibili direttamente sul tuo computer."
 
 #: src\ui\settings.rs:513
 msgid "Enable Clipping"
@@ -4151,19 +4167,19 @@ msgstr "Nitro Basic"
 
 #: src\ui\settings.rs:536
 msgid "Your subscription is managed on Discord."
-msgstr ""
+msgstr "Il tuo abbonamento si gestisce su Discord."
 
 #: src\ui\settings.rs:539
 msgid "You don't have Nitro"
-msgstr ""
+msgstr "Non hai Nitro"
 
 #: src\ui\settings.rs:540
 msgid "CordFast shows your plan but sells nothing: subscriptions are made on Discord."
-msgstr ""
+msgstr "CordFast mostra il tuo piano ma non vende nulla: gli abbonamenti si fanno su Discord."
 
 #: src\ui\settings.rs:545
 msgid "Open on Discord"
-msgstr ""
+msgstr "Apri su Discord"
 
 #: src\ui\settings.rs:551 src\ui\settings.rs:34
 msgid "Server Boost"
@@ -4171,11 +4187,11 @@ msgstr "Potenziamento server"
 
 #: src\ui\settings.rs:553
 msgid "Your Boosts"
-msgstr ""
+msgstr "I tuoi potenziamenti"
 
 #: src\ui\settings.rs:555
 msgid "You don't have any Boosts."
-msgstr ""
+msgstr "Non hai potenziamenti."
 
 #: src\ui\settings.rs:559
 msgid "Unused Boost"
@@ -4183,7 +4199,7 @@ msgstr "Potenziamento inutilizzato"
 
 #: src\ui\settings.rs:561
 msgid "Cooldown ends {when}"
-msgstr ""
+msgstr "Il periodo di attesa termina {when}"
 
 #: src\ui\settings.rs:568 src\ui\settings.rs:35
 msgid "Subscriptions"
@@ -4191,15 +4207,15 @@ msgstr "Abbonamenti"
 
 #: src\ui\settings.rs:571
 msgid "You don't have any subscriptions."
-msgstr ""
+msgstr "Non hai abbonamenti."
 
 #: src\ui\settings.rs:577
 msgid "Ends {when}"
-msgstr ""
+msgstr "Termina {when}"
 
 #: src\ui\settings.rs:577
 msgid "Renews {when}"
-msgstr ""
+msgstr "Si rinnova {when}"
 
 #: src\ui\settings.rs:578
 msgid "Plan"
@@ -4211,11 +4227,11 @@ msgstr "Inventario regali"
 
 #: src\ui\settings.rs:587
 msgid "You don't have any gifts."
-msgstr ""
+msgstr "Non hai regali."
 
 #: src\ui\settings.rs:592
 msgid "Gift"
-msgstr ""
+msgstr "Regalo"
 
 #: src\ui\settings.rs:597 src\ui\settings.rs:32 src\ui\settings.rs:37
 msgid "Billing"
@@ -4227,7 +4243,7 @@ msgstr "Metodi di pagamento"
 
 #: src\ui\settings.rs:601
 msgid "You don't have any payment methods."
-msgstr ""
+msgstr "Non hai metodi di pagamento."
 
 #: src\ui\settings.rs:607
 msgid "Expires {date}"
@@ -4239,7 +4255,7 @@ msgstr "Cronologia transazioni"
 
 #: src\ui\settings.rs:616
 msgid "No transactions yet."
-msgstr ""
+msgstr "Ancora nessuna transazione."
 
 #: src\ui\settings.rs:632 src\ui\settings.rs:40
 msgid "Voice & Video"
@@ -4251,7 +4267,7 @@ msgstr "Microfono"
 
 #: src\ui\settings.rs:647
 msgid "Speaker"
-msgstr ""
+msgstr "Altoparlante"
 
 #: src\ui\settings.rs:651
 msgid "Microphone Volume"
@@ -4319,7 +4335,7 @@ msgstr "La finestra dell'anteprima appare ogni volta che attivi il video"
 
 #: src\ui\settings.rs:713
 msgid "Streaming"
-msgstr ""
+msgstr "Streaming"
 
 #: src\ui\settings.rs:714
 msgid "Show Stream Previews"
@@ -4359,7 +4375,7 @@ msgstr "Registrazione… {seconds} s"
 
 #: src\ui\settings.rs:749
 msgid "Diagnostic audio recording is used for analyzing audio problems. The last 20 seconds of the call are saved beside the logs."
-msgstr ""
+msgstr "La registrazione audio di diagnostica serve ad analizzare i problemi audio. Gli ultimi 20 secondi della chiamata vengono salvati accanto ai log."
 
 #: src\ui\settings.rs:751
 msgid "Diagnostic Audio Recording"
@@ -4443,11 +4459,11 @@ msgstr "Personalizza"
 
 #: src\ui\settings.rs:866
 msgid "Make any theme your own: change its colors and save it as a new theme."
-msgstr ""
+msgstr "Rendi tuo qualsiasi tema: cambiane i colori e salvalo come nuovo tema."
 
 #: src\ui\settings.rs:868
 msgid "Use My Own Accent Color"
-msgstr ""
+msgstr "Usa il mio colore di accento"
 
 #: src\ui\settings.rs:890
 msgid "Messages"
@@ -4531,11 +4547,11 @@ msgstr "Mostra il pulsante degli adesivi"
 
 #: src\ui\settings.rs:922
 msgid "Server List"
-msgstr ""
+msgstr "Elenco server"
 
 #: src\ui\settings.rs:923
 msgid "Channel List"
-msgstr ""
+msgstr "Elenco canali"
 
 #: src\ui\settings.rs:924
 msgid "Chat"
@@ -4543,11 +4559,11 @@ msgstr "Chat"
 
 #: src\ui\settings.rs:925
 msgid "Message Box"
-msgstr ""
+msgstr "Casella del messaggio"
 
 #: src\ui\settings.rs:926
 msgid "Hover"
-msgstr ""
+msgstr "Al passaggio"
 
 #: src\ui\settings.rs:927
 msgid "Selected"
@@ -4555,11 +4571,11 @@ msgstr "Selezionati"
 
 #: src\ui\settings.rs:929
 msgid "Headings"
-msgstr ""
+msgstr "Titoli"
 
 #: src\ui\settings.rs:930
 msgid "Muted Text"
-msgstr ""
+msgstr "Testo attenuato"
 
 #: src\ui\settings.rs:931
 msgid "Accent"
@@ -4575,19 +4591,19 @@ msgstr "Menzioni"
 
 #: src\ui\settings.rs:934
 msgid "Borders"
-msgstr ""
+msgstr "Bordi"
 
 #: src\ui\settings.rs:948
 msgid "Theme name"
-msgstr ""
+msgstr "Nome del tema"
 
 #: src\ui\settings.rs:949
 msgid "Save as New Theme"
-msgstr ""
+msgstr "Salva come nuovo tema"
 
 #: src\ui\settings.rs:954
 msgid "Theme saved."
-msgstr ""
+msgstr "Tema salvato."
 
 #: src\ui\settings.rs:992 src\ui\settings.rs:42
 msgid "Accessibility"
@@ -4777,187 +4793,195 @@ msgstr "Giochi registrati"
 msgid "Current Game"
 msgstr "Gioco attuale"
 
-#: src\ui\settings.rs:1158
-msgid "Now: Playing {game}"
-msgstr "Ora: sta giocando a {game}"
-
-#: src\ui\settings.rs:1160
+#: src\ui\settings.rs:1161 src\ui\settings.rs:1177
 msgid "No game detected"
 msgstr "Nessun gioco rilevato"
 
-#: src\ui\settings.rs:1164 src\ui\settings.rs:1172
+#: src\ui\settings.rs:1161
+msgid "What are you playing?!"
+msgstr "A cosa stai giocando?!"
+
+#: src\ui\settings.rs:1166 src\ui\settings.rs:1186
 msgid "Share my activity"
 msgstr "Condividere la mia attività"
 
-#: src\ui\settings.rs:1164
+#: src\ui\settings.rs:1166
 msgid "Games found running and apps that report through Discord's local pipe, as rich presence."
-msgstr ""
+msgstr "I giochi in esecuzione e le app che comunicano tramite la pipe locale di Discord, come rich presence."
 
-#: src\ui\settings.rs:1170 src\ui\settings.rs:48
+#: src\ui\settings.rs:1169
+msgid "Added Games"
+msgstr "Giochi aggiunti"
+
+#: src\ui\settings.rs:1173
+msgid "Last played {when}"
+msgstr "Ultimo avvio: {when}"
+
+#: src\ui\settings.rs:1184 src\ui\settings.rs:48
 msgid "Activity Privacy"
 msgstr "Privacy attività"
 
-#: src\ui\settings.rs:1171
+#: src\ui\settings.rs:1185
 msgid "What Activity I Share"
 msgstr "Quali attività condivido"
 
-#: src\ui\settings.rs:1172
+#: src\ui\settings.rs:1186
 msgid "Show the game or app you're using as your status."
-msgstr ""
+msgstr "Mostra il gioco o l'app che stai usando come stato."
 
-#: src\ui\settings.rs:1173
+#: src\ui\settings.rs:1187
 msgid "Share when I come online"
 msgstr "Condividi quando sono online"
 
-#: src\ui\settings.rs:1173
+#: src\ui\settings.rs:1187
 msgid "Allow friends to receive a push notification when you come online."
 msgstr "Permetti agli amici di ricevere una notifica push quando sei online."
 
-#: src\ui\settings.rs:1174
+#: src\ui\settings.rs:1188
 msgid "Share when I start streaming"
 msgstr "Condividi quando faccio streaming"
 
-#: src\ui\settings.rs:1174
+#: src\ui\settings.rs:1188
 msgid "Allow members that you interact with the most to get a notification when you start streaming in small servers."
 msgstr "Consenti ai membri con cui interagisci di più di ricevere una notifica quando inizi a fare streaming in server di dimensioni ridotte."
 
-#: src\ui\settings.rs:1176
+#: src\ui\settings.rs:1190
 msgid "Where I Share Activity"
 msgstr "Dove condivido l'attività"
 
-#: src\ui\settings.rs:1177
+#: src\ui\settings.rs:1191
 msgid "Automatically share my activity when joining a server"
 msgstr "Condividi automaticamente la mia attività quando mi unisco a un server"
 
-#: src\ui\settings.rs:1177
+#: src\ui\settings.rs:1191
 msgid "Your activity is always shared with your friends."
 msgstr "La tua attività viene sempre condivisa con gli amici."
 
-#: src\ui\settings.rs:1178
+#: src\ui\settings.rs:1192
 msgid "On for large servers"
-msgstr ""
+msgstr "Attivo nei server grandi"
 
-#: src\ui\settings.rs:1178
+#: src\ui\settings.rs:1192
 msgid "On"
-msgstr ""
+msgstr "Attivo"
 
-#: src\ui\settings.rs:1180
+#: src\ui\settings.rs:1194
 msgid "Activity Joining"
 msgstr "Partecipare all'attività"
 
-#: src\ui\settings.rs:1180
+#: src\ui\settings.rs:1194
 msgid "Some games allow users to join the game you're playing when viewing your activity."
 msgstr "Alcuni titoli permettono agli utenti di unirsi al gioco a cui stai giocando quando visualizzano la tua attività."
 
-#: src\ui\settings.rs:1181
+#: src\ui\settings.rs:1195
 msgid "Allow friends to join my game"
 msgstr "Consenti agli amici di unirsi alla mia partita"
 
-#: src\ui\settings.rs:1181
+#: src\ui\settings.rs:1195
 msgid "Allows friends to join without sending a request."
 msgstr "Consenti agli amici di unirsi alla mia partita senza che inviino una richiesta."
 
-#: src\ui\settings.rs:1182
+#: src\ui\settings.rs:1196
 msgid "Allow voice channel participants to join my game"
 msgstr "Consenti ai partecipanti del canale vocale di unirsi alla mia partita"
 
-#: src\ui\settings.rs:1182
+#: src\ui\settings.rs:1196
 msgid "Allow anyone in a shared voice channel to join my game without sending a request. This feature only works in non-Community enabled servers."
 msgstr "Permetti a chiunque in un canale vocale condiviso di unirsi alla mia partita senza inviare una richiesta. Questa funzionalità funziona solo nei server attivati non-community."
 
-#: src\ui\settings.rs:1187 src\ui\settings.rs:49
+#: src\ui\settings.rs:1201 src\ui\settings.rs:49
 msgid "Game Overlay"
 msgstr "Overlay di gioco"
 
-#: src\ui\settings.rs:1188
+#: src\ui\settings.rs:1202
 msgid "The game overlay isn't in CordFast yet."
-msgstr ""
+msgstr "L'overlay di gioco non è ancora in CordFast."
 
-#: src\ui\settings.rs:1192 src\ui\settings.rs:50
+#: src\ui\settings.rs:1206 src\ui\settings.rs:50
 msgid "Connected Apps"
 msgstr "App collegate"
 
-#: src\ui\settings.rs:1193
+#: src\ui\settings.rs:1207
 msgid "These are accounts from other platforms. Connecting them here can unlock new features on Discord, like the ability to share what you're currently listening to, get paid safely and securely, and more."
 msgstr "Questi sono account di altre piattaforme. Collegandoli qui sbloccherai nuove funzionalità su Discord, come la possibilità di condividere ciò che stai ascoltando, ricevere pagamenti in modo sicuro e molto altro."
 
-#: src\ui\settings.rs:1196
+#: src\ui\settings.rs:1210
 msgid "You haven't connected any accounts."
-msgstr ""
+msgstr "Non hai collegato alcun account."
 
-#: src\ui\settings.rs:1208
+#: src\ui\settings.rs:1222
 msgid "Authorized Apps"
 msgstr "App autorizzate"
 
-#: src\ui\settings.rs:1208
+#: src\ui\settings.rs:1222
 msgid "These include third-party services you've given permission to access your Discord account. You can review what each app can do and revoke access anytime."
 msgstr "Sono inclusi i servizi di terze parti a cui hai dato l'autorizzazione di accedere al tuo account Discord. Puoi verificare cosa può fare ogni app e revocare l'accesso in qualsiasi momento."
 
-#: src\ui\settings.rs:1211
+#: src\ui\settings.rs:1225
 msgid "You haven't authorized any apps."
-msgstr ""
+msgstr "Non hai autorizzato alcuna app."
 
-#: src\ui\settings.rs:1217
+#: src\ui\settings.rs:1231
 msgid "Deauthorize"
 msgstr "Rimuovi autorizzazione"
 
-#: src\ui\settings.rs:1228 src\ui\settings.rs:56
+#: src\ui\settings.rs:1242 src\ui\settings.rs:56
 msgid "Developer"
 msgstr "Sviluppatore"
 
-#: src\ui\settings.rs:1230
+#: src\ui\settings.rs:1244
 msgid "Developer Mode"
 msgstr "Modalità per sviluppatori"
 
-#: src\ui\settings.rs:1230
+#: src\ui\settings.rs:1244
 msgid "Developer Mode exposes context menu items helpful for people writing apps using the Discord API."
 msgstr "La modalità per sviluppatori espone gli elementi del menu di contesto utili agli utenti che stanno creando app usando l'API di Discord."
 
-#: src\ui\settings.rs:1237 src\ui\settings.rs:1239 src\ui\settings.rs:53
+#: src\ui\settings.rs:1251 src\ui\settings.rs:1253 src\ui\settings.rs:53
 msgid "Plugins"
 msgstr "Plugin"
 
-#: src\ui\settings.rs:1239
+#: src\ui\settings.rs:1253
 msgid "Required Plugins"
-msgstr ""
+msgstr "Plugin obbligatori"
 
-#: src\ui\settings.rs:1285 src\ui\settings.rs:54
+#: src\ui\settings.rs:1299 src\ui\settings.rs:54
 msgid "About CordFast"
 msgstr "Informazioni su CordFast"
 
-#: src\ui\settings.rs:1286
+#: src\ui\settings.rs:1300
 msgid "A native, light and fast Discord."
 msgstr "Un Discord nativo, leggero e veloce."
 
-#: src\ui\settings.rs:1289
+#: src\ui\settings.rs:1303
 msgid "You're on the latest version."
 msgstr "Hai la versione più recente."
 
-#: src\ui\settings.rs:1290
+#: src\ui\settings.rs:1304
 msgid "Downloading version {version}… {percent}%"
 msgstr "Download della versione {version}… {percent}%"
 
-#: src\ui\settings.rs:1292
+#: src\ui\settings.rs:1306
 msgid "Version {version} is ready."
 msgstr "La versione {version} è pronta."
 
-#: src\ui\settings.rs:1294
+#: src\ui\settings.rs:1308
 msgid "Restart and Update"
 msgstr "Riavvia e aggiorna"
 
-#: src\ui\settings.rs:1297
+#: src\ui\settings.rs:1311
 msgid "Version {version} is out, but this copy does not update itself."
 msgstr "È uscita la versione {version}, ma questa copia non si aggiorna da sola."
 
-#: src\ui\settings.rs:1298
+#: src\ui\settings.rs:1312
 msgid "Download on GitHub"
 msgstr "Scarica da GitHub"
 
-#: src\ui\settings.rs:1303
+#: src\ui\settings.rs:1317
 msgid "The update failed: {error}"
 msgstr "L'aggiornamento non è riuscito: {error}"
 
-#: src\ui\settings.rs:1310
+#: src\ui\settings.rs:1324
 msgid "Third-party clients break Discord's terms of service. Use at your own risk."
 msgstr "I client di terze parti violano i termini di servizio di Discord. Usalo a tuo rischio."
 
@@ -4995,26 +5019,26 @@ msgstr "Nessuna menzione recente"
 msgid "When someone mentions you, it shows up here."
 msgstr "Quando qualcuno ti menziona, compare qui."
 
-#: src\voice.rs:991
+#: src\voice.rs:1020
 msgid "Left Mouse Button"
 msgstr "Tasto sinistro del mouse"
 
-#: src\voice.rs:992
+#: src\voice.rs:1021
 msgid "Right Mouse Button"
 msgstr "Tasto destro del mouse"
 
-#: src\voice.rs:993
+#: src\voice.rs:1022
 msgid "Middle Mouse Button"
 msgstr "Tasto centrale del mouse"
 
-#: src\voice.rs:994
+#: src\voice.rs:1023
 msgid "Mouse Button 4"
 msgstr "Tasto 4 del mouse"
 
-#: src\voice.rs:995
+#: src\voice.rs:1024
 msgid "Mouse Button 5"
 msgstr "Tasto 5 del mouse"
 
-#: src\voice.rs:1015
+#: src\voice.rs:1044
 msgid "Key {code}"
 msgstr "Tasto {code}"

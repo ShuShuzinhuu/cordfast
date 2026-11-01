@@ -851,6 +851,8 @@ impl App {
             .find(|(name, _)| *name == self.settings.theme)
             .map_or(crate::theme::DISCORD_DARK, |(_, p)| *p);
         crate::theme::apply(ctx, palette, self.settings.accent);
+        // Zoom keys are rebindable shortcuts here, not egui's own.
+        ctx.options_mut(|o| o.zoom_with_keyboard = false);
         ctx.set_zoom_factor(self.settings.zoom.clamp(0.6, 2.0));
     }
 
@@ -1257,6 +1259,15 @@ impl App {
             }
             Event::Activity(activity, full) => {
                 self.activity = activity;
+                // Each game played lands in Registered Games, newest first.
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64);
+                for game in full.iter().filter(|a| a.kind == 0) {
+                    let Some(id) = game.application.map(|id| id.to_string()) else { continue };
+                    self.settings.played_games.retain(|g| g.id != id);
+                    self.settings.played_games.insert(0, crate::settings::PlayedGame { id, name: game.name.clone(), last_played: now });
+                    self.settings.played_games.truncate(100);
+                    self.settings.save();
+                }
                 self.own_activities = full;
             }
             Event::Api { key, result } if !key.starts_with("do:") && !matches!(key.as_str(), "guild" | "members" | "invites" | "bans" | "emojis" | "audit") => {

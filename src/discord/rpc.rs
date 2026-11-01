@@ -213,12 +213,14 @@ pub async fn gateway_activity(
     application: Id,
     activity: &Value,
 ) -> Value {
-    let name = api
-        .application_name(application)
-        .await
-        .ok()
-        .or_else(|| activity.get("name").and_then(Value::as_str).map(str::to_owned))
-        .unwrap_or_else(|| t!("Game").into());
+    // A detected game carries the detectable list's name ("PUBG:
+    // BATTLEGROUNDS"), which Discord shows rather than the application's
+    // older one ("PLAYERUNKNOWN'S BATTLEGROUNDS"); a game on the pipe sets
+    // none and takes its application's.
+    let name = match activity.get("name").and_then(Value::as_str).filter(|n| !n.is_empty()) {
+        Some(name) => name.to_owned(),
+        None => api.application_name(application).await.ok().unwrap_or_else(|| t!("Game").into()),
+    };
     let mut out = json!({
         "application_id": application.to_string(),
         "name": name,
