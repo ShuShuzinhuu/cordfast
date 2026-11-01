@@ -2,7 +2,10 @@
 //! most games never talk to the IPC pipe, Discord recognises them from the
 //! running executable against `/applications/detectable`. A scan every few
 //! seconds compares each process's path, from its file name up through its
-//! folders, with the executables listed for this platform.
+//! folders, with the executables listed for this platform. Like Discord's
+//! RunningGameStore, it reports one game at a time: the one in the window
+//! in front, or else the one already shown (helpers that run beside a game
+//! match other entries: PUBG's execpubg.exe is "PUBG: Test Server").
 
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
@@ -50,6 +53,10 @@ struct Table {
     paths: HashMap<String, Id>,
     names: HashSet<String>,
     titles: HashMap<Id, String>,
+    /// How many executables each game lists: a game with several (its
+    /// client, its anti-cheat) is likelier the real one than a helper's
+    /// single entry, when nothing else tells them apart.
+    weight: HashMap<Id, usize>,
 }
 
 impl Table {
@@ -69,6 +76,7 @@ impl Table {
                 }
                 table.names.insert(name);
                 table.paths.entry(path).or_insert(id);
+                *table.weight.entry(id).or_default() += 1;
             }
         }
         table
@@ -109,41 +117,49 @@ pub async fn run(api: super::rest::Api, out: mpsc::UnboundedSender<RpcEvent>) {
     };
     log::info!("detect: {} executables known", table.paths.len());
     let table = std::sync::Arc::new(table);
-    // Game id to when it was first seen running.
+    // Game id to when it was first seen running, and the one shown.
     let mut running: HashMap<Id, u64> = HashMap::new();
+    let mut shown: Option<Id> = None;
     loop {
         let scan = table.clone();
-        let found: HashSet<Id> = tokio::task::spawn_blocking(move || {
-            processes().iter().filter_map(|p| scan.find(p)).collect()
+        let (found, focused): (HashSet<Id>, Option<Id>) = tokio::task::spawn_blocking(move || {
+            let found = processes().iter().filter_map(|p| scan.find(p)).collect();
+            (found, foreground().and_then(|p| scan.find(&p)))
         })
         .await
         .unwrap_or_default();
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_millis() as u64);
         for id in &found {
-            if running.contains_key(id) {
-                continue;
+            if !running.contains_key(id) {
+                log::info!("detect: game {id} running");
+                running.insert(*id, now);
             }
-            let start = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |d| d.as_millis() as u64);
-            running.insert(*id, start);
-            log::info!("detect: game {id} started");
-            let _ = out.send(RpcEvent::Activity {
-                socket: SOCKET | (*id & (SOCKET - 1)),
-                application: *id,
-                activity: Some(json!({
-                    "name": table.titles.get(id),
-                    "timestamps": { "start": start },
-                })),
-            });
         }
-        running.retain(|id, _| {
-            let alive = found.contains(id);
-            if !alive {
-                log::info!("detect: game {id} closed");
-                let _ = out.send(RpcEvent::Closed { socket: SOCKET | (id & (SOCKET - 1)) });
+        running.retain(|id, _| found.contains(id));
+        // The game in front wins; else the one shown stays; else the most
+        // likely real game among those running.
+        let pick = focused
+            .filter(|id| found.contains(id))
+            .or_else(|| shown.filter(|id| found.contains(id)))
+            .or_else(|| found.iter().copied().max_by_key(|id| (table.weight.get(id).copied().unwrap_or(0), std::cmp::Reverse(*id))));
+        if pick != shown {
+            if let Some(old) = shown {
+                log::info!("detect: game {old} no longer shown");
+                let _ = out.send(RpcEvent::Closed { socket: SOCKET | (old & (SOCKET - 1)) });
             }
-            alive
-        });
+            if let Some(id) = pick {
+                log::info!("detect: showing game {id}");
+                let _ = out.send(RpcEvent::Activity {
+                    socket: SOCKET | (id & (SOCKET - 1)),
+                    application: id,
+                    activity: Some(json!({
+                        "name": table.titles.get(&id),
+                        "timestamps": { "start": running.get(&id).copied().unwrap_or(now) },
+                    })),
+                });
+            }
+            shown = pick;
+        }
         tokio::time::sleep(SCAN).await;
     }
 }
@@ -200,6 +216,39 @@ fn processes() -> Vec<String> {
     out
 }
 
+/// The executable of the window in front, as Discord picks the game it
+/// shows.
+#[cfg(windows)]
+fn foreground() -> Option<String> {
+    use windows_sys::Win32::Foundation::CloseHandle;
+    use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION, QueryFullProcessImageNameW};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
+    // SAFETY: plain queries on the foreground window and its process; the
+    // handle opened is closed before returning.
+    unsafe {
+        let window = GetForegroundWindow();
+        if window.is_null() {
+            return None;
+        }
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(window, &mut pid);
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if handle.is_null() {
+            return None;
+        }
+        let mut buffer = [0u16; 1024];
+        let mut size = buffer.len() as u32;
+        let ok = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, buffer.as_mut_ptr(), &mut size) != 0;
+        CloseHandle(handle);
+        ok.then(|| String::from_utf16_lossy(&buffer[..size as usize]))
+    }
+}
+
+#[cfg(not(windows))]
+fn foreground() -> Option<String> {
+    None
+}
+
 /// On Linux the command line's first word (a Wine or Proton game shows its
 /// .exe there), or else the executable's link.
 #[cfg(unix)]
@@ -241,5 +290,19 @@ mod tests {
         assert_eq!(table.find(r"C:\x\launcher.exe"), None);
         assert_eq!(table.find(r"C:\x\other.exe"), None);
         assert_eq!(table.find(r"C:\x\bin\game.exe"), None);
+    }
+
+    /// PUBG's helper matches "PUBG: Test Server" by its one executable;
+    /// with nothing in front, the game listing more of them is shown.
+    #[test]
+    fn weighs_the_real_game_over_a_helper() {
+        let list: Vec<Detectable> = serde_json::from_value(json!([
+            { "id": "452140668265955339", "name": "PUBG: Test Server", "executables": [{ "name": "execpubg.exe", "os": OS }] },
+            { "id": "1402418717781921935", "name": "PUBG: BATTLEGROUNDS", "executables": [{ "name": "tslgame.exe", "os": OS }, { "name": "win64/tslgame.exe", "os": OS }, { "name": "tslgame_be.exe", "os": OS }] },
+        ]))
+        .unwrap();
+        let table = Table::new(list);
+        assert_eq!(table.weight[&1402418717781921935], 3);
+        assert!(table.weight[&452140668265955339] < table.weight[&1402418717781921935]);
     }
 }
