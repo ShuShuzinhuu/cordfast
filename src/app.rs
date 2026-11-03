@@ -274,12 +274,29 @@ pub enum Confirmed {
     SwitchVoice { guild: Option<Id>, channel: Id },
     /// Settings → Log Out.
     Logout,
+    /// Server Boost: a free slot given to a server.
+    ApplyBoost { guild: Id, slot: Id },
+    /// Server Boost: a slot taken from one server for another; Discord
+    /// removes it first (`boost` is that server's subscription).
+    TransferBoost { from: Id, boost: Id, to: Id, slot: Id },
+    CancelBoost { slot: Id },
+    UncancelBoost { slot: Id },
+}
+
+/// Gives a boost slot to a server, as the web client's apply call.
+fn apply_boost(guild: Id, slot: Id) -> Command {
+    Command::Api {
+        key: "boost-changed".into(),
+        method: "PUT",
+        path: format!("/guilds/{guild}/premium/subscriptions"),
+        body: Some(serde_json::json!({ "user_premium_guild_subscription_slot_ids": [slot.to_string()], "disable_powerup_auto_apply": false })),
+    }
 }
 
 impl Confirmed {
     /// Whether the button warns (red) or just goes ahead (the brand colour).
     pub fn danger(&self) -> bool {
-        !matches!(self, Self::SwitchVoice { .. })
+        !matches!(self, Self::SwitchVoice { .. } | Self::ApplyBoost { .. } | Self::TransferBoost { .. } | Self::UncancelBoost { .. })
     }
 
     pub fn run(self, app: &mut App) {
@@ -291,6 +308,10 @@ impl Confirmed {
             Self::RemoveFriend { user } => app.actions.push(Action::Relationship { user, kind: None }),
             Self::SwitchVoice { guild, channel } => app.commands.send(Command::Call { guild, channel, ring: false }),
             Self::Logout => app.actions.push(Action::Logout),
+            Self::ApplyBoost { guild, slot } => app.commands.send(apply_boost(guild, slot)),
+            Self::TransferBoost { from, boost, to, slot } => app.commands.send(api(&format!("boost-transfer:{slot}:{to}"), "DELETE", format!("/guilds/{from}/premium/subscriptions/{boost}"), None)),
+            Self::CancelBoost { slot } => app.commands.send(api("boost-changed", "POST", format!("/users/@me/guilds/premium/subscription-slots/{slot}/cancel"), None)),
+            Self::UncancelBoost { slot } => app.commands.send(api("boost-changed", "POST", format!("/users/@me/guilds/premium/subscription-slots/{slot}/uncancel"), None)),
             Self::DeleteRole { guild, role } => {
                 app.commands.send(crate::admin::change("DELETE", format!("/guilds/{guild}/roles/{role}"), None, &format!("roles:{}", t!("Role deleted."))));
                 if let Some(admin) = &mut app.admin {
@@ -2052,6 +2073,19 @@ impl App {
 
     /// Answers to the API calls the chat makes (pins, search, joining).
     fn api_answer(&mut self, key: &str, result: Result<serde_json::Value, String>) {
+        // The Server Boost page shows what the slots are now, whatever
+        // happened; a transfer goes on to its new server once removed.
+        if let Some(rest) = key.strip_prefix("boost-transfer:")
+            && result.is_ok()
+            && let Some((slot, to)) = rest.split_once(':')
+            && let (Ok(slot), Ok(to)) = (slot.parse::<Id>(), to.parse::<Id>())
+        {
+            self.commands.send(apply_boost(to, slot));
+            return;
+        }
+        if key == "boost-changed" || key.starts_with("boost-transfer:") {
+            self.commands.send(crate::admin::get("settings:boosts", "/users/@me/guilds/premium/subscription-slots".to_owned()));
+        }
         let value = match result {
             Ok(value) => value,
             Err(error) => {
@@ -2925,10 +2959,10 @@ impl App {
                 }
                 // What each page shows from the API, asked for when it opens.
                 let wanted: &[(&str, &str)] = match tab {
-                    SettingsTab::Account => &[("settings:me", "/users/@me"), ("settings:sessions", "/auth/sessions")],
+                    SettingsTab::Account => &[("settings:me", "/users/@me"), ("settings:sessions", "/auth/sessions"), ("settings:standing", "/safety-hub/@me")],
                     SettingsTab::Nitro => &[("settings:me", "/users/@me")],
                     SettingsTab::DataPrivacy => &[("settings:consent", "/users/@me/consent")],
-                    SettingsTab::ServerBoost => &[("settings:boosts", "/users/@me/guilds/premium/subscription-slots")],
+                    SettingsTab::ServerBoost => &[("settings:me", "/users/@me"), ("settings:boosts", "/users/@me/guilds/premium/subscription-slots"), ("settings:subscriptions", "/users/@me/billing/subscriptions")],
                     SettingsTab::Subscriptions => &[("settings:subscriptions", "/users/@me/billing/subscriptions")],
                     SettingsTab::GiftInventory => &[("settings:gifts", "/users/@me/entitlements/gifts"), ("settings:gift-codes", "/users/@me/entitlements/gift-codes")],
                     SettingsTab::Billing => &[("settings:payment-sources", "/users/@me/billing/payment-sources"), ("settings:payments", "/users/@me/billing/payments?limit=20")],
