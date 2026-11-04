@@ -348,6 +348,8 @@ pub struct ViewerSource {
 
 pub enum Action {
     SelectGuild(Option<Id>),
+    /// Goes to a voice channel's own view, wherever we are.
+    OpenVoiceChannel { guild: Option<Id>, channel: Id },
     SelectChannel(Id),
     LoadOlder(Id),
     Send,
@@ -503,6 +505,8 @@ pub struct App {
     /// Servers' public cards: requested (none yet), then the card or why not.
     pub guild_profiles: HashMap<Id, Option<Result<crate::discord::model::GuildProfile, String>>>,
     pub show_dm_profile: bool,
+    /// A voice channel showing its text chat instead of the people.
+    pub voice_chat: bool,
     pub requested_profiles: HashSet<Id>,
     pub status: String,
     /// When a timed status ends and we are back online.
@@ -686,6 +690,7 @@ impl App {
             loading: None,
             guild_profiles: HashMap::new(),
             show_dm_profile: true,
+            voice_chat: false,
             requested_profiles: HashSet::new(),
             status: "online".into(),
             status_until: None,
@@ -1161,8 +1166,12 @@ impl App {
             Event::Auth(auth) => self.apply_auth(auth),
             Event::Gateway(dispatch) => self.apply_dispatch(dispatch),
             Event::Messages { channel, before, messages } => {
+                // The people a message names, or its mentions read "unknown".
                 for m in &messages {
                     self.learn(&m.author.clone());
+                    for user in &m.mentions {
+                        self.learn(&user.clone());
+                    }
                 }
                 if before.is_some()
                     && let Some((c, _, arrived)) = &mut self.scroll_anchor
@@ -2639,6 +2648,14 @@ impl App {
             Action::SelectGuild(guild) => {
                 self.forums.retain(|_, _| false);
                 self.select_guild(guild);
+            }
+            Action::OpenVoiceChannel { guild, channel } => {
+                if self.selected_guild != guild {
+                    self.forums.retain(|_, _| false);
+                    self.select_guild(guild);
+                }
+                self.voice_chat = false;
+                self.open_channel(channel);
             }
             Action::SelectChannel(channel) => {
                 self.remembered.insert(self.selected_guild, channel);

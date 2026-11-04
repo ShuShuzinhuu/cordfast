@@ -820,9 +820,9 @@ fn folder(app: &mut App, ui: &mut egui::Ui, id: i64, name: Option<String>, color
         .collect();
     let selected_inside = guilds.iter().any(|g| app.selected_guild == Some(*g));
     let response = rail_item(app, ui, selected_inside && !open, unread, if open { 0 } else { mentions }, &label, |app, ui, rect, r| {
-        ui.painter().rect_filled(rect, r, tint.linear_multiply(0.35));
+        ui.painter().rect_filled(rect, r, tint.linear_multiply(if open { 0.15 } else { 0.35 }));
         if open {
-            ui.painter().text(rect.center(), Align2::CENTER_CENTER, "📁", FontId::proportional(20.0), tint);
+            icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), Icon::Folder, tint);
         } else {
             for (i, (url, initials)) in icons.iter().enumerate() {
                 let cell = Rect::from_min_size(
@@ -1269,6 +1269,9 @@ fn channel_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel, visible: boo
     if response.clicked() {
         if !visible {
             app.notify(t!("You do not have permission to view this channel."));
+        } else if voice && in_this_voice {
+            // Already there: a click opens it, as Discord's list.
+            app.actions.push(Action::OpenVoiceChannel { guild: channel.guild_id, channel: channel.id });
         } else if voice {
             app.actions.push(Action::JoinVoice { guild: channel.guild_id, channel: channel.id, ring: false });
         } else if channel.kind == ChannelKind::Forum {
@@ -1891,7 +1894,17 @@ fn voice_panel(app: &mut App, ui: &mut egui::Ui) {
     });
     let text_right = row.right() - 76.0;
     paint_truncated(ui, Rect::from_min_max(pos2(bars.right() + 8.0, row.top() + 4.0), pos2(text_right, row.center().y + 1.0)), &status, theme::strong(14.0), color);
-    paint_truncated(ui, Rect::from_min_max(pos2(bars.right() + 8.0, row.center().y + 1.0), pos2(text_right, row.bottom() - 4.0)), &place, FontId::proportional(12.0), p.muted);
+    // Where we are, underlined on hover: it opens the channel.
+    let place_rect = Rect::from_min_max(pos2(bars.right() + 8.0, row.center().y + 1.0), pos2(text_right, row.bottom() - 4.0));
+    paint_truncated(ui, place_rect, &place, FontId::proportional(12.0), p.muted);
+    let place_width = ui.painter().layout_no_wrap(place.clone(), FontId::proportional(12.0), p.muted).size().x.min(place_rect.width());
+    let place_response = ui.interact(Rect::from_min_size(place_rect.min, vec2(place_width, place_rect.height())), ui.id().with("voice-place"), Sense::click());
+    if place_response.hovered() {
+        ui.painter().hline(place_rect.left()..=place_rect.left() + place_width, place_rect.center().y + 7.0, Stroke::new(1.0, p.muted));
+    }
+    if place_response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        app.actions.push(Action::OpenVoiceChannel { guild, channel });
+    }
     // Noise suppression, then hang up, at the right end.
     let hang = Rect::from_center_size(pos2(row.right() - 18.0, row.center().y), Vec2::splat(32.0));
     let response = ui.interact(hang, ui.id().with("voice-leave"), Sense::click());

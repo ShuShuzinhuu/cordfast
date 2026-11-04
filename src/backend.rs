@@ -294,7 +294,7 @@ async fn run(events: Events, mut commands: mpsc::UnboundedReceiver<Command>, log
         gateway: None,
         login: None,
         token: None,
-        images: Arc::new(Semaphore::new(6)),
+        images: Arc::new(Semaphore::new(12)),
         requested: HashSet::new(),
         hooks,
         notifications,
@@ -661,7 +661,7 @@ impl Worker {
                     let _permit = permits.acquire_owned().await;
                     let image = fetch_image(&http, &url, max).await;
                     if let Err(error) = &image {
-                        log::debug!("image {url}: {error:#}");
+                        log::info!("image {}: {error:#}", url.split('?').next().unwrap_or_default());
                     }
                     events.send(Event::Image { url, image: image.ok() });
                 });

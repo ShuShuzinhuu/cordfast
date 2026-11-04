@@ -31,6 +31,10 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         return;
     };
     let Some(channel) = app.channel(channel_id).cloned() else { return };
+    if matches!(channel.kind, ChannelKind::Voice | ChannelKind::Stage) && !app.voice_chat {
+        voice_view(app, ui, &channel);
+        return;
+    }
     header(app, ui, &channel);
     if channel.kind == ChannelKind::Forum {
         forum(app, ui, &channel);
@@ -114,6 +118,9 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     .on_hover_text(topic);
             }
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                if matches!(channel.kind, ChannelKind::Voice | ChannelKind::Stage) && crate::icons::button(ui, crate::icons::Icon::Chat, 28.0, t!("Hide Chat")).clicked() {
+                    app.voice_chat = false;
+                }
                 // Search and pins, as in Discord's header; the inbox and
                 // help moved to the title bar with Discord's.
                 let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
@@ -2541,6 +2548,109 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
                 }
             }
         });
+    });
+}
+
+/// A voice channel's own view, as Discord's: a tile for each person, in
+/// rows as wide as fit, the picture on its average colour and a green edge
+/// while they speak. The name shows on hover.
+fn voice_view(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
+    const GAP: f32 = 8.0;
+    let p = theme::p();
+    let full = ui.max_rect();
+    ui.painter().rect_filled(full, 0.0, p.chat);
+    let inside = app.voice.channel.is_some_and(|(_, c)| c == channel.id);
+    let members = app.voice_members(channel);
+    let chat = Rect::from_min_size(egui::pos2(full.right() - 44.0, full.top() + 8.0), Vec2::splat(32.0));
+    let response = ui.interact(chat, ui.id().with("voice-show-chat"), Sense::click());
+    if response.hovered() {
+        ui.painter().rect_filled(chat, 8.0, p.hover);
+    }
+    crate::icons::paint(ui, Rect::from_center_size(chat.center(), Vec2::splat(20.0)), crate::icons::Icon::Chat, if response.hovered() { p.strong } else { p.muted });
+    if response.on_hover_text(t!("Show Chat")).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        app.voice_chat = true;
+    }
+    if !inside {
+        let button = Rect::from_center_size(egui::pos2(full.center().x, if members.is_empty() { full.center().y + 24.0 } else { full.bottom() - 36.0 }), vec2(160.0, 40.0));
+        let response = ui.interact(button, ui.id().with("voice-join"), Sense::click());
+        ui.painter().rect_filled(button, 8.0, if response.hovered() { p.green.linear_multiply(0.85) } else { p.green });
+        ui.painter().text(button.center(), Align2::CENTER_CENTER, t!("Join Voice"), theme::strong(14.0), Color32::WHITE);
+        if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            app.actions.push(Action::JoinVoice { guild: channel.guild_id, channel: channel.id, ring: false });
+        }
+    }
+    if members.is_empty() {
+        ui.painter().text(full.center() - vec2(0.0, 24.0), Align2::CENTER_CENTER, channel.title(), theme::strong(24.0), p.strong);
+        return;
+    }
+    let area = Rect::from_min_max(full.min + vec2(GAP, 48.0), full.max - vec2(GAP, if inside { 16.0 } else { 72.0 }));
+    // The column count that makes the tiles largest, each 16:9.
+    let n = members.len();
+    let (mut columns, mut width) = (1, 0.0f32);
+    for c in 1..=n {
+        let rows = n.div_ceil(c) as f32;
+        let across = (area.width() - GAP * (c as f32 - 1.0)) / c as f32;
+        let down = (area.height() - GAP * (rows - 1.0)) / rows * 16.0 / 9.0;
+        if across.min(down) > width {
+            (columns, width) = (c, across.min(down));
+        }
+    }
+    let height = width * 9.0 / 16.0;
+    let rows = n.div_ceil(columns);
+    let mut y = area.center().y - (rows as f32 * height + (rows - 1) as f32 * GAP) / 2.0;
+    for row in members.chunks(columns) {
+        let mut x = area.center().x - (row.len() as f32 * width + (row.len() - 1) as f32 * GAP) / 2.0;
+        for id in row {
+            voice_tile(app, ui, channel, *id, Rect::from_min_size(egui::pos2(x, y), vec2(width, height)));
+            x += width + GAP;
+        }
+        y += height + GAP;
+    }
+}
+
+fn voice_tile(app: &mut App, ui: &mut egui::Ui, channel: &Channel, id: Id, rect: Rect) {
+    let p = theme::p();
+    let Some(user) = app.users.get(&id).cloned() else {
+        app.images.circle(ui, Rect::from_center_size(rect.center(), Vec2::splat(80.0)), None, "", 40.0);
+        if let Some(guild) = channel.guild_id {
+            app.request_member(guild, id);
+        }
+        return;
+    };
+    let response = ui.interact(rect, ui.id().with(("voice-tile", id)), Sense::click());
+    let url = user.avatar_url().replace("size=64", "size=128");
+    let side = 80.0f32.min(rect.height() * 0.5);
+    let avatar = Rect::from_center_size(rect.center(), Vec2::splat(side));
+    let fill = app.images.average(&url).unwrap_or(p.sidebar);
+    ui.painter().rect_filled(rect, 8.0, fill);
+    app.images.circle(ui, avatar, Some(&url), &initials(user.display_name()), side / 2.0);
+    if let Some(decoration) = user.decoration_url() {
+        crate::icons::decoration(ui, &mut app.images, avatar, &decoration);
+    }
+    if app.voice.speaking.contains(&id) {
+        ui.painter().rect_stroke(rect, 8.0, Stroke::new(2.0, p.green), egui::StrokeKind::Inside);
+    }
+    // Muted or deafened, in the corner.
+    let (muted, deaf) = app.voice_flags.get(&id).copied().unwrap_or_default();
+    if muted || deaf {
+        let badge = Rect::from_min_size(rect.right_bottom() - vec2(36.0, 36.0), Vec2::splat(28.0));
+        ui.painter().circle_filled(badge.center(), 14.0, Color32::from_black_alpha(180));
+        crate::icons::paint(ui, badge.shrink(5.0), if deaf { crate::icons::Icon::HeadphonesSlash } else { crate::icons::Icon::MicrophoneSlash }, Color32::WHITE);
+    }
+    if response.hovered() {
+        let (name, _) = app.display(channel.guild_id, &user);
+        let galley = ui.painter().layout_no_wrap(name, theme::strong(14.0), Color32::WHITE);
+        let pill = Rect::from_min_size(rect.left_bottom() + vec2(8.0, -36.0), galley.size() + vec2(16.0, 8.0));
+        ui.painter().rect_filled(pill, 6.0, Color32::from_black_alpha(180));
+        ui.painter().galley(pill.min + vec2(8.0, 4.0), galley, Color32::WHITE);
+    }
+    let at = rect.right_top() + vec2(8.0, 0.0);
+    if response.clicked() {
+        app.actions.push(Action::OpenProfile { user: user.clone(), guild: channel.guild_id, at });
+    }
+    response.context_menu(|ui| {
+        super::menu::begin(ui);
+        super::menu::user(app, ui, &user, channel.guild_id);
     });
 }
 

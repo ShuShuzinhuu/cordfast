@@ -403,6 +403,12 @@ fn spans_view(
                     continue;
                 }
                 Kind::Mention(kind, id) => {
+                    if *kind == '@'
+                        && !app.users.contains_key(id)
+                        && let Some(guild) = app.selected_guild
+                    {
+                        app.request_member(guild, *id);
+                    }
                     let name = app.name_for(*kind, *id).unwrap_or_else(|| match kind {
                         '#' => t!("unknown-channel").into(),
                         '&' => t!("unknown-role").into(),
