@@ -1522,7 +1522,14 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let font = if unread { theme::strong(15.0) } else { FontId::proportional(15.0) };
     // Under the name, as Discord's list: what they are doing (the game
     // after a controller, the custom status), or a group's size.
+    let voice = channel.kind == ChannelKind::Dm && channel.recipients.first().is_some_and(|u| friends::shows_voice(app, u.id));
     let sub = match channel.kind {
+        ChannelKind::Dm if voice => {
+            // Discord's line: the green speaker, its text giving way to a
+            // custom status.
+            let custom = channel.recipients.first().and_then(|u| app.presences.get(&u.id)).and_then(|pr| pr.custom.clone());
+            Some((None, custom.map_or_else(|| t!("In voice").to_owned(), |custom| format!("• {custom}"))))
+        }
         ChannelKind::Dm => channel.recipients.first().and_then(|u| friends::doing_short(app, u.id)),
         _ => Some((None, tn!(channel.recipients.len() + 1, "{count} Member", "{count} Members"))),
     };
@@ -1534,6 +1541,10 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             let mut sx = x;
             if let Some(icon) = icon {
                 icons::paint(ui, Rect::from_center_size(pos2(sx + 6.0, rect.center().y + 9.0), Vec2::splat(12.0)), icon, p.muted);
+                sx += 16.0;
+            }
+            if voice {
+                icons::paint(ui, Rect::from_center_size(pos2(sx + 6.0, rect.center().y + 9.0), Vec2::splat(12.0)), Icon::Voice, p.green);
                 sx += 16.0;
             }
             paint_truncated(ui, Rect::from_min_max(pos2(sx, rect.center().y + 1.0), pos2(right, rect.center().y + 17.0)), &text, FontId::proportional(12.0), p.muted);

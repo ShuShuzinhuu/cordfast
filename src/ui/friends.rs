@@ -252,6 +252,12 @@ pub fn doing_short(app: &App, user: Id) -> Option<(Option<Icon>, String)> {
     presence.custom.clone().map(|custom| (None, custom))
 }
 
+/// Whether someone's line says they are in voice: Discord's list names a
+/// game or another activity first.
+pub fn shows_voice(app: &App, user: Id) -> bool {
+    app.presences.get(&user).is_none_or(|presence| presence.activities.is_empty()) && app.user_voice_channel(user).is_some()
+}
+
 /// The line under a friend's name: what they do or else their status.
 fn doing(app: &App, user: &User) -> (Option<Icon>, String) {
     doing_short(app, user.id).unwrap_or_else(|| {

@@ -17,7 +17,7 @@ fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
 # songbird reports through tracing; this forwards its events to the log.
 tracing = { version = "0.1", features = ["log"] }
 # UI framework. glow avoids the larger wgpu dependency, as in ZapFast.
-eframe = { version = "0.36.2", default-features = false, features = ["accesskit", "glow", "default_fonts", "persistence", "wayland", "x11"] }
+eframe = { version = "0.36.2", default-features = false, features = ["accesskit", "glow", "default_fonts", "links", "persistence", "wayland", "x11"] }
 egui = "0.36.2"
 # Decodes avatars and attachments on the runtime thread, never in a frame.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif"] }

@@ -99,6 +99,12 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 }
             }
             ui.add(Label::new(RichText::new(channel.title()).font(theme::strong(16.0)).color(p.strong)).truncate());
+            if channel.kind == ChannelKind::Dm && channel.recipients.first().is_some_and(|u| app.user_voice_channel(u.id).is_some()) {
+                ui.add_space(8.0);
+                let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
+                crate::icons::paint(ui, rect, crate::icons::Icon::Voice, p.green);
+                ui.label(RichText::new(t!("In voice")).size(14.0).color(p.text));
+            }
             if let Some(topic) = &channel.topic {
                 let (bar, _) = ui.allocate_exact_size(vec2(1.0, 24.0), Sense::hover());
                 ui.painter().vline(bar.center().x, bar.y_range(), Stroke::new(1.0, p.selected));
@@ -1131,29 +1137,25 @@ fn picture(app: &mut App, ui: &mut egui::Ui, proxy: &str, original: &str, w: u32
         }
     }
     if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-        if app.plugin(Plugin::ImageZoom) {
-            // The viewer asks for a larger copy than the message shows.
-            let big = if proxy.contains("media.discordapp.net") {
-                let s = (1600.0 / w.max(h)).min(1.0);
-                format!("{proxy}{separator}width={}&height={}", (w * s) as u32, (h * s) as u32)
-            } else {
-                proxy.to_owned()
-            };
-            let from = from.map(|message| {
-                let (name, _) = app.display(message.guild_id, &message.author);
-                crate::app::ViewerSource { author: message.author.clone(), name, at: message.timestamp_ms(), channel: message.channel_id, guild: message.guild_id, message: message.id }
-            });
-            app.viewer = Some(Viewer {
-                url: big,
-                original: original.to_owned(),
-                size: vec2(w, h),
-                zoom: 1.0,
-                offset: Vec2::ZERO,
-                from,
-            });
+        // The viewer asks for a larger copy than the message shows.
+        let big = if proxy.contains("media.discordapp.net") {
+            let s = (1600.0 / w.max(h)).min(1.0);
+            format!("{proxy}{separator}width={}&height={}", (w * s) as u32, (h * s) as u32)
         } else {
-            let _ = open::that_detached(original);
-        }
+            proxy.to_owned()
+        };
+        let from = from.map(|message| {
+            let (name, _) = app.display(message.guild_id, &message.author);
+            crate::app::ViewerSource { author: message.author.clone(), name, at: message.timestamp_ms(), channel: message.channel_id, guild: message.guild_id, message: message.id }
+        });
+        app.viewer = Some(Viewer {
+            url: big,
+            original: original.to_owned(),
+            size: vec2(w, h),
+            zoom: 1.0,
+            offset: Vec2::ZERO,
+            from,
+        });
     }
 }
 
@@ -1888,7 +1890,15 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                     let name = member.nick.clone().unwrap_or_else(|| user.display_name().to_owned());
                     let color = if app.settings.role_colors == 0 { theme::role_color(guild.role_color(&member.roles)) } else { None }.unwrap_or(p.muted);
                     let color = if offline { color.linear_multiply(0.5) } else { color };
+                    let voice = super::friends::shows_voice(app, user.id);
                     let activity = presence.as_ref().and_then(member_activity);
+                    // In voice, the green speaker: with a custom status its
+                    // text gives way, as Discord's line.
+                    let activity = match activity {
+                        Some((custom, bold, id)) if voice => Some((format!("• {custom}"), bold, id)),
+                        None if voice => Some((t!("In voice").to_owned(), String::new(), None)),
+                        other => other,
+                    };
                     let x = avatar.right() + 10.0;
                     // The game's icon at the row's end, as Discord's list.
                     let icon = activity.as_ref().and_then(|(_, _, app_id)| *app_id).and_then(|a| app.app_icon(a));
@@ -1903,9 +1913,15 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                         // "Playing " and the game in bold, as Discord writes it.
                         let mut job = egui::text::LayoutJob::default();
                         super::rich_template(&mut job, &template, &egui::TextFormat::simple(FontId::proportional(12.0), p.muted), &egui::TextFormat::simple(theme::strong(12.0), p.muted), &[("name", &bold)]);
-                        job.wrap = egui::text::TextWrapping::truncate_at_width(right - x);
+                        let text_x = if voice {
+                            crate::icons::paint(ui, Rect::from_center_size(egui::pos2(x + 6.0, inner.center().y + 10.0), Vec2::splat(12.0)), crate::icons::Icon::Voice, p.green);
+                            x + 16.0
+                        } else {
+                            x
+                        };
+                        job.wrap = egui::text::TextWrapping::truncate_at_width(right - text_x);
                         let galley = ui.fonts_mut(|f| f.layout_job(job));
-                        ui.painter().galley(egui::pos2(x, inner.center().y + 10.0 - galley.size().y / 2.0), galley, p.muted);
+                        ui.painter().galley(egui::pos2(text_x, inner.center().y + 10.0 - galley.size().y / 2.0), galley, p.muted);
                     }
                     if response.clicked() {
                         app.actions.push(Action::OpenProfile { user: user.clone(), guild: Some(guild_id), at: rect.left_top() - vec2(350.0, 0.0) });
@@ -2502,6 +2518,7 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
                 ui.label(RichText::new(t!("Member Since")).font(theme::strong(12.5)).color(p.strong));
                 ui.label(RichText::new(text::day(crate::discord::model::snowflake_ms(user.id))).size(13.0).color(p.text));
             });
+            voice_card(app, ui, user.id);
             if let Some(profile) = &profile {
                 let mutual: Vec<(Option<String>, String)> = profile
                     .mutual_guilds
@@ -2524,6 +2541,53 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
                 }
             }
         });
+    });
+}
+
+/// Discord's "In voice" card on a profile: up to four of the people there,
+/// the channel and its server, and the button to join when we may connect.
+fn voice_card(app: &mut App, ui: &mut egui::Ui, user: Id) {
+    /// Discord's CONNECT permission.
+    const CONNECT: u64 = 1 << 20;
+    let p = theme::p();
+    let Some(channel) = app.user_voice_channel(user).cloned() else { return };
+    let Some(guild_id) = channel.guild_id else { return };
+    let (guild_name, can_connect) = match app.guild(guild_id) {
+        Some(guild) => (guild.name.clone(), guild.channel_permissions(app.me_id(), &channel) & CONNECT != 0),
+        None => return,
+    };
+    let inside = app.voice.channel.is_some_and(|(_, c)| c == channel.id);
+    let people: Vec<crate::discord::model::User> = app.voice_members(&channel).into_iter().filter_map(|id| app.users.get(&id).cloned()).take(4).collect();
+    Frame::new().fill(p.rail).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        ui.label(RichText::new(t!("In voice")).font(theme::strong(12.5)).color(p.strong));
+        ui.add_space(8.0);
+        ui.horizontal(|ui| {
+            // The people, two by two.
+            let (tile, _) = ui.allocate_exact_size(Vec2::splat(52.0), Sense::hover());
+            for (i, person) in people.iter().enumerate() {
+                let at = tile.min + vec2((i % 2) as f32 * 28.0, (i / 2) as f32 * 28.0);
+                app.images.circle(ui, Rect::from_min_size(at, Vec2::splat(24.0)), Some(&person.avatar_url()), &initials(person.display_name()), 12.0);
+            }
+            ui.add_space(4.0);
+            ui.vertical(|ui| {
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 4.0;
+                    let (icon, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
+                    crate::icons::paint(ui, icon, crate::icons::Icon::Voice, p.muted);
+                    ui.add(Label::new(RichText::new(&channel.name).font(theme::strong(14.0)).color(p.strong)).truncate());
+                });
+                ui.add(Label::new(RichText::new(t!("in {name}", name = guild_name)).size(12.5).color(p.muted)).truncate());
+            });
+        });
+        if can_connect || inside {
+            ui.add_space(10.0);
+            let label = if inside { t!("Open Voice") } else { t!("Join Voice") };
+            if super::form::button_wide(ui, label).clicked() {
+                app.actions.push(if inside { Action::SelectChannel(channel.id) } else { Action::JoinVoice { guild: Some(guild_id), channel: channel.id, ring: false } });
+            }
+        }
     });
 }
 

@@ -374,6 +374,15 @@ pub fn button_enabled(ui: &mut egui::Ui, text: &str, kind: Kind, enabled: bool) 
     }
 }
 
+/// A secondary button the whole width of its card, as the profile's.
+pub fn button_wide(ui: &mut egui::Ui, text: &str) -> egui::Response {
+    let p = theme::p();
+    let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 32.0), Sense::click());
+    ui.painter().rect(rect, 8.0, if response.hovered() { p.selected } else { p.hover }, Stroke::new(1.0, p.selected), egui::StrokeKind::Inside);
+    ui.painter().text(rect.center(), Align2::CENTER_CENTER, text, theme::strong(14.0), p.strong);
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
+}
+
 fn darker(c: Color32) -> Color32 {
     Color32::from_rgb((c.r() as f32 * 0.85) as u8, (c.g() as f32 * 0.85) as u8, (c.b() as f32 * 0.85) as u8)
 }

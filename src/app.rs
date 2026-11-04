@@ -1003,6 +1003,16 @@ impl App {
         self.notice = Some((text.into(), Instant::now()));
     }
 
+    /// The server voice channel someone is in, when we may see it (the
+    /// bundle's rule for "In voice": a channel hidden from us shows nothing).
+    pub fn user_voice_channel(&self, user: Id) -> Option<&Channel> {
+        let me = self.me_id();
+        self.guilds.iter().find_map(|guild| {
+            let (_, channel) = guild.voice_states.iter().find(|(u, _)| *u == user)?;
+            self.channel(*channel).filter(|channel| guild.can_view(me, channel))
+        })
+    }
+
     /// Who is in a voice channel (guild channels and DM calls), in
     /// Discord's order: by the server nickname, or else the name, in lower
     /// case and compared as JavaScript compares strings (UTF-16 units),
