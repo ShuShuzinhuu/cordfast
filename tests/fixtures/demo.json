@@ -1607,6 +1607,11 @@
  },
  "autocomplete": ["Rain on the Window", "Synthwave noturno", "Lo-fi para estudar", "One Step Closer", "Numb"],
  "api": {
+  "settings:me": {"username": "alex", "email": "alex@example.com", "phone": null, "mfa_enabled": true, "nsfw_allowed": true, "premium_type": 2},
+  "settings:sessions": {"user_sessions": [{"id_hash": "a", "approx_last_used_time": "2026-10-30T12:00:00+00:00", "client_info": {"os": "Windows", "platform": "Discord Client", "location": "Lisbon, Portugal"}}, {"id_hash": "b", "approx_last_used_time": "2026-10-12T12:00:00+00:00", "client_info": {"os": "Android", "platform": "Discord Android", "location": "Lisbon, Portugal"}}]},
+  "settings:standing": {"account_standing": {"state": 100}},
+  "settings:boosts": [{"id": "9001", "subscription_id": "7001", "canceled": false, "cooldown_ends_at": null, "premium_guild_subscription": {"id": "1174109840998400000", "guild_id": "100000000000000300"}}, {"id": "9002", "subscription_id": "7001", "canceled": false, "cooldown_ends_at": "2030-01-01T00:00:00+00:00", "premium_guild_subscription": {"id": "1174109840998400000", "guild_id": "100000000000000300"}}, {"id": "9003", "subscription_id": "7001", "canceled": false, "cooldown_ends_at": null, "premium_guild_subscription": null}],
+  "settings:subscriptions": [{"id": "7001", "current_period_end": "2026-12-01T00:00:00+00:00", "items": [{"plan_id": "1"}]}],
   "frecency": { "settings": "MogDCh0KA2pveRIWCBQSEoCUg7mXNIDc6Y+XNICk0OaWNAofCgVoZWFydBIWCBMSEoCUg7mXNIDc6Y+XNICk0OaWNAoiCgh0aHVtYnN1cBIWCBISEoCUg7mXNIDc6Y+XNICk0OaWNAoeCgRmaXJlEhYIERISgJSDuZc0gNzpj5c0gKTQ5pY0Ch0KA3NvYhIWCBASEoCUg7mXNIDc6Y+XNICk0OaWNAofCgVza3VsbBIWCA8SEoCUg7mXNIDc6Y+XNICk0OaWNAoeCgRleWVzEhYIDhISgJSDuZc0gNzpj5c0gKTQ5pY0Ch4KBHByYXkSFggNEhKAlIO5lzSA3OmPlzSApNDmljQKIgoIc3BhcmtsZXMSFggMEhKAlIO5lzSA3OmPlzSApNDmljQKHQoDMTAwEhYICxISgJSDuZc0gNzpj5c0gKTQ5pY0Ch4KBHJvZmwSFggKEhKAlIO5lzSA3OmPlzSApNDmljQKHwoFc21pbGUSFggJEhKAlIO5lzSA3OmPlzSApNDmljQqDQoFaGVhcnQKBGZpcmU=" },
   "guild-profile:1200000000000000000": { "id": "1200000000000000000", "name": "Pixel Artists", "icon_hash": null, "member_count": 17826, "online_count": 1650,
    "description": "A community for pixel artists: contests, feedback and weekly events.",

@@ -52,7 +52,22 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     } else if !matches!(app.auth, AuthView::LoggedIn) {
         login(app, ui);
     } else if let Some(tab) = app.page {
-        settings::show(app, ui, tab);
+        // Discord's settings are a window over the app: the app stays drawn
+        // behind it, without the keyboard, which the window takes on opening.
+        let below = ui.available_rect_before_wrap();
+        let opened = egui::Id::new("settings-open");
+        if !ui.ctx().data(|d| d.get_temp::<bool>(opened)).unwrap_or(false) {
+            ui.ctx().data_mut(|d| d.insert_temp(opened, true));
+            ui.ctx().memory_mut(|m| {
+                if let Some(focused) = m.focused() {
+                    m.surrender_focus(focused);
+                }
+            });
+        }
+        app.focus_composer = false;
+        main(app, ui);
+        settings::show(app, ui, tab, below);
+        chat::modal(app, ui.ctx());
     } else if app.admin.is_some() {
         guild::show(app, ui);
     } else {
@@ -64,6 +79,9 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         chat::modal(app, ui.ctx());
         incoming_call(app, ui.ctx());
         switcher(app, ui.ctx());
+    }
+    if app.page.is_none() {
+        ui.ctx().data_mut(|d| d.insert_temp(egui::Id::new("settings-open"), false));
     }
     titlebar::inbox(app, ui.ctx());
     if let Some((notice, _)) = &app.notice {
@@ -402,7 +420,9 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
     if app.page.is_none() && crate::keybinds::pressed(ui, &app.settings, crate::keybinds::Shortcut::QuickSwitcher) {
         app.switcher = Some(String::new());
     }
-    shortcuts(app, ui);
+    if app.page.is_none() {
+        shortcuts(app, ui);
+    }
     // Discord's account panel: a card over the bottom of the rail and the
     // channel list together, so the name has room; both columns end above it.
     let card = account_card_height(app);
@@ -428,7 +448,7 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
         .show(ui, |ui| chat::show(app, ui));
     sidebar_edge(app, ui, sidebar_panel.response.rect, width);
     let bottom = sidebar_panel.response.rect.bottom();
-    content_edge(ui, sidebar_panel.response.rect.left_top(), bottom - card - 16.0);
+    content_edge(ui, sidebar_panel.response.rect.left_top(), bottom - card - 16.0, app.page.is_some());
     let area = Rect::from_min_max(pos2(rail_panel.response.rect.left() + 8.0, bottom - card - 8.0), pos2(sidebar_panel.response.rect.right() - 8.0, bottom - 8.0));
     account_card(app, ui.ctx(), area);
 }
@@ -487,10 +507,13 @@ fn account_card(app: &mut App, ctx: &egui::Context, area: Rect) {
 /// Where the content meets the title bar and the rail, as Discord's: a
 /// rounded corner and a 1-point line along the top and the left, in the
 /// line colour (the rail's in the dark theme, a grey on AMOLED black).
-fn content_edge(ui: &egui::Ui, corner: egui::Pos2, left_end: f32) {
+fn content_edge(ui: &egui::Ui, corner: egui::Pos2, left_end: f32, covered: bool) {
     let p = theme::p();
     const RADIUS: f32 = 8.0;
-    let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Middle, egui::Id::new("content-edge")));
+    // A layer egui hasn't ordered paints over every window of its order, so
+    // under the settings window the edge stays on the panels' own layer.
+    let layer = if covered { ui.layer_id() } else { egui::LayerId::new(egui::Order::Middle, egui::Id::new("content-edge")) };
+    let painter = ui.ctx().layer_painter(layer);
     let screen = ui.ctx().content_rect();
     // The rail's colour outside the curve, the sidebar's inside it.
     painter.rect_filled(Rect::from_min_size(corner, Vec2::splat(RADIUS)), 0.0, p.rail);

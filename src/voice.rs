@@ -1335,8 +1335,6 @@ pub enum VoiceCommand {
     RankRegions,
     /// Mic test on or off: hear yourself as others would.
     MicTest(bool),
-    /// Plays a short tone through the speakers.
-    TestTone,
     /// Records 20 s of what we hear in the call, for diagnosis.
     Record,
 }
@@ -1440,20 +1438,6 @@ pub async fn run(
                     VoiceCommand::Record => {
                         *shared.recording.lock().unwrap_or_else(|e| e.into_inner()) = Some(Recording::default());
                         log::info!("voice: recording {RECORD_SECONDS} s for the diagnostic");
-                    }
-                    VoiceCommand::TestTone => {
-                        if audio.is_none() {
-                            audio = Some(start_audio(&shared, &gate_tx));
-                        }
-                        // A second of A4, faded in and out.
-                        let mut output = shared.output.lock().unwrap_or_else(|e| e.into_inner());
-                        for i in 0..RATE as usize {
-                            let t = i as f32 / RATE as f32;
-                            let fade = (t * 20.0).min(1.0).min((1.0 - t) * 20.0);
-                            let s = (t * 440.0 * std::f32::consts::TAU).sin() * 0.25 * fade;
-                            output.push_back(s);
-                            output.push_back(s);
-                        }
                     }
                     VoiceCommand::RankRegions => {
                         regions = rank_regions(&http).await;
