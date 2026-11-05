@@ -36,6 +36,10 @@ repouso.
   <img src="images/screenshot.png" alt="O CordFast mostrando um servidor com seus canais, uma conversa, um embed e a lista de membros">
 </p>
 
+<p align="center">
+  <img src="images/settings.png" alt="A janela de configurações do CordFast na página Voz e vídeo, com microfone, alto-falante e perfil de entrada">
+</p>
+
 [O que tem](#o-que-tem) · [Instalar](#instalar) · [Compilar](#compilar) · [Idiomas](#idiomas)
 
 ## O que tem
