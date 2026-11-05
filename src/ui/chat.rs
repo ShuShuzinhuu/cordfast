@@ -129,6 +129,15 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 if response.on_hover_text(t!("Search")).clicked() {
                     app.toggle_search();
                 }
+                if !dm && channel.kind != crate::discord::model::ChannelKind::Thread {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Thread, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Threads")).clicked() {
+                        app.archived_threads = None;
+                        app.commands.send(crate::admin::get("threads-archived", format!("/channels/{}/threads/archived/public?limit=25", channel.id)));
+                        app.modal = Some(crate::app::Modal::Threads { channel: channel.id, name: String::new() });
+                    }
+                }
                 let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
                 let pins = matches!(app.side, Some(crate::app::Side::Pins(_)));
                 crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Pin, if pins || response.hovered() { p.strong } else { p.muted });
@@ -603,6 +612,21 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                 } else if video {
                     let (w, h) = (attachment.width.unwrap_or(400), attachment.height.unwrap_or(225));
                     video_view(app, ui, &attachment.proxy_url, &attachment.url, w, h);
+                } else if attachment.content_type.as_deref().is_some_and(|t| t.starts_with("audio/")) {
+                    // Audio and voice messages (flag 8192) play here.
+                    Frame::new().fill(p.sidebar).corner_radius(8).inner_margin(Margin::same(10)).show(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            let (rect, response) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::click());
+                            ui.painter().circle_filled(rect.center(), 16.0, if response.hovered() { p.accent.linear_multiply(0.85) } else { p.accent });
+                            let c = rect.center();
+                            ui.painter().add(egui::Shape::convex_polygon(vec![c + vec2(-4.0, -7.0), c + vec2(7.0, 0.0), c + vec2(-4.0, 7.0)], Color32::WHITE, Stroke::NONE));
+                            if response.on_hover_text(t!("Play")).clicked() {
+                                crate::sounds::play_url(attachment.url.clone(), app.settings.output_device.clone(), app.settings.output_volume.min(1.0));
+                            }
+                            let name = if message.flags & 8192 != 0 { t!("Voice Message").to_owned() } else { attachment.filename.clone() };
+                            ui.hyperlink_to(RichText::new(name).color(p.link), &attachment.url);
+                        });
+                    });
                 } else if attachment.is_image() {
                     let (w, h) = (attachment.width.unwrap_or(400), attachment.height.unwrap_or(300));
                     let key = (message.id, usize::MAX - attachment.filename.len());
@@ -1585,6 +1609,11 @@ fn forum(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let posts = app.forums.get(&channel.id).cloned();
     ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         ui.add_space(12.0);
+        Frame::new().inner_margin(Margin::symmetric(16, 4)).show(ui, |ui| {
+            if ui.add(egui::Button::new(RichText::new(t!("New Post")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                app.modal = Some(crate::app::Modal::NewPost { forum: channel.id, title: String::new(), body: String::new() });
+            }
+        });
         let Some(Some(posts)) = posts else {
             ui.vertical_centered(|ui| ui.spinner());
             return;
@@ -1624,6 +1653,25 @@ fn forum(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
 
 fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let p = theme::p();
+    // Someone who is no friend wrote: nothing goes out until it is accepted.
+    if channel.message_request {
+        Frame::new().fill(p.sidebar).corner_radius(8).inner_margin(Margin::same(14)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.label(RichText::new(t!("Message Requests")).font(theme::strong(15.0)).color(p.strong));
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                let path = format!("/channels/{}/recipients/@me", channel.id);
+                if ui.add(egui::Button::new(RichText::new(t!("Accept")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                    app.commands.send(call("PUT", path.clone(), Some(serde_json::json!({ "consent_status": 2 }))));
+                }
+                if ui.button(t!("Ignore")).clicked() {
+                    app.commands.send(call("DELETE", path, None));
+                    app.actions.push(Action::CloseDm(channel.id));
+                }
+            });
+        });
+        return;
+    }
     let typing: Vec<String> = app
         .typing
         .get(&channel.id)
@@ -2067,28 +2115,79 @@ fn side(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             ui.add_space(6.0);
             let response = ui.add(egui::TextEdit::singleline(query).hint_text(t!("Search Messages")).desired_width(f32::INFINITY));
             if response.lost_focus() && ui.input(|i| i.key_pressed(Key::Enter)) && !query.trim().is_empty() {
-                search_now = Some(query.trim().to_owned());
+                search_now = Some(0);
+            }
+        }
+        if let Some(crate::app::Side::Search { query, tab, oldest, offset, results }) = &mut app.side {
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| {
+                for (i, label) in [t!("Messages"), t!("Media"), t!("Links"), t!("Files")].into_iter().enumerate() {
+                    if ui.selectable_label(*tab == i as u8, label).clicked() && *tab != i as u8 {
+                        *tab = i as u8;
+                        search_now = Some(0);
+                    }
+                }
+            });
+            ui.horizontal(|ui| {
+                if ui.selectable_label(!*oldest, t!("Newest")).clicked() && *oldest {
+                    *oldest = false;
+                    search_now = Some(0);
+                }
+                if ui.selectable_label(*oldest, t!("Oldest")).clicked() && !*oldest {
+                    *oldest = true;
+                    search_now = Some(0);
+                }
+                let total = results.as_ref().map_or(0, |(total, _)| *total);
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if *offset + 25 < total && ui.small_button("›").clicked() {
+                        search_now = Some(*offset + 25);
+                    }
+                    if *offset > 0 && ui.small_button("‹").clicked() {
+                        search_now = Some(offset.saturating_sub(25));
+                    }
+                });
+            });
+            if query.trim().is_empty() && *tab == 0 {
+                search_now = None;
             }
         }
     });
-    if let Some(query) = search_now {
-        let encoded: String = query
-            .bytes()
-            .map(|b| if b.is_ascii_alphanumeric() { (b as char).to_string() } else { format!("%{b:02X}") })
-            .collect();
+    if let Some(page) = search_now {
+        let Some(crate::app::Side::Search { query, tab, oldest, .. }) = &app.side else { return };
+        // "from:name" names someone known here; the rest is the text.
+        let mut words = Vec::new();
+        let mut filters = String::new();
+        for word in query.split_whitespace() {
+            match word.strip_prefix("from:").map(|name| app.users.values().find(|u| u.username.eq_ignore_ascii_case(name) || u.display_name().eq_ignore_ascii_case(name))) {
+                Some(Some(user)) => filters.push_str(&format!("&author_id={}", user.id)),
+                _ => words.push(word),
+            }
+        }
+        let encoded = crate::discord::rest::percent_encode(&words.join(" "));
+        filters.push_str(match tab {
+            1 => "&has=image&has=video",
+            2 => "&has=link",
+            3 => "&has=file",
+            _ => "",
+        });
+        if *oldest {
+            filters.push_str("&sort_by=timestamp&sort_order=asc");
+        }
+        filters.push_str(&format!("&offset={page}"));
         let path = match channel.guild_id {
-            Some(guild) => format!("/guilds/{guild}/messages/search?content={encoded}"),
-            None => format!("/channels/{}/messages/search?content={encoded}", channel.id),
+            Some(guild) => format!("/guilds/{guild}/messages/search?content={encoded}{filters}"),
+            None => format!("/channels/{}/messages/search?content={encoded}{filters}", channel.id),
         };
-        if let Some(crate::app::Side::Search { results, .. }) = &mut app.side {
+        if let Some(crate::app::Side::Search { results, offset, .. }) = &mut app.side {
             *results = None;
+            *offset = page;
         }
         app.commands.send(crate::admin::get("search", path));
     }
     let (list, header) = match &app.side {
         Some(crate::app::Side::Pins(Some(list))) => (Some(list.clone()), tn!(list.len(), "{count} Pinned Message", "{count} Pinned Messages")),
         Some(crate::app::Side::Search { results: Some((total, list)), .. }) => (Some(list.clone()), tn!(*total, "{count} Result", "{count} Results")),
-        Some(crate::app::Side::Search { results: None, query }) if query.is_empty() => (Some(Vec::new()), String::new()),
+        Some(crate::app::Side::Search { results: None, query, .. }) if query.is_empty() => (Some(Vec::new()), String::new()),
         _ => (None, String::new()),
     };
     ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
@@ -2119,10 +2218,11 @@ fn side(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     })
                     .response
                     .interact(Sense::click());
-                if response.on_hover_text(t!("Jump to Channel")).clicked() {
+                if response.on_hover_text(t!("Jump")).clicked() {
                     let guild = message.guild_id.or_else(|| app.channel(message.channel_id).and_then(|c| c.guild_id));
                     app.actions.push(Action::SelectGuild(guild));
                     app.actions.push(Action::SelectChannel(message.channel_id));
+                    app.actions.push(Action::JumpTo { channel: message.channel_id, message: message.id });
                 }
                 ui.add_space(6.0);
             }
@@ -2478,6 +2578,63 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     app.commands.send(crate::backend::Command::MfaFinish { ticket: ticket.clone(), mfa_type, code: code.trim().to_owned(), key: key.clone(), method, path: path.clone(), body: body.clone() });
                     keep = false;
                 }
+            }
+            crate::app::Modal::NewPost { forum, title, body } => {
+                own_footer = true;
+                ui.label(RichText::new(t!("New Post")).font(theme::strong(20.0)).color(p.strong));
+                ui.add_space(8.0);
+                ui.add(egui::TextEdit::singleline(title).hint_text(t!("Post Title")).char_limit(100).desired_width(f32::INFINITY));
+                ui.add_space(6.0);
+                ui.add(egui::TextEdit::multiline(body).hint_text(t!("Message")).desired_rows(5).desired_width(f32::INFINITY));
+                ui.add_space(10.0);
+                ui.horizontal(|ui| {
+                    if ui.button(t!("Cancel")).clicked() {
+                        keep = false;
+                    }
+                    if ui.add_enabled(!title.trim().is_empty() && !body.trim().is_empty(), egui::Button::new(RichText::new(t!("Post")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                        app.commands.send(crate::backend::Command::Api { key: "thread-made".into(), method: "POST", path: format!("/channels/{forum}/threads"), body: Some(serde_json::json!({ "name": title.trim(), "auto_archive_duration": 1440, "message": { "content": body.trim() } })) });
+                        keep = false;
+                    }
+                });
+            }
+            crate::app::Modal::Threads { channel, name } => {
+                ui.label(RichText::new(t!("Threads")).font(theme::strong(20.0)).color(p.strong));
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    ui.add(egui::TextEdit::singleline(name).hint_text(t!("New Thread")).desired_width(280.0));
+                    if ui.add_enabled(!name.trim().is_empty(), egui::Button::new(RichText::new(t!("Create")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                        // 11, a public thread, with no message under it.
+                        app.commands.send(crate::backend::Command::Api { key: "thread-made".into(), method: "POST", path: format!("/channels/{channel}/threads"), body: Some(serde_json::json!({ "name": name.trim(), "type": 11, "auto_archive_duration": 1440 })) });
+                        keep = false;
+                    }
+                });
+                ui.add_space(8.0);
+                let active: Vec<(Id, String)> = app.guilds.iter().flat_map(|g| g.channels.iter()).filter(|c| c.kind == crate::discord::model::ChannelKind::Thread && c.parent_id == Some(*channel) && !c.archived).map(|c| (c.id, c.title())).collect();
+                let archived: Option<Vec<(Id, String)>> = app.archived_threads.as_ref().map(|list| list.iter().map(|c| (c.id, c.title())).collect());
+                ScrollArea::vertical().max_height(340.0).show(ui, |ui| {
+                    ui.label(RichText::new(t!("Active Threads").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                    for (id, title) in &active {
+                        if ui.selectable_label(false, title).clicked() {
+                            app.actions.push(Action::SelectChannel(*id));
+                            keep = false;
+                        }
+                    }
+                    ui.add_space(8.0);
+                    ui.label(RichText::new(t!("Archived Threads").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                    match &archived {
+                        Some(list) => {
+                            for (id, title) in list {
+                                if ui.selectable_label(false, title).clicked() {
+                                    app.actions.push(Action::SelectChannel(*id));
+                                    keep = false;
+                                }
+                            }
+                        }
+                        None => {
+                            ui.spinner();
+                        }
+                    }
+                });
             }
             crate::app::Modal::Reactions { channel, message, emojis, picked, manage } => {
                 ui.label(RichText::new(t!("Reactions")).font(theme::strong(20.0)).color(p.strong));

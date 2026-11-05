@@ -62,6 +62,9 @@ impl std::fmt::Display for MfaRequired {
 
 impl std::error::Error for MfaRequired {}
 
+/// Up to here files go inside the message's own request.
+const DIRECT_UPLOAD: u64 = 8 * 1024 * 1024;
+
 /// The token each ack's answer gives for the next, as the web client keeps it.
 static ACK_TOKEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
@@ -161,6 +164,15 @@ impl Api {
         if files.is_empty() {
             return self.send(request.json(&body)).await.map(drop);
         }
+        // Large files go up on their own, read from disk as they are sent.
+        let mut total = 0;
+        for upload in &files {
+            total += tokio::fs::metadata(&upload.path).await.map_or(0, |meta| meta.len());
+        }
+        if total > DIRECT_UPLOAD {
+            body["attachments"] = self.upload_files(channel, &files).await?;
+            return self.send(request.json(&body)).await.map(drop);
+        }
         let mut attachments = Vec::new();
         let mut form = reqwest::multipart::Form::new();
         for (index, upload) in files.iter().enumerate() {
@@ -181,6 +193,32 @@ impl Api {
         body["attachments"] = Value::Array(attachments);
         form = form.text("payload_json", body.to_string());
         self.send(request.multipart(form)).await.map(drop)
+    }
+
+    /// The web client's way: ask where each file goes, send it there, and the
+    /// message then names what was sent.
+    async fn upload_files(&self, channel: Id, files: &[crate::backend::Upload]) -> Result<Value> {
+        let mut asked = Vec::new();
+        for (index, upload) in files.iter().enumerate() {
+            let size = tokio::fs::metadata(&upload.path).await.with_context(|| t!("couldn't read {name}", name = upload.name))?.len();
+            asked.push(json!({ "filename": upload.sent_name(), "file_size": size, "id": index.to_string() }));
+        }
+        let answer = self.send(self.request(reqwest::Method::POST, &format!("/channels/{channel}/attachments")).json(&json!({ "files": asked }))).await?;
+        let places = answer.get("attachments").and_then(Value::as_array).context("no upload address")?;
+        let mut attachments = Vec::new();
+        for (index, (upload, place)) in files.iter().zip(places).enumerate() {
+            let url = place.get("upload_url").and_then(Value::as_str).context("no upload address")?;
+            let uploaded = place.get("upload_filename").and_then(Value::as_str).context("no upload name")?;
+            let file = tokio::fs::File::open(&upload.path).await.with_context(|| t!("couldn't read {name}", name = upload.name))?;
+            let size = file.metadata().await?.len();
+            self.http.put(url).header("Content-Type", "application/octet-stream").header("Content-Length", size).body(file).send().await.context(t!("no connection"))?.error_for_status()?;
+            let mut attachment = json!({ "id": index.to_string(), "filename": upload.sent_name(), "uploaded_filename": uploaded });
+            if !upload.description.trim().is_empty() {
+                attachment["description"] = json!(upload.description.trim());
+            }
+            attachments.push(attachment);
+        }
+        Ok(Value::Array(attachments))
     }
 
     pub async fn react(&self, channel: Id, message: Id, emoji: &str, add: bool) -> Result<()> {

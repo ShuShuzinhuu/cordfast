@@ -205,7 +205,8 @@ pub enum PickerTarget {
 /// The panel that replaces the member list: pinned messages or a search.
 pub enum Side {
     Pins(Option<Vec<Message>>),
-    Search { query: String, results: Option<(u64, Vec<Message>)> },
+    /// `tab` 0 messages, 1 media, 2 links, 3 files; `offset` the page's start.
+    Search { query: String, results: Option<(u64, Vec<Message>)>, tab: u8, oldest: bool, offset: u64 },
 }
 
 /// Where the window is: a server and its channel, a DM, or the friends
@@ -263,6 +264,10 @@ pub enum Modal {
     /// A second factor for a call Discord held: the code, or the password
     /// when that is all the account has.
     Mfa { ticket: String, password: bool, code: String, key: String, method: &'static str, path: String, body: Option<serde_json::Value> },
+    /// A forum's "New Post".
+    NewPost { forum: Id, title: String, body: String },
+    /// The "Threads" button: a channel's active and archived threads.
+    Threads { channel: Id, name: String },
     /// "View Reactions": who reacted with each emoji.
     Reactions { channel: Id, message: Id, emojis: Vec<crate::discord::model::Emoji>, picked: usize, manage: bool },
     /// "Create Poll".
@@ -550,6 +555,8 @@ pub struct App {
     pub saved_asked: bool,
     /// Who reacted with the emoji the open dialog shows.
     pub reactors: Option<Vec<crate::discord::model::User>>,
+    /// The channel's archived threads, while its dialog is open.
+    pub archived_threads: Option<Vec<Channel>>,
     pub soundboard: crate::ui::soundboard::Board,
     /// The emoji someone in the call just sent, and since when.
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
@@ -744,6 +751,7 @@ impl App {
             saved: HashSet::new(),
             saved_asked: false,
             reactors: None,
+            archived_threads: None,
             soundboard: Default::default(),
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
@@ -2256,6 +2264,17 @@ impl App {
             }
             return;
         }
+        if key == "threads-archived" {
+            let users = self.users.clone();
+            self.archived_threads = Some(value.get("threads").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|thread| Channel::parse(thread, None, &users)).collect());
+            return;
+        }
+        if key == "thread-made" {
+            if let Some(id) = value.get("id").and_then(serde_json::Value::as_str).and_then(|id| id.parse().ok()) {
+                self.actions.push(Action::SelectChannel(id));
+            }
+            return;
+        }
         if key == "reactors" {
             self.reactors = Some(value.as_array().into_iter().flatten().filter_map(crate::discord::model::User::parse).collect());
             return;
@@ -2732,7 +2751,7 @@ impl App {
         if self.selected_channel.is_none() {
             return;
         }
-        self.side = if matches!(self.side, Some(Side::Search { .. })) { None } else { Some(Side::Search { query: String::new(), results: None }) };
+        self.side = if matches!(self.side, Some(Side::Search { .. })) { None } else { Some(Side::Search { query: String::new(), results: None, tab: 0, oldest: false, offset: 0 }) };
     }
 
     /// The member list of a server's channel, shown or hidden.

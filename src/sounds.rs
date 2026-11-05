@@ -89,6 +89,20 @@ pub fn play_soundboard(id: u64, device: Option<String>, volume: f32) {
     });
 }
 
+/// Plays an audio attachment or a voice message once.
+pub fn play_url(url: String, device: Option<String>, volume: f32) {
+    let _ = std::thread::Builder::new().name("cordfast-sound".into()).spawn(move || {
+        let played = (|| {
+            let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
+            let (pcm, rate) = decode(&bytes)?;
+            output(&pcm, rate, device, volume)
+        })();
+        if let Err(error) = played {
+            log::warn!("audio: {error:#}");
+        }
+    });
+}
+
 fn soundboard_file(id: u64) -> anyhow::Result<Vec<u8>> {
     let dir = crate::settings::config_dir().join("sounds");
     let path = dir.join(format!("board-{id}"));

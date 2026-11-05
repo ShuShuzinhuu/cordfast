@@ -102,6 +102,36 @@ fn draw(app: &mut App, ui: &mut egui::Ui, message: &Message, component: &Compone
             let Some(origin) = message.origin.clone() else { return };
             let chosen = options.iter().find(|o| o.default).map(|o| o.label.clone());
             let text = chosen.or_else(|| placeholder.clone()).unwrap_or_else(|| t!("Make a selection").into());
+            if *kind != 3 {
+                // People, roles or channels: the server's, from what is known here.
+                let guild = message.guild_id.or_else(|| app.channel(message.channel_id).and_then(|c| c.guild_id));
+                let mut picks: Vec<(String, String)> = Vec::new();
+                if let Some(guild) = guild.and_then(|g| app.guild(g)) {
+                    if matches!(*kind, 5 | 7) {
+                        let known = app.members.keys().filter(|(g, _)| *g == guild.id).filter_map(|(_, user)| app.users.get(user));
+                        picks.extend(known.map(|user| (user.display_name().to_owned(), user.id.to_string())));
+                    }
+                    if matches!(*kind, 6 | 7) {
+                        picks.extend(guild.roles.iter().map(|role| (format!("@{}", role.name), role.id.to_string())));
+                    }
+                    if *kind == 8 {
+                        picks.extend(guild.channels.iter().filter(|c| c.kind != crate::discord::model::ChannelKind::Category).map(|c| (format!("#{}", c.title()), c.id.to_string())));
+                    }
+                }
+                picks.sort_by_key(|(name, _)| name.to_lowercase());
+                ui.add_enabled_ui(!disabled, |ui| {
+                    egui::ComboBox::from_id_salt(("select", message.id, custom_id.as_str())).selected_text(text).width(ui.available_width().min(420.0)).show_ui(ui, |ui| {
+                        egui::ScrollArea::vertical().max_height(240.0).show(ui, |ui| {
+                            for (name, value) in &picks {
+                                if ui.selectable_label(false, name).clicked() {
+                                    interact(app, &origin, json!({ "component_type": kind, "custom_id": custom_id, "type": kind, "values": [value] }));
+                                }
+                            }
+                        });
+                    });
+                });
+                return;
+            }
             ui.add_enabled_ui(!disabled && *kind == 3, |ui| {
                 egui::ComboBox::from_id_salt(("select", message.id, custom_id.as_str()))
                     .selected_text(text)
