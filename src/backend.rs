@@ -171,6 +171,8 @@ pub type Wake = Arc<dyn Fn() + Send + Sync>;
 pub struct Events {
     tx: std::sync::mpsc::Sender<Event>,
     wake: Wake,
+    /// Lazy events waiting for the next beat of the window.
+    pending: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Events {
@@ -178,6 +180,26 @@ impl Events {
         if self.tx.send(event).is_ok() {
             (self.wake)();
         }
+    }
+
+    /// An event the eye can wait for. Accounts in many servers get presences
+    /// and member updates all the time, and drawing the window for each kept
+    /// a core busy: these wait for a beat, four times a second.
+    pub fn send_lazy(&self, event: Event) {
+        if self.tx.send(event).is_ok() {
+            self.pending.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Starts the beat: it only wakes the window when something waits.
+    fn beat(&self) {
+        let (pending, wake) = (self.pending.clone(), self.wake.clone());
+        let _ = std::thread::Builder::new().name("cordfast-beat".into()).spawn(move || loop {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            if pending.swap(false, std::sync::atomic::Ordering::Relaxed) {
+                wake();
+            }
+        });
     }
 }
 
@@ -200,7 +222,8 @@ impl Backend {
     pub fn spawn(wake: Wake, logo: Vec<u8>) -> Self {
         let (command_tx, command_rx) = mpsc::unbounded_channel();
         let (event_tx, event_rx) = std::sync::mpsc::channel();
-        let events = Events { tx: event_tx, wake };
+        let events = Events { tx: event_tx, wake, pending: Default::default() };
+        events.beat();
         std::thread::Builder::new()
             .name("cordfast-backend".into())
             .spawn(move || {
@@ -362,7 +385,11 @@ impl Worker {
                 }
                 _ => {}
             }
-            events.send(Event::Gateway(dispatch));
+            if matches!(dispatch, Dispatch::Presences(_) | Dispatch::Members { .. } | Dispatch::MemberList(_)) {
+                events.send_lazy(Event::Gateway(dispatch));
+            } else {
+                events.send(Event::Gateway(dispatch));
+            }
         });
         tokio::spawn(gateway::run(token, sink, control_rx));
     }

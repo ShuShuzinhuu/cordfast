@@ -527,6 +527,8 @@ pub struct App {
     pub show_dm_profile: bool,
     /// A voice channel showing its text chat instead of the people.
     pub voice_chat: bool,
+    /// Since when, frames drawn and events applied, for the log's line.
+    load: (Instant, u32, u32),
     pub requested_profiles: HashSet<Id>,
     pub status: String,
     /// When a timed status ends and we are back online.
@@ -711,6 +713,7 @@ impl App {
             guild_profiles: HashMap::new(),
             show_dm_profile: true,
             voice_chat: false,
+            load: (Instant::now(), 0, 0),
             requested_profiles: HashSet::new(),
             status: "online".into(),
             status_until: None,
@@ -1087,7 +1090,14 @@ impl App {
     /// Applies what the runtime sent. `ctx` is `None` without a window.
     pub fn pump(&mut self, ctx: Option<&egui::Context>) {
         while let Ok(event) = self.backend.events.try_recv() {
+            self.load.2 += 1;
             self.apply(ctx, event);
+        }
+        // How busy the window is, to compare with what a call costs.
+        self.load.1 += 1;
+        if self.load.0.elapsed() >= Duration::from_secs(30) {
+            log::info!("load: {} frames, {} events in 30 s", self.load.1, self.load.2);
+            self.load = (Instant::now(), 0, 0);
         }
         if let Some(ctx) = ctx {
             self.apply_theme(ctx);
