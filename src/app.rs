@@ -79,6 +79,7 @@ pub enum SettingsTab {
     MessagingPermissions,
     Notifications,
     Clips,
+    Streamer,
     Nitro,
     ServerBoost,
     Subscriptions,
@@ -566,6 +567,12 @@ pub struct App {
     pub event_rsvp: HashSet<String>,
     /// In a Stage: (suppressed, hand raised), by user.
     pub voice_stage: HashMap<Id, (bool, bool)>,
+    /// OBS or XSplit is open, for Streamer Mode's automatic switch.
+    pub streaming_app: bool,
+    /// People ignored this session.
+    pub ignored: HashSet<Id>,
+    /// When the running programs were last looked at.
+    streaming_checked: Instant,
     pub soundboard: crate::ui::soundboard::Board,
     /// The emoji someone in the call just sent, and since when.
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
@@ -765,6 +772,9 @@ impl App {
             gate_asked: HashSet::new(),
             event_rsvp: HashSet::new(),
             voice_stage: HashMap::new(),
+            streaming_app: false,
+            ignored: HashSet::new(),
+            streaming_checked: Instant::now(),
             soundboard: Default::default(),
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
@@ -857,6 +867,9 @@ impl App {
     fn sound(&self, sound: crate::sounds::Sound) {
         use crate::sounds::Sound;
         if self.voice.deaf && !matches!(sound, Sound::Deafen | Sound::Undeafen) {
+            return;
+        }
+        if self.streamer_on() && self.settings.streamer_no_sounds {
             return;
         }
         if self.settings.sounds_off.iter().any(|s| s == sound.name()) {
@@ -1162,6 +1175,14 @@ impl App {
             list.retain(|(_, at)| now.duration_since(*at) < Duration::from_secs(10));
             !list.is_empty()
         });
+        // Every 15 seconds at most, and only with the automatic switch on.
+        if self.settings.streamer_auto && self.streaming_checked.elapsed() >= Duration::from_secs(15) {
+            self.streaming_checked = Instant::now();
+            self.streaming_app = crate::discord::detect::processes().iter().any(|name| {
+                let name = name.to_lowercase();
+                name.starts_with("obs") || name.starts_with("xsplit")
+            });
+        }
         if !self.saved_asked && self.connection == Connection::Connected {
             self.saved_asked = true;
             self.commands.send(crate::admin::get("saved-ids", "/users/@me/saved-messages?bookmark_ids=true".into()));
@@ -2267,6 +2288,21 @@ impl App {
                 return;
             }
         };
+        if key == "connection-authorize" {
+            if let Some(url) = value.get("url").and_then(serde_json::Value::as_str) {
+                let _ = open::that_detached(url);
+            }
+            return;
+        }
+        if key == "gate:account" {
+            // Discord ended the old token: the session goes on with the new one.
+            if let Some(token) = value.get("token").and_then(serde_json::Value::as_str) {
+                self.commands.send(Command::LoginWithToken(token.to_owned()));
+            }
+            self.commands.send(crate::admin::get("settings:me", "/users/@me".into()));
+            self.gate_data.insert(key.to_owned(), Ok(value));
+            return;
+        }
         if key == "gate:event-made" {
             // The list asks again, with the change in it.
             self.gate_asked.retain(|asked| !asked.starts_with("gate:events:"));
@@ -2542,8 +2578,13 @@ impl App {
         }
     }
 
+    /// Streamer Mode is on: chosen, or automatic while OBS or XSplit runs.
+    pub fn streamer_on(&self) -> bool {
+        self.settings.streamer_mode || (self.settings.streamer_auto && self.streaming_app)
+    }
+
     fn system_notify(&mut self, title: &str, body: &str, channel: Id) {
-        if self.settings.notifications {
+        if self.settings.notifications && !(self.streamer_on() && self.settings.streamer_no_notifications) {
             self.commands.send(Command::Notify {
                 title: title.into(),
                 body: body.into(),

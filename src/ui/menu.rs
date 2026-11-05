@@ -323,6 +323,20 @@ pub fn user(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::User
             app.actions.push(Action::Relationship { user: user.id, kind: Some(2) });
             ui.close();
         }
+        // Ignoring hides someone from you without them or a block knowing.
+        if kind != Some(2) {
+            let ignored = app.ignored.contains(&user.id);
+            if item(ui, if ignored { t!("Unignore") } else { t!("Ignore") }, Tail::None).clicked() {
+                let method = if ignored { "DELETE" } else { "PUT" };
+                app.commands.send(crate::backend::Command::Api { key: "pin".into(), method, path: format!("/users/@me/relationships/{}/ignore", user.id), body: None });
+                if ignored {
+                    app.ignored.remove(&user.id);
+                } else {
+                    app.ignored.insert(user.id);
+                }
+                ui.close();
+            }
+        }
     }
     if let Some(guild_id) = guild
         && let Some(guild) = app.guild(guild_id).cloned()

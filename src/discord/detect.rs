@@ -171,7 +171,7 @@ pub fn detected(socket: u64) -> bool {
 
 /// Every running process's executable path.
 #[cfg(windows)]
-fn processes() -> Vec<String> {
+pub fn processes() -> Vec<String> {
     use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE};
     use windows_sys::Win32::System::Diagnostics::ToolHelp::{
         CreateToolhelp32Snapshot, PROCESSENTRY32W, Process32FirstW, Process32NextW, TH32CS_SNAPPROCESS,
@@ -252,7 +252,7 @@ fn foreground() -> Option<String> {
 /// On Linux the command line's first word (a Wine or Proton game shows its
 /// .exe there), or else the executable's link.
 #[cfg(unix)]
-fn processes() -> Vec<String> {
+pub fn processes() -> Vec<String> {
     let own = std::process::id().to_string();
     let Ok(dir) = std::fs::read_dir("/proc") else { return Vec::new() };
     dir.flatten()
@@ -269,7 +269,7 @@ fn processes() -> Vec<String> {
 }
 
 #[cfg(not(any(windows, unix)))]
-fn processes() -> Vec<String> {
+pub fn processes() -> Vec<String> {
     Vec::new()
 }
 

@@ -71,6 +71,13 @@ pub struct Settings {
     pub sounds_off: Vec<String>,
     /// People whose soundboard is not played here ("Mute Soundboard").
     pub soundboard_muted: Vec<String>,
+    /// Streamer Mode: on by hand, or while OBS or XSplit runs; what it hides.
+    pub streamer_mode: bool,
+    pub streamer_auto: bool,
+    pub streamer_hide_personal: bool,
+    pub streamer_hide_invites: bool,
+    pub streamer_no_sounds: bool,
+    pub streamer_no_notifications: bool,
     /// The composer's emoji, GIF and sticker buttons (Appearance → Chat
     /// Box).
     pub emoji_button: bool,
@@ -145,6 +152,12 @@ impl Default for Settings {
             keybinds: BTreeMap::new(),
             sounds_off: Vec::new(),
             soundboard_muted: Vec::new(),
+            streamer_mode: false,
+            streamer_auto: false,
+            streamer_hide_personal: true,
+            streamer_hide_invites: true,
+            streamer_no_sounds: true,
+            streamer_no_notifications: true,
             emoji_button: true,
             gif_button: true,
             sticker_button: true,

@@ -40,6 +40,7 @@ const SECTIONS: &[Section] = &[
         (SettingsTab::Voice, Icon::Microphone, n!("Voice & Video")),
         (SettingsTab::Appearance, Icon::Palette, n!("Appearance")),
         (SettingsTab::Accessibility, Icon::Accessibility, n!("Accessibility")),
+        (SettingsTab::Streamer, Icon::Video, n!("Streamer Mode")),
         (SettingsTab::System, Icon::System, n!("System")),
         (SettingsTab::Language, Icon::Language, n!("Language & Time")),
     ]),
@@ -122,6 +123,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab, below: Rect) {
                 SettingsTab::MessagingPermissions => messaging(app, ui),
                 SettingsTab::Notifications => notifications(app, ui),
                 SettingsTab::Clips => clips(ui),
+                SettingsTab::Streamer => streamer(app, ui),
                 SettingsTab::Nitro => nitro(app, ui),
                 SettingsTab::ServerBoost => boosts(app, ui),
                 SettingsTab::Subscriptions => subscriptions(app, ui),
@@ -333,6 +335,7 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
     let reveal_id = ui.id().with("reveal");
     let mut revealed: (bool, bool) = ui.data(|d| d.get_temp(reveal_id)).unwrap_or_default();
     let text = |k: &str| me.get(k).and_then(Value::as_str).unwrap_or_default().to_owned();
+    let hide_personal = app.streamer_on() && app.settings.streamer_hide_personal;
     // Discord asks for the password in its own dialogs: Edit and Add open it.
     form::category(ui, t!("Account Info"), "", |ui| {
         if form::row(ui, t!("Username"), "", |ui| {
@@ -341,19 +344,19 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
             form::value(ui, &text("username"));
             edit
         }) {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, super::gates::AccountEdit::Username);
         }
         let email = text("email");
         let (edit, reveal) = form::row(ui, t!("Email"), "", |ui| {
             let edit = form::button(ui, t!("Edit"), Kind::Secondary).clicked();
             ui.add_space(4.0);
-            let reveal = form::link(ui, if revealed.0 { t!("Hide") } else { t!("Reveal") });
-            form::value(ui, &if revealed.0 { email.clone() } else { masked(&email) });
+            let reveal = !hide_personal && form::link(ui, if revealed.0 { t!("Hide") } else { t!("Reveal") });
+            form::value(ui, &if revealed.0 && !hide_personal { email.clone() } else { masked(&email) });
             (edit, reveal)
         });
         revealed.0 ^= reveal;
         if edit {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, super::gates::AccountEdit::Email);
         }
         let phone = text("phone");
         let (edit, reveal) = form::row(ui, t!("Phone Number"), "", |ui| {
@@ -363,8 +366,8 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
                 form::value(ui, t!("You haven't added a phone number yet."));
                 return (edit, false);
             }
-            let reveal = form::link(ui, if revealed.1 { t!("Hide") } else { t!("Reveal") });
-            form::value(ui, &if revealed.1 { phone.clone() } else { masked(&phone) });
+            let reveal = !hide_personal && form::link(ui, if revealed.1 { t!("Hide") } else { t!("Reveal") });
+            form::value(ui, &if revealed.1 && !hide_personal { phone.clone() } else { masked(&phone) });
             (edit, reveal)
         });
         revealed.1 ^= reveal;
@@ -375,11 +378,11 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
     ui.data_mut(|d| d.insert_temp(reveal_id, revealed));
     form::category(ui, t!("Password & Security"), "", |ui| {
         if form::row(ui, t!("Password"), "", |ui| form::button(ui, t!("Edit"), Kind::Secondary).clicked()) {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, super::gates::AccountEdit::Password);
         }
         let mfa = me.get("mfa_enabled").and_then(Value::as_bool).unwrap_or(false);
         if form::link_row(ui, t!("Multi-Factor Authentication"), if mfa { t!("Enabled") } else { t!("Disabled") }) {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, if mfa { super::gates::AccountEdit::MfaOff } else { super::gates::AccountEdit::MfaOn });
         }
         let count = app.settings_data.get("settings:sessions").and_then(|v| v.as_ref()).and_then(|r| r.as_ref().ok()).and_then(|v| v.get("user_sessions")).and_then(Value::as_array).map_or(0, Vec::len);
         if form::link_row(ui, t!("Logged-in Devices"), &tn!(count, "{count} device", "{count} devices")) {
@@ -418,12 +421,30 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
     });
     form::category(ui, "", "", |ui| {
         if form::row(ui, t!("Disable your account"), t!("Temporarily disable your account."), |ui| form::button(ui, t!("Disable Account"), Kind::Secondary).clicked()) {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, super::gates::AccountEdit::Disable);
         }
         if form::row(ui, t!("Close your account"), t!("Permanently close your account."), |ui| form::button(ui, t!("Delete Account"), Kind::Danger).clicked()) {
-            open_web("/channels/@me");
+            super::gates::account_dialog(app, super::gates::AccountEdit::Delete);
         }
     });
+}
+
+/// Streamer Mode: what it hides while a stream runs.
+fn streamer(app: &mut App, ui: &mut egui::Ui) {
+    let mut changed = false;
+    form::category(ui, t!("Streamer Mode"), "", |ui| {
+        changed |= form::switch_row(ui, &mut app.settings.streamer_mode, t!("Enable Streamer Mode"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_auto, t!("Automatically Enable/Disable"), "OBS, XSplit");
+    });
+    form::category(ui, t!("Options"), "", |ui| {
+        changed |= form::switch_row(ui, &mut app.settings.streamer_hide_personal, t!("Hide Personal Information"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_hide_invites, t!("Hide Invite Links"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_no_sounds, t!("Disable Sounds"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_no_notifications, t!("Disable Notifications"), "");
+    });
+    if changed {
+        app.actions.push(Action::SettingsChanged);
+    }
 }
 
 /// Logged-in Devices, opened from its row on the account page.
@@ -489,6 +510,23 @@ fn data_privacy(app: &mut App, ui: &mut egui::Ui) {
 
 fn messaging(app: &mut App, ui: &mut egui::Ui) {
     form::category(ui, t!("Content Filters"), "", |ui| {
+        // Discord's three places, each to show, blur or block.
+        let names = [t!("Show").to_owned(), t!("Blur").to_owned(), t!("Block").to_owned()];
+        for (which, label) in [(1, t!("Direct messages from friends")), (2, t!("Direct messages from others")), (3, t!("Server channels"))] {
+            // explicit_content_friend_dm, _non_friend_dm and _guilds.
+            let field = match which {
+                1 => 2,
+                2 => 3,
+                _ => 1,
+            };
+            let current = app.preloaded.content_filter(field).clamp(1, 3) as usize - 1;
+            form::label(ui, label);
+            if let Some(picked) = form::select(ui, &format!("content-filter-{which}"), &names[current], &names, 240.0) {
+                let patch = app.preloaded.set_content_filter(field, picked as u64 + 1);
+                app.commands.send(crate::backend::Command::SaveSettings(patch));
+            }
+            ui.add_space(10.0);
+        }
         account_switch(app, ui, pre::NSFW_COMMANDS, false, t!("Allow access to age-restricted commands from apps in DMs"), t!("Allows people 18+ to access commands marked as age-restricted in DMs. Applies to all apps."));
         account_switch(app, ui, pre::NSFW_GUILDS_IOS, false, t!("Allow access to age-restricted servers on iOS"), t!("Access age-restricted servers (18+) on iOS devices, after joining them on desktop."));
     });
@@ -1476,6 +1514,14 @@ fn overlay(ui: &mut egui::Ui) {
 
 fn connected_apps(app: &mut App, ui: &mut egui::Ui) {
     form::category(ui, t!("Connections"), t!("These are accounts from other platforms. Connecting them here can unlock new features on Discord, like the ability to share what you're currently listening to, get paid safely and securely, and more."), |ui| {
+        // Connecting happens on the other service's site, in the browser.
+        const SERVICES: [&str; 10] = ["battlenet", "epicgames", "github", "leagueoflegends", "reddit", "riotgames", "spotify", "steam", "twitch", "youtube"];
+        let names: Vec<String> = SERVICES.iter().map(|name| (*name).to_owned()).collect();
+        form::label(ui, t!("Add Connection"));
+        if let Some(picked) = form::select(ui, "add-connection", t!("Add Connection"), &names, 240.0) {
+            app.commands.send(crate::admin::get("connection-authorize", format!("/connections/{}/authorize", SERVICES[picked])));
+        }
+        ui.add_space(10.0);
         let Some(list) = loaded(app, ui, "settings:connections").and_then(Value::as_array).cloned() else { return };
         if list.is_empty() {
             form::note(ui, t!("You haven't connected any accounts."));
@@ -1484,6 +1530,11 @@ fn connected_apps(app: &mut App, ui: &mut egui::Ui) {
             let kind = c.get("type").and_then(Value::as_str).unwrap_or_default();
             let name = c.get("name").and_then(Value::as_str).unwrap_or_default();
             let id = c.get("id").and_then(Value::as_str).unwrap_or_default();
+            let mut visible = c.get("visibility").and_then(Value::as_u64) == Some(1);
+            if form::switch_row(ui, &mut visible, t!("Display on profile"), name) {
+                app.commands.send(crate::backend::Command::Api { key: "connection-removed".into(), method: "PATCH", path: format!("/users/@me/connections/{kind}/{id}"), body: Some(serde_json::json!({ "visibility": u8::from(visible) })) });
+                app.commands.send(crate::admin::get("settings:connections", "/users/@me/connections".into()));
+            }
             if item_row(ui, name, kind, Some((t!("Remove"), Kind::Secondary))) {
                 app.commands.send(crate::backend::Command::Api { key: "connection-removed".into(), method: "DELETE", path: format!("/users/@me/connections/{kind}/{id}"), body: None });
                 app.commands.send(crate::admin::get("settings:connections", "/users/@me/connections".into()));

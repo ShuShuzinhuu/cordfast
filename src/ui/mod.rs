@@ -647,6 +647,11 @@ fn voice_badge(app: &App, ui: &egui::Ui, icon: Rect, guilds: &[Id]) {
 /// Asks Discord for an invite to `channel`; the answer goes to the
 /// clipboard (see the "invite" answer in app.rs).
 fn create_invite(app: &mut App, channel: Id) {
+    // Streamer Mode: links stay off the screen and the clipboard's way.
+    if app.streamer_on() && app.settings.streamer_hide_invites {
+        app.notify(t!("Hide Invite Links"));
+        return;
+    }
     app.commands.send(crate::backend::Command::Api {
         key: "invite".into(),
         method: "POST",

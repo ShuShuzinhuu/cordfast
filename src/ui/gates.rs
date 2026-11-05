@@ -27,7 +27,22 @@ pub struct EventDraft {
     pub channel: Option<Id>,
 }
 
+/// What the account dialog changes.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum AccountEdit {
+    Username,
+    Email,
+    Password,
+    /// Turning the authenticator on, with its fresh secret.
+    MfaOn,
+    MfaOff,
+    Disable,
+    Delete,
+}
+
 pub enum Gate {
+    /// `first` is the new value; `code` the emailed code or the authenticator's.
+    Account { what: AccountEdit, first: String, password: String, code: String, secret: String, sent: bool },
     Verification { guild: Id, answers: BTreeMap<usize, Value>, agreed: bool },
     Onboarding { guild: Id, picked: Option<HashSet<String>>, page: usize },
     Events { guild: Id, draft: Option<EventDraft> },
@@ -87,12 +102,136 @@ fn answered(ui: &mut egui::Ui, answer: Option<Result<Value, String>>) -> Option<
 /// Draws the dialog; false when it closes.
 pub fn show(app: &mut App, ui: &mut egui::Ui, gate: &mut Gate) -> bool {
     match gate {
+        Gate::Account { what, first, password, code, secret, sent } => account(app, ui, *what, first, password, code, secret, sent),
         Gate::Verification { guild, answers, agreed } => verification(app, ui, *guild, answers, agreed),
         Gate::Onboarding { guild, picked, page } => onboarding(app, ui, *guild, picked, page),
         Gate::Events { guild, draft } => events(app, ui, *guild, draft),
         Gate::Discover { query, asked } => discover(app, ui, query, asked),
         Gate::Stage { channel, topic } => stage(app, ui, *channel, topic),
     }
+}
+
+/// A new secret for an authenticator app: 16 base32 letters, as Discord's are.
+fn totp_secret() -> String {
+    use rand::Rng;
+    const ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    let mut random = rand::thread_rng();
+    (0..16).map(|_| ALPHABET[random.gen_range(0..ALPHABET.len())] as char).collect()
+}
+
+/// Opens the account dialog for one change.
+pub fn account_dialog(app: &mut App, what: AccountEdit) {
+    let secret = if what == AccountEdit::MfaOn { totp_secret() } else { String::new() };
+    open(app, Gate::Account { what, first: String::new(), password: String::new(), code: String::new(), secret, sent: false });
+}
+
+/// Changing the account here instead of in the browser. An answer with a new
+/// token means Discord ended the old one: the session starts over with it.
+#[allow(clippy::too_many_arguments)]
+fn account(app: &mut App, ui: &mut egui::Ui, what: AccountEdit, first: &mut String, password: &mut String, code: &mut String, secret: &mut String, sent: &mut bool) -> bool {
+    let p = theme::p();
+    if let Some(Ok(value)) = app.gate_data.get("gate:account").cloned() {
+        // Backup codes are shown once.
+        if let Some(codes) = value.get("backup_codes").and_then(Value::as_array) {
+            title(ui, t!("Enable Authenticator App"));
+            ui.label(t!("Save these backup codes somewhere safe."));
+            ui.add_space(6.0);
+            for backup in codes {
+                if let Some(text) = backup.get("code").and_then(Value::as_str) {
+                    ui.label(RichText::new(text).monospace().color(p.strong));
+                }
+            }
+            ui.add_space(10.0);
+            return !primary(ui, t!("Done"), true);
+        }
+        if matches!(what, AccountEdit::Disable | AccountEdit::Delete) {
+            app.actions.push(crate::app::Action::Logout);
+        }
+        return false;
+    }
+    let field = |ui: &mut egui::Ui, label: &str, value: &mut String, hide: bool| {
+        heading(ui, label);
+        ui.add(egui::TextEdit::singleline(value).password(hide).desired_width(f32::INFINITY));
+        ui.add_space(8.0);
+    };
+    let (heading_text, button) = match what {
+        AccountEdit::Username => (t!("Username"), t!("Save")),
+        AccountEdit::Email => (t!("Email"), t!("Save")),
+        AccountEdit::Password => (t!("Password"), t!("Save")),
+        AccountEdit::MfaOn => (t!("Enable Authenticator App"), t!("Activate")),
+        AccountEdit::MfaOff => (t!("Disable Authenticator App"), t!("Disable")),
+        AccountEdit::Disable => (t!("Disable Account"), t!("Disable Account")),
+        AccountEdit::Delete => (t!("Delete Account"), t!("Delete Account")),
+    };
+    title(ui, heading_text);
+    match what {
+        AccountEdit::Username => field(ui, t!("Username"), first, false),
+        AccountEdit::Email => {
+            field(ui, t!("Email"), first, false);
+            // Discord confirms a change through the current address first.
+            if *sent {
+                field(ui, t!("Verification Code"), code, false);
+            } else if ui.button(t!("Send Verification Code")).clicked() {
+                *sent = true;
+                app.commands.send(call("pin", "PUT", "/users/@me/email".into(), Some(json!({}))));
+            }
+        }
+        AccountEdit::Password => field(ui, t!("New Password"), first, true),
+        AccountEdit::MfaOn => {
+            ui.label(t!("Add this key to your authenticator app, then enter the code it shows."));
+            ui.add_space(4.0);
+            ui.label(RichText::new(secret.as_str()).monospace().size(16.0).color(p.strong));
+            ui.add_space(8.0);
+            field(ui, t!("Verification Code"), code, false);
+        }
+        AccountEdit::MfaOff => field(ui, t!("Verification Code"), code, false),
+        AccountEdit::Delete => {
+            ui.label(RichText::new(t!("Permanently close your account.")).color(p.red));
+            ui.add_space(8.0);
+        }
+        AccountEdit::Disable => {
+            ui.label(t!("Temporarily disable your account."));
+            ui.add_space(8.0);
+        }
+    }
+    if what != AccountEdit::MfaOff {
+        field(ui, if what == AccountEdit::Password { t!("Current Password") } else { t!("Password") }, password, true);
+    }
+    if let Some(Err(error)) = app.gate_data.get("gate:account") {
+        ui.label(RichText::new(error).color(p.red));
+        ui.add_space(6.0);
+    }
+    let ready = match what {
+        AccountEdit::Username | AccountEdit::Password => !first.trim().is_empty() && !password.is_empty(),
+        AccountEdit::Email => !first.trim().is_empty() && !password.is_empty() && !code.trim().is_empty(),
+        AccountEdit::MfaOn => !password.is_empty() && !code.trim().is_empty(),
+        AccountEdit::MfaOff => !code.trim().is_empty(),
+        AccountEdit::Disable | AccountEdit::Delete => !password.is_empty(),
+    };
+    let mut open = true;
+    ui.horizontal(|ui| {
+        if ui.button(t!("Cancel")).clicked() {
+            open = false;
+        }
+        let danger = matches!(what, AccountEdit::Delete);
+        let fill = if danger { p.red } else { p.accent };
+        if ui.add_enabled(ready, egui::Button::new(RichText::new(button).color(Color32::WHITE)).fill(fill)).clicked() {
+            app.gate_data.remove("gate:account");
+            let me = "/users/@me".to_owned();
+            let code_text = code.trim().to_owned();
+            let (method, path, body) = match what {
+                AccountEdit::Username => ("PATCH", me, json!({ "username": first.trim(), "password": password })),
+                AccountEdit::Password => ("PATCH", me, json!({ "password": password, "new_password": first })),
+                AccountEdit::Email => ("PATCH", me, json!({ "email": first.trim(), "email_token": code_text, "password": password })),
+                AccountEdit::MfaOn => ("POST", format!("{me}/mfa/totp/enable"), json!({ "password": password, "code": code_text, "secret": secret })),
+                AccountEdit::MfaOff => ("POST", format!("{me}/mfa/totp/disable"), json!({ "code": code_text })),
+                AccountEdit::Disable => ("POST", format!("{me}/disable"), json!({ "password": password })),
+                AccountEdit::Delete => ("POST", format!("{me}/delete"), json!({ "password": password })),
+            };
+            app.commands.send(call("gate:account", method, path, Some(body)));
+        }
+    });
+    open
 }
 
 /// The form a server with "Rules Screening" asks before letting someone talk:

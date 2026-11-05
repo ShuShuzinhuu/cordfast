@@ -141,6 +141,25 @@ impl Preloaded {
         }
     }
 
+    /// text_and_images.explicit_content_settings: 1 guilds, 2 friends' DMs,
+    /// 3 others' DMs, each 1 show, 2 blur or 3 block.
+    pub fn content_filter(&self, which: u32) -> u64 {
+        let read = |message: &[u8]| {
+            let section = proto::fields(message).into_iter().filter(|(n, _)| *n == 6).filter_map(|(_, v)| v.bytes()).last()?;
+            let settings = proto::fields(section).into_iter().filter(|(n, _)| *n == 29).filter_map(|(_, v)| v.bytes()).last()?;
+            proto::fields(settings).into_iter().filter(|(n, _)| *n == which).find_map(|(_, v)| match v {
+                Field::Varint(value) => Some(value),
+                _ => None,
+            })
+        };
+        self.patches.iter().rev().find_map(|patch| read(patch)).or_else(|| read(&self.whole)).unwrap_or(2)
+    }
+
+    /// Sets one of them and returns the message that saves it.
+    pub fn set_content_filter(&mut self, which: u32, value: u64) -> Vec<u8> {
+        self.save(6, &length_field(29, &varint_field(which, value)))
+    }
+
     /// voice_and_video.soundboard_settings.volume, a float from 0 to 100.
     pub fn soundboard_volume(&self) -> f32 {
         let read = |message: &[u8]| {
