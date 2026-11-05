@@ -619,7 +619,7 @@ fn nitro(app: &mut App, ui: &mut egui::Ui) {
 }
 
 /// Server Boost: what Discord's page manages. The boosts can be moved,
-/// applied and canceled here; buying more stays on Discord.
+/// applied and moved here; buying more and canceling stay on Discord.
 fn boosts(app: &mut App, ui: &mut egui::Ui) {
     use crate::app::{Confirmed, Modal};
     use crate::discord::model::sf;
@@ -742,12 +742,13 @@ fn boosts(app: &mut App, ui: &mut egui::Ui) {
                                     }
                                     if is_canceled {
                                         if super::menu::item(ui, t!("Uncancel Boost Subscription"), super::menu::Tail::None).clicked() {
-                                            app.modal = Some(Modal::Confirm { title: t!("Uncancel Boost Subscription").into(), body: t!("Would you like to uncancel this Server Boost?").into(), button: t!("Yes, Uncancel Now").into(), then: Confirmed::UncancelBoost { slot: id } });
+                                            open_web("/channels/@me");
                                             ui.close();
                                         }
                                     } else if active > included {
                                         if super::menu::danger(ui, t!("Cancel Boost Subscription"), super::menu::Tail::None).clicked() {
-                                            app.modal = Some(Modal::Confirm { title: t!("Cancel Boost Subscription").into(), body: t!("Are you sure you want to cancel this Server Boost? It will be removed from associated servers and canceled from your subscription at the end of your billing period.").into(), button: t!("Yes, Cancel Boost").into(), then: Confirmed::CancelBoost { slot: id } });
+                                            // Recurring billing: Discord\'s site, not this client.
+                                            open_web("/channels/@me");
                                             ui.close();
                                         }
                                     } else {

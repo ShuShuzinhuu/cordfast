@@ -788,15 +788,18 @@ struct MessageActions {
 impl MessageActions {
     fn of(app: &App, message: &Message, guild: Option<Id>) -> Self {
         const MANAGE_MESSAGES: u64 = 1 << 13;
+        // Split from Manage Messages in 2025, as the bundle's pin button checks.
+        const PIN_MESSAGES: u64 = 1 << 51;
         let mine = message.author.id == app.me_id();
-        let manage = guild.and_then(|g| app.guild(g)).is_some_and(|g| {
+        let perms = guild.and_then(|g| app.guild(g)).map(|g| {
             let perms = app.channel(message.channel_id).map_or_else(|| g.my_permissions(app.me_id()), |c| g.channel_permissions(app.me_id(), c));
-            perms & MANAGE_MESSAGES != 0
+            perms
         });
+        let manage = perms.is_some_and(|perms| perms & MANAGE_MESSAGES != 0);
         Self {
             edit: mine && matches!(message.kind, 0 | 19) && !message.deleted,
             delete: (mine || manage) && !message.deleted,
-            pin: guild.is_none() || manage,
+            pin: guild.is_none() || perms.is_some_and(|perms| perms & PIN_MESSAGES != 0),
         }
     }
 }
@@ -2364,6 +2367,22 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                 let label = if picked.len() > 1 { t!("Create Group") } else { t!("Create DM") };
                 if ui.add_enabled(!picked.is_empty(), egui::Button::new(RichText::new(label).color(Color32::WHITE)).fill(p.accent)).clicked() || (enter && !picked.is_empty()) {
                     app.actions.push(Action::NewDm(picked.clone()));
+                }
+            }
+            crate::app::Modal::Mfa { ticket, password, code, key, method, path, body } => {
+                ui.label(RichText::new(t!("Multi-Factor Authentication")).font(theme::strong(18.0)).color(p.strong));
+                let (note, hint) = if *password { (t!("Enter your password to continue."), t!("Password")) } else { (t!("Open your authentication app and enter the code below."), t!("Enter Discord Auth/Backup Code")) };
+                ui.label(RichText::new(note).size(13.0).color(p.muted));
+                ui.add_space(6.0);
+                let field = ui.add(egui::TextEdit::singleline(code).password(*password).hint_text(hint).desired_width(f32::INFINITY));
+                field.request_focus();
+                ui.add_space(6.0);
+                let verify = ui.add(egui::Button::new(RichText::new(t!("Verify")).color(Color32::WHITE)).fill(p.accent)).clicked();
+                if (verify || enter) && !code.trim().is_empty() {
+                    // Backup codes are eight characters, the app's are six.
+                    let mfa_type = if *password { "password" } else if code.trim().chars().filter(char::is_ascii_alphanumeric).count() > 6 { "backup" } else { "totp" };
+                    app.commands.send(crate::backend::Command::MfaFinish { ticket: ticket.clone(), mfa_type, code: code.trim().to_owned(), key: key.clone(), method, path: path.clone(), body: body.clone() });
+                    keep = false;
                 }
             }
             crate::app::Modal::NewThread { channel, message, name } => {

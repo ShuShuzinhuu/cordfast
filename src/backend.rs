@@ -79,19 +79,21 @@ pub enum Command {
     CloseDm(Id),
     LeaveGuild(Id),
     /// A status, until a moment in Unix milliseconds or for good.
-    SetStatus { status: String, until: Option<u64> },
+    SetStatus { status: String, settings: Vec<u8> },
     /// Part of the account's PreloadedUserSettings, merged into it.
     SaveSettings(Vec<u8>),
     /// A button press or menu choice, sent to the bot that owns it.
     Interact { origin: crate::discord::components::Origin, data: Value },
     /// A slash command (kind 2) or an autocomplete request (kind 4).
     SlashCommand { guild: Option<Id>, channel: Id, application: Id, kind: u64, data: Value, nonce: String },
-    SetCustomStatus { text: Option<String>, until: Option<u64> },
+    SetCustomStatus { text: Option<String>, settings: Vec<u8> },
     AddFriend(String),
     /// `Some(1)` accepts a request, `Some(2)` blocks, `None` removes.
     Relationship { user: Id, kind: Option<u64> },
     /// A call the server settings pages make; answered by `Event::Api`.
     Api { key: String, method: &'static str, path: String, body: Option<Value> },
+    /// A call Discord held for a second factor, with the answer to it.
+    MfaFinish { ticket: String, mfa_type: &'static str, code: String, key: String, method: &'static str, path: String, body: Option<Value> },
 }
 
 /// A file waiting in the composer, as Discord's upload card holds it: the
@@ -158,6 +160,8 @@ pub enum Event {
     /// and every activity in full, for your own profile.
     Activity(Option<String>, Vec<crate::discord::gateway::Activity>),
     Api { key: String, result: Result<Value, String> },
+    /// A `Command::Api` waiting for a second factor.
+    Mfa { ticket: String, methods: Vec<String>, key: String, method: &'static str, path: String, body: Option<Value> },
 }
 
 /// Wakes whatever is showing: a window, or the headless shell loop.
@@ -723,13 +727,13 @@ impl Worker {
                     }
                 });
             }
-            Command::SetCustomStatus { text, until } => {
+            Command::SetCustomStatus { text, settings } => {
                 self.custom_status = text.clone();
                 self.send_presence();
                 if let Some(api) = self.api.clone() {
                     let events = self.events.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = api.set_custom_status(text.as_deref(), until).await {
+                        if let Err(error) = api.save_settings(&settings).await {
                             events.send(Event::Error(t!("Couldn't save the status: {error}", error = format!("{error:#}"))));
                         }
                     });
@@ -745,13 +749,13 @@ impl Worker {
                     });
                 }
             }
-            Command::SetStatus { status, until } => {
+            Command::SetStatus { status, settings } => {
                 self.status = status.clone();
                 self.send_presence();
                 if let Some(api) = self.api.clone() {
                     let events = self.events.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = api.set_status(&status, until).await {
+                        if let Err(error) = api.save_settings(&settings).await {
                             events.send(Event::Error(t!("Couldn't save the status: {error}", error = format!("{error:#}"))));
                         }
                     });
@@ -857,9 +861,20 @@ async fn api_call(api: Api, events: Events, command: Command) {
             Ok(posts) => events.send(Event::ForumPosts { forum, posts }),
             Err(error) => fail(t!("Couldn't load the forum"), error),
         },
-        Command::Api { key, method, path, body } => {
-            let result = api.raw(method, &path, body, None).await.map_err(|e| format!("{e:#}"));
-            events.send(Event::Api { key, result });
+        Command::Api { key, method, path, body } => match api.raw(method, &path, body.clone(), None).await {
+            Err(error) if error.is::<crate::discord::rest::MfaRequired>() => {
+                if let Ok(mfa) = error.downcast::<crate::discord::rest::MfaRequired>() {
+                    events.send(Event::Mfa { ticket: mfa.ticket, methods: mfa.methods, key, method, path, body });
+                }
+            }
+            result => events.send(Event::Api { key, result: result.map_err(|e| format!("{e:#}")) }),
+        },
+        Command::MfaFinish { ticket, mfa_type, code, key, method, path, body } => {
+            let result = match api.mfa_finish(&ticket, mfa_type, &code).await {
+                Ok(token) => api.raw_with_mfa(method, &path, body, &token).await,
+                Err(error) => Err(error),
+            };
+            events.send(Event::Api { key, result: result.map_err(|e| format!("{e:#}")) });
         }
         Command::AddFriend(username) => match api.add_friend(&username).await {
             Ok(()) => events.send(Event::Error(t!("Friend request sent to {name}.", name = username))),

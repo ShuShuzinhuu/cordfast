@@ -46,6 +46,25 @@ pub fn http() -> reqwest::Client {
         .expect("unable to build the HTTP client")
 }
 
+/// Discord asking for a second factor before a sensitive call: 401 with code
+/// 60003, a ticket and the ways this account can answer.
+#[derive(Debug)]
+pub struct MfaRequired {
+    pub ticket: String,
+    pub methods: Vec<String>,
+}
+
+impl std::fmt::Display for MfaRequired {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", t!("Multi-Factor Authentication"))
+    }
+}
+
+impl std::error::Error for MfaRequired {}
+
+/// The token each ack's answer gives for the next, as the web client keeps it.
+static ACK_TOKEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
 #[derive(Clone)]
 pub struct Api {
     http: reqwest::Client,
@@ -85,8 +104,14 @@ impl Api {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
         if !status.is_success() {
-            let message = serde_json::from_str::<Value>(&body)
-                .ok()
+            let answer = serde_json::from_str::<Value>(&body).ok();
+            if let Some(mfa) = answer.as_ref().filter(|v| v.get("code").and_then(Value::as_u64) == Some(60003)).and_then(|v| v.get("mfa"))
+                && let Some(ticket) = mfa.get("ticket").and_then(Value::as_str)
+            {
+                let methods = mfa.get("methods").and_then(Value::as_array).into_iter().flatten().filter_map(|m| m.get("type")?.as_str().map(str::to_owned)).collect();
+                return Err(MfaRequired { ticket: ticket.to_owned(), methods }.into());
+            }
+            let message = answer
                 .and_then(|v| v.get("message")?.as_str().map(str::to_owned))
                 .unwrap_or_else(|| status.to_string());
             bail!("{message} ({})", status.as_u16());
@@ -341,15 +366,20 @@ impl Api {
 
     /// Marks a channel read up to `message`, on every device.
     pub async fn ack(&self, channel: Id, message: Id) -> Result<()> {
-        self.send(
-            self.request(
-                reqwest::Method::POST,
-                &format!("/channels/{channel}/messages/{message}/ack"),
+        let token = ACK_TOKEN.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let answer = self
+            .send(
+                self.request(
+                    reqwest::Method::POST,
+                    &format!("/channels/{channel}/messages/{message}/ack"),
+                )
+                .json(&json!({ "token": token })),
             )
-            .json(&json!({ "token": null })),
-        )
-        .await
-        .map(drop)
+            .await?;
+        if let Some(token) = answer.get("token").and_then(Value::as_str) {
+            *ACK_TOKEN.lock().unwrap_or_else(|e| e.into_inner()) = Some(token.to_owned());
+        }
+        Ok(())
     }
 
     pub async fn typing(&self, channel: Id) -> Result<()> {
@@ -589,6 +619,25 @@ impl Api {
 impl Api {
     /// Any API call, for the server settings pages: `method` is GET, POST,
     /// PATCH, PUT or DELETE, `path` starts after `/api/v9`.
+    /// Answers an [`MfaRequired`]: the token that lets the call through,
+    /// good for five minutes.
+    pub async fn mfa_finish(&self, ticket: &str, mfa_type: &str, data: &str) -> Result<String> {
+        let answer = self
+            .send(self.request(reqwest::Method::POST, "/mfa/finish").json(&json!({ "ticket": ticket, "mfa_type": mfa_type, "data": data })))
+            .await?;
+        answer.get("token").and_then(Value::as_str).map(str::to_owned).context("no token")
+    }
+
+    /// A call again, with the token from [`Api::mfa_finish`].
+    pub async fn raw_with_mfa(&self, method: &str, path: &str, body: Option<Value>, token: &str) -> Result<Value> {
+        let method = reqwest::Method::from_bytes(method.as_bytes())?;
+        let mut request = self.request(method, path).header("X-Discord-MFA-Authorization", token);
+        if let Some(body) = body {
+            request = request.json(&body);
+        }
+        self.send(request).await
+    }
+
     pub async fn raw(&self, method: &str, path: &str, body: Option<Value>, reason: Option<&str>) -> Result<Value> {
         let method = reqwest::Method::from_bytes(method.as_bytes())?;
         let mut request = self.request(method, path);
@@ -603,28 +652,6 @@ impl Api {
 }
 
 impl Api {
-    /// Saves our status (online, idle, dnd, invisible), until `expires_ms`
-    /// or for good, in the settings protobuf, as the web client does:
-    /// PreloadedUserSettings.status (11) → StatusSettings { 1: status (a
-    /// StringValue), 4: status_expires_at_ms (fixed64) }.
-    pub async fn set_status(&self, status: &str, expires_ms: Option<u64>) -> Result<()> {
-        let mut status_settings = proto::message(1, &proto::message(1, status.as_bytes()));
-        status_settings.extend(proto::fixed64(4, expires_ms.unwrap_or(0)));
-        self.save_settings(&proto::message(11, &status_settings)).await
-    }
-
-    /// Sets (or clears, with `None`) the custom status:
-    /// StatusSettings.custom_status (2) → CustomStatus { 1: text,
-    /// 4: expires_at_ms }.
-    pub async fn set_custom_status(&self, text: Option<&str>, expires_ms: Option<u64>) -> Result<()> {
-        let mut custom = proto::message(1, text.unwrap_or_default().as_bytes());
-        // An empty status that ended a moment ago clears it everywhere.
-        let expires = if text.is_some() { expires_ms.unwrap_or(0) } else { 1 };
-        custom.extend(proto::fixed64(4, expires));
-        let status_settings = proto::message(2, &custom);
-        self.save_settings(&proto::message(11, &status_settings)).await
-    }
-
     pub async fn save_settings(&self, settings: &[u8]) -> Result<()> {
         let encoded = base64::engine::general_purpose::STANDARD.encode(settings);
         self.send(
@@ -654,49 +681,6 @@ impl Api {
             None => self.request(reqwest::Method::DELETE, &format!("/users/@me/relationships/{user}")),
         };
         self.send(request).await.map(drop)
-    }
-}
-
-/// Protobuf encoding, just the field shapes the settings use.
-mod proto {
-    fn varint(mut value: u64, out: &mut Vec<u8>) {
-        loop {
-            let byte = (value & 0x7f) as u8;
-            value >>= 7;
-            if value == 0 {
-                out.push(byte);
-                return;
-            }
-            out.push(byte | 0x80);
-        }
-    }
-
-    /// A length-delimited field: a string, bytes or a nested message.
-    pub fn message(field: u32, body: &[u8]) -> Vec<u8> {
-        let mut out = Vec::with_capacity(body.len() + 4);
-        varint(u64::from(field) << 3 | 2, &mut out);
-        varint(body.len() as u64, &mut out);
-        out.extend_from_slice(body);
-        out
-    }
-
-    pub fn fixed64(field: u32, value: u64) -> Vec<u8> {
-        let mut out = Vec::with_capacity(9);
-        varint(u64::from(field) << 3 | 1, &mut out);
-        out.extend_from_slice(&value.to_le_bytes());
-        out
-    }
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn encodes_status_like_the_web_client() {
-            let status = super::message(11, &super::message(1, &super::message(1, b"dnd")));
-            assert_eq!(status, vec![0x5a, 7, 0x0a, 5, 0x0a, 3, b'd', b'n', b'd']);
-            assert_eq!(super::fixed64(4, 1)[0], 0x21);
-            // Long texts need a two-byte length.
-            assert_eq!(&super::message(1, &[0u8; 200])[..3], &[0x0a, 0xc8, 0x01]);
-        }
     }
 }
 

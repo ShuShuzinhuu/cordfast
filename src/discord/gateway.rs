@@ -47,6 +47,9 @@ pub enum Dispatch {
     ReactionAdd { channel: Id, message: Id, user: Id, emoji: Emoji },
     ReactionRemove { channel: Id, message: Id, user: Id, emoji: Emoji },
     ReactionsCleared { channel: Id, message: Id },
+    ReactionEmojiCleared { channel: Id, message: Id, emoji: Emoji },
+    UserUpdate(User),
+    MemberRemoved { guild: Id, user: Id },
     RelationshipAdd(Relationship),
     RelationshipRemove { user: Id, kind: u64 },
     GuildSettings(Value),
@@ -451,6 +454,10 @@ async fn connect(
                         guild.to_string(): {"typing": true, "threads": true, "activities": false}
                     }}});
                     tx.send(WsMessage::text(subscribe.to_string())).await?;
+                    // The voice channels' statuses set before we connected,
+                    // as the web client asks them (answered by CHANNEL_INFO).
+                    let info = json!({"op": 43, "d": {"guild_id": guild.to_string(), "fields": ["status", "voice_start_time"]}});
+                    tx.send(WsMessage::text(info.to_string())).await?;
                 }
                 Some(Control::MemberList { guild, channel, rows }) => {
                     // Ranges of 100 rows, as the web client asks them.
@@ -691,6 +698,13 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
         "MESSAGE_REACTION_REMOVE" => one(reaction().map(|(channel, message, user, emoji)| {
             Dispatch::ReactionRemove { channel, message, user, emoji }
         })),
+        "MESSAGE_REACTION_REMOVE_EMOJI" => one((|| {
+            Some(Dispatch::ReactionEmojiCleared { channel: id("channel_id")?, message: id("message_id")?, emoji: Emoji::parse(d.get("emoji")?)? })
+        })()),
+        "USER_UPDATE" => one(User::parse(d).map(Dispatch::UserUpdate)),
+        "GUILD_MEMBER_REMOVE" => one((|| {
+            Some(Dispatch::MemberRemoved { guild: id("guild_id")?, user: d.pointer("/user/id").and_then(sf)? })
+        })()),
         "MESSAGE_REACTION_REMOVE_ALL" => one((|| {
             Some(Dispatch::ReactionsCleared {
                 channel: id("channel_id")?,

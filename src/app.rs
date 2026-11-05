@@ -257,6 +257,9 @@ pub enum Modal {
     Forward { channel: Id, guild: Option<Id>, message: Id, picked: Vec<Id>, filter: String, note: String },
     /// "Set a channel status" for the voice channel you are in.
     VoiceStatus { channel: Id, status: String },
+    /// A second factor for a call Discord held: the code, or the password
+    /// when that is all the account has.
+    Mfa { ticket: String, password: bool, code: String, key: String, method: &'static str, path: String, body: Option<serde_json::Value> },
     /// An upload card's pencil: the file's name, description and spoiler.
     Attachment { index: usize, upload: crate::backend::Upload },
 }
@@ -279,8 +282,6 @@ pub enum Confirmed {
     /// Server Boost: a slot taken from one server for another; Discord
     /// removes it first (`boost` is that server's subscription).
     TransferBoost { from: Id, boost: Id, to: Id, slot: Id },
-    CancelBoost { slot: Id },
-    UncancelBoost { slot: Id },
 }
 
 /// Gives a boost slot to a server, as the web client's apply call.
@@ -296,7 +297,7 @@ fn apply_boost(guild: Id, slot: Id) -> Command {
 impl Confirmed {
     /// Whether the button warns (red) or just goes ahead (the brand colour).
     pub fn danger(&self) -> bool {
-        !matches!(self, Self::SwitchVoice { .. } | Self::ApplyBoost { .. } | Self::TransferBoost { .. } | Self::UncancelBoost { .. })
+        !matches!(self, Self::SwitchVoice { .. } | Self::ApplyBoost { .. } | Self::TransferBoost { .. })
     }
 
     pub fn run(self, app: &mut App) {
@@ -310,8 +311,6 @@ impl Confirmed {
             Self::Logout => app.actions.push(Action::Logout),
             Self::ApplyBoost { guild, slot } => app.commands.send(apply_boost(guild, slot)),
             Self::TransferBoost { from, boost, to, slot } => app.commands.send(api(&format!("boost-transfer:{slot}:{to}"), "DELETE", format!("/guilds/{from}/premium/subscriptions/{boost}"), None)),
-            Self::CancelBoost { slot } => app.commands.send(api("boost-changed", "POST", format!("/users/@me/guilds/premium/subscription-slots/{slot}/cancel"), None)),
-            Self::UncancelBoost { slot } => app.commands.send(api("boost-changed", "POST", format!("/users/@me/guilds/premium/subscription-slots/{slot}/uncancel"), None)),
             Self::DeleteRole { guild, role } => {
                 app.commands.send(crate::admin::change("DELETE", format!("/guilds/{guild}/roles/{role}"), None, &format!("roles:{}", t!("Role deleted."))));
                 if let Some(admin) = &mut app.admin {
@@ -1310,6 +1309,14 @@ impl App {
                 }
                 self.own_activities = full;
             }
+            Event::Mfa { ticket, methods, key, method, path, body } => {
+                let code = methods.iter().any(|m| m == "totp" || m == "backup");
+                if code || methods.iter().any(|m| m == "password") {
+                    self.modal = Some(Modal::Mfa { ticket, password: !code, code: String::new(), key, method, path, body });
+                } else {
+                    self.notify(t!("This action needs a verification only Discord's site offers."));
+                }
+            }
             Event::Api { key, result } if !key.starts_with("do:") && !matches!(key.as_str(), "guild" | "members" | "invites" | "bans" | "emojis" | "audit") => {
                 self.api_answer(&key, result);
             }
@@ -1653,6 +1660,21 @@ impl App {
             }
             Dispatch::ReactionRemove { channel, message, user, emoji } => {
                 self.reaction(channel, message, user, emoji, false);
+            }
+            Dispatch::ReactionEmojiCleared { channel, message, emoji } => {
+                if let Some(m) = self.histories.get_mut(&channel).and_then(|h| h.messages.iter_mut().find(|m| m.id == message)) {
+                    m.reactions.retain(|r| r.emoji.api_name() != emoji.api_name());
+                }
+            }
+            Dispatch::UserUpdate(user) => {
+                if self.me.as_ref().is_some_and(|me| me.id == user.id) {
+                    self.me = Some(user.clone());
+                }
+                self.users.insert(user.id, user);
+            }
+            Dispatch::MemberRemoved { guild, user } => {
+                self.members.remove(&(guild, user));
+                self.requested_members.remove(&(guild, user));
             }
             Dispatch::ReactionsCleared { channel, message } => {
                 if let Some(m) = self
@@ -3114,14 +3136,16 @@ impl App {
                 self.status = status.to_owned();
                 let until = minutes.map(|m| now_ms() + m * 60_000);
                 self.status_until = until;
-                self.commands.send(Command::SetStatus { status: status.to_owned(), until });
+                let settings = self.preloaded.set_status(status, until);
+                self.commands.send(Command::SetStatus { status: status.to_owned(), settings });
             }
             Action::SetCustomStatus { text, minutes } => {
                 let text = text.map(|t| t.trim().to_owned()).filter(|t| !t.is_empty());
                 self.custom_status = text.clone();
                 let until = minutes.map(|m| now_ms() + m * 60_000);
                 self.modal = None;
-                self.commands.send(Command::SetCustomStatus { text, until });
+                let settings = self.preloaded.set_custom_status(text.as_deref(), until);
+                self.commands.send(Command::SetCustomStatus { text, settings });
             }
             Action::MoveChannel { guild, channel, parent, anchor } => self.move_channel(guild, channel, parent, anchor),
             Action::MoveCategory { guild, category, before } => self.move_category(guild, category, before),
