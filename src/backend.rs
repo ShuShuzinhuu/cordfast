@@ -285,7 +285,6 @@ pub fn selftest(out: &str) {
         let api = Api::new(crate::discord::rest::http(), token);
         let mut lines = Vec::new();
         let mut parse_note = String::new();
-        let mut saved_note = Vec::new();
         let mut ask = async |label: &str, path: String| -> Option<Value> {
             tokio::time::sleep(Duration::from_millis(400)).await;
             match api.raw("GET", &path, None, None).await {
@@ -327,20 +326,6 @@ pub fn selftest(out: &str) {
         let channels = ask("channels", format!("/guilds/{member}/channels")).await.unwrap_or_default();
         if let Some(text) = channels.as_array().into_iter().flatten().find(|c| c.get("type").and_then(Value::as_u64) == Some(0)).map(id) {
             ask("archived threads", format!("/channels/{text}/threads/archived/public?limit=25")).await;
-            // A bookmark only the account sees, taken off at once: does saving work where reading says 404?
-            if let Some(message) = ask("one message", format!("/channels/{text}/messages?limit=1")).await.as_ref().and_then(|list| list.pointer("/0/id")).and_then(Value::as_str) {
-                let path = format!("/users/@me/saved-messages/{text}/{message}");
-                let put = api.raw("PUT", &path, Some(serde_json::json!({ "due_at": null })), None).await;
-                saved_note.push(format!("SAVE put: {}", put.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
-                tokio::time::sleep(Duration::from_millis(400)).await;
-                let list = api.raw("GET", "/users/@me/saved-messages?bookmark_ids=true", None, None).await;
-                saved_note.push(format!("SAVE ids after: {}", list.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
-                let pages = api.raw("GET", "/users/@me/saved-messages/bookmarks?limit=25", None, None).await;
-                saved_note.push(format!("SAVE page after: {}", pages.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
-                tokio::time::sleep(Duration::from_millis(400)).await;
-                let delete = api.raw("DELETE", &path, None, None).await;
-                saved_note.push(format!("SAVE delete: {}", delete.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
-            }
         }
         ask("search media", format!("/guilds/{member}/messages/search?content=a&has=image&has=video&offset=0")).await;
         ask("search oldest", format!("/guilds/{member}/messages/search?content=a&sort_by=timestamp&sort_order=asc&offset=25")).await;
@@ -351,7 +336,6 @@ pub fn selftest(out: &str) {
             }
         }
         lines.push(parse_note);
-        lines.extend(saved_note);
         let _ = std::fs::write(out, lines.join("\n"));
     });
 }
