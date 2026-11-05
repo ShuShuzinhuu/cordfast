@@ -79,6 +79,7 @@ pub enum SettingsTab {
     MessagingPermissions,
     Notifications,
     Clips,
+    Streamer,
     Nitro,
     ServerBoost,
     Subscriptions,
@@ -205,7 +206,8 @@ pub enum PickerTarget {
 /// The panel that replaces the member list: pinned messages or a search.
 pub enum Side {
     Pins(Option<Vec<Message>>),
-    Search { query: String, results: Option<(u64, Vec<Message>)> },
+    /// `tab` 0 messages, 1 media, 2 links, 3 files; `offset` the page's start.
+    Search { query: String, results: Option<(u64, Vec<Message>)>, tab: u8, oldest: bool, offset: u64 },
 }
 
 /// Where the window is: a server and its channel, a DM, or the friends
@@ -220,6 +222,7 @@ pub struct Place {
 /// unread messages, and recent mentions everywhere.
 pub struct Inbox {
     pub tab: InboxTab,
+    /// The list of the tab showing, when it is not Unreads.
     pub mentions: Option<Vec<Message>>,
 }
 
@@ -235,6 +238,8 @@ pub enum Anchor {
 pub enum InboxTab {
     Unread,
     Mentions,
+    Bookmarks,
+    Reminders,
 }
 
 /// A small dialog over everything.
@@ -257,6 +262,23 @@ pub enum Modal {
     Forward { channel: Id, guild: Option<Id>, message: Id, picked: Vec<Id>, filter: String, note: String },
     /// "Set a channel status" for the voice channel you are in.
     VoiceStatus { channel: Id, status: String },
+    /// A second factor for a call Discord held: the code, or the password
+    /// when that is all the account has.
+    Mfa { ticket: String, password: bool, code: String, key: String, method: &'static str, path: String, body: Option<serde_json::Value> },
+    /// The member's dialogs: verification, onboarding, events, discovery, Stage.
+    Gate(crate::ui::gates::Gate),
+    /// A forum's "New Post".
+    NewPost { forum: Id, title: String, body: String },
+    /// The "Threads" button: a channel's active and archived threads.
+    Threads { channel: Id, name: String },
+    /// "View Reactions": who reacted with each emoji.
+    Reactions { channel: Id, message: Id, emojis: Vec<crate::discord::model::Emoji>, picked: usize, manage: bool },
+    /// "Create Poll".
+    NewPoll { channel: Id, question: String, answers: Vec<String>, hours: u64, multiple: bool },
+    /// "Edit Group": a group's name.
+    GroupName { channel: Id, name: String },
+    /// "Add Friends to DM".
+    GroupAdd { channel: Id, picked: Vec<Id>, filter: String },
     /// An upload card's pencil: the file's name, description and spoiler.
     Attachment { index: usize, upload: crate::backend::Upload },
 }
@@ -274,12 +296,29 @@ pub enum Confirmed {
     SwitchVoice { guild: Option<Id>, channel: Id },
     /// Settings → Log Out.
     Logout,
+    RemoveAllReactions { channel: Id, message: Id },
+    LeaveGroup { channel: Id },
+    /// Server Boost: a free slot given to a server.
+    ApplyBoost { guild: Id, slot: Id },
+    /// Server Boost: a slot taken from one server for another; Discord
+    /// removes it first (`boost` is that server's subscription).
+    TransferBoost { from: Id, boost: Id, to: Id, slot: Id },
+}
+
+/// Gives a boost slot to a server, as the web client's apply call.
+fn apply_boost(guild: Id, slot: Id) -> Command {
+    Command::Api {
+        key: "boost-changed".into(),
+        method: "PUT",
+        path: format!("/guilds/{guild}/premium/subscriptions"),
+        body: Some(serde_json::json!({ "user_premium_guild_subscription_slot_ids": [slot.to_string()], "disable_powerup_auto_apply": false })),
+    }
 }
 
 impl Confirmed {
     /// Whether the button warns (red) or just goes ahead (the brand colour).
     pub fn danger(&self) -> bool {
-        !matches!(self, Self::SwitchVoice { .. })
+        !matches!(self, Self::SwitchVoice { .. } | Self::ApplyBoost { .. } | Self::TransferBoost { .. })
     }
 
     pub fn run(self, app: &mut App) {
@@ -291,6 +330,13 @@ impl Confirmed {
             Self::RemoveFriend { user } => app.actions.push(Action::Relationship { user, kind: None }),
             Self::SwitchVoice { guild, channel } => app.commands.send(Command::Call { guild, channel, ring: false }),
             Self::Logout => app.actions.push(Action::Logout),
+            Self::RemoveAllReactions { channel, message } => app.commands.send(api("pin", "DELETE", format!("/channels/{channel}/messages/{message}/reactions"), None)),
+            Self::LeaveGroup { channel } => {
+                app.commands.send(api("pin", "DELETE", format!("/channels/{channel}?silent=false"), None));
+                app.actions.push(Action::CloseDm(channel));
+            }
+            Self::ApplyBoost { guild, slot } => app.commands.send(apply_boost(guild, slot)),
+            Self::TransferBoost { from, boost, to, slot } => app.commands.send(api(&format!("boost-transfer:{slot}:{to}"), "DELETE", format!("/guilds/{from}/premium/subscriptions/{boost}"), None)),
             Self::DeleteRole { guild, role } => {
                 app.commands.send(crate::admin::change("DELETE", format!("/guilds/{guild}/roles/{role}"), None, &format!("roles:{}", t!("Role deleted."))));
                 if let Some(admin) = &mut app.admin {
@@ -348,6 +394,8 @@ pub struct ViewerSource {
 
 pub enum Action {
     SelectGuild(Option<Id>),
+    /// Goes to a voice channel's own view, wherever we are.
+    OpenVoiceChannel { guild: Option<Id>, channel: Id },
     SelectChannel(Id),
     LoadOlder(Id),
     Send,
@@ -503,6 +551,41 @@ pub struct App {
     /// Servers' public cards: requested (none yet), then the card or why not.
     pub guild_profiles: HashMap<Id, Option<Result<crate::discord::model::GuildProfile, String>>>,
     pub show_dm_profile: bool,
+    /// A voice channel showing its text chat instead of the people.
+    pub voice_chat: bool,
+    /// Messages bookmarked, to name the menu's item; asked once connected.
+    pub saved: HashSet<Id>,
+    pub saved_asked: bool,
+    /// Who reacted with the emoji the open dialog shows.
+    pub reactors: Option<Vec<crate::discord::model::User>>,
+    /// The channel's archived threads, while its dialog is open.
+    pub archived_threads: Option<Vec<Channel>>,
+    /// What the member's dialogs asked for, by the call's key.
+    pub gate_data: HashMap<String, Result<serde_json::Value, String>>,
+    pub gate_asked: HashSet<String>,
+    /// Events the account said it is interested in, this session.
+    pub event_rsvp: HashSet<String>,
+    /// In a Stage: (suppressed, hand raised), by user.
+    pub voice_stage: HashMap<Id, (bool, bool)>,
+    /// OBS or XSplit is open, for Streamer Mode's automatic switch.
+    pub streaming_app: bool,
+    /// People ignored this session.
+    pub ignored: HashSet<Id>,
+    /// When the running programs were last looked at.
+    streaming_checked: Instant,
+    pub soundboard: crate::ui::soundboard::Board,
+    /// The one video playing in a message.
+    #[cfg(windows)]
+    pub video: Option<crate::video::Player>,
+    pub wake: crate::backend::Wake,
+    /// The emoji someone in the call just sent, and since when.
+    pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
+    /// Since when, frames drawn and events applied, for the log's line.
+    load: (Instant, u32, u32),
+    /// `CORDFAST_REPAINTS`: who asks for immediate repaints, for the log.
+    repaints: Option<HashMap<String, u32>>,
+    /// `CORDFAST_SHOT`: the window saves what it draws.
+    shots: Option<crate::shots::Shots>,
     pub requested_profiles: HashSet<Id>,
     pub status: String,
     /// When a timed status ends and we are back online.
@@ -558,6 +641,11 @@ pub struct App {
     // Window and tray.
     pub focused: bool,
     pub has_window: bool,
+    /// Hidden to the tray but kept, during a call, for the game overlay.
+    pub window_hidden: bool,
+    /// Minimized or hidden: nobody sees the main window.
+    pub unseen: bool,
+    pub overlay: crate::ui::overlay::Overlay,
     pub quit: bool,
     pub hide: bool,
     pub show: bool,
@@ -565,6 +653,14 @@ pub struct App {
     /// What Windows starts at login, read and written off this thread.
     pub autostart: std::sync::Arc<std::sync::Mutex<Option<fastframe_autostart::State>>>,
     pub updates: crate::updates::Shared,
+    /// Discord's updater window, shown in place of the app while starting.
+    pub splash: Option<crate::ui::splash::Splash>,
+    /// Starting in the tray: an update found at start is installed before the
+    /// window is ever opened, as the splash does it in sight.
+    pub update_at_start: bool,
+    /// What an update installed at start relaunches this copy with (in the
+    /// tray again, say).
+    pub relaunch: Vec<String>,
     pub keybinds: std::sync::Arc<crate::keybinds::Global>,
     /// The shortcut whose new keys Settings is waiting for.
     pub recording: Option<&'static str>,
@@ -622,6 +718,7 @@ impl App {
             settings.plugin(Plugin::NoTrack),
             std::sync::atomic::Ordering::Relaxed,
         );
+        let wake_for_video = wake.clone();
         let backend = Backend::spawn(wake, crate::icon::png(256));
         let commands = backend.commands.clone();
         commands.send(Command::RichPresence(settings.plugins.get("rich-presence").copied().unwrap_or(true)));
@@ -686,6 +783,26 @@ impl App {
             loading: None,
             guild_profiles: HashMap::new(),
             show_dm_profile: true,
+            voice_chat: false,
+            saved: HashSet::new(),
+            saved_asked: false,
+            reactors: None,
+            archived_threads: None,
+            gate_data: HashMap::new(),
+            gate_asked: HashSet::new(),
+            event_rsvp: HashSet::new(),
+            voice_stage: HashMap::new(),
+            streaming_app: false,
+            ignored: HashSet::new(),
+            streaming_checked: Instant::now(),
+            soundboard: Default::default(),
+            #[cfg(windows)]
+            video: None,
+            wake: wake_for_video,
+            voice_effects: HashMap::new(),
+            load: (Instant::now(), 0, 0),
+            repaints: std::env::var_os("CORDFAST_REPAINTS").map(|_| HashMap::new()),
+            shots: crate::shots::Shots::from_env(),
             requested_profiles: HashSet::new(),
             status: "online".into(),
             status_until: None,
@@ -722,12 +839,18 @@ impl App {
             devices: (Vec::new(), Vec::new()),
             focused: true,
             has_window: false,
+            window_hidden: false,
+            unseen: false,
+            overlay: crate::ui::overlay::Overlay::default(),
             quit: false,
             hide: false,
             show: false,
             tray: None,
             autostart: std::sync::Arc::default(),
             updates: crate::updates::Shared::default(),
+            splash: None,
+            update_at_start: false,
+            relaunch: Vec::new(),
             keybinds: std::sync::Arc::default(),
             recording: None,
             command_index: HashMap::new(),
@@ -741,7 +864,7 @@ impl App {
     pub fn sync_global_keybinds(&self) {
         use crate::keybinds::{Shortcut, bind};
         *self.keybinds.binds.lock().unwrap_or_else(std::sync::PoisonError::into_inner) =
-            (bind(&self.settings, Shortcut::ToggleMute), bind(&self.settings, Shortcut::ToggleDeaf));
+            (bind(&self.settings, Shortcut::ToggleMute), bind(&self.settings, Shortcut::ToggleDeaf), bind(&self.settings, Shortcut::ToggleOverlayLock));
     }
 
     fn autostart_entry() -> fastframe_autostart::Autostart {
@@ -774,6 +897,9 @@ impl App {
     fn sound(&self, sound: crate::sounds::Sound) {
         use crate::sounds::Sound;
         if self.voice.deaf && !matches!(sound, Sound::Deafen | Sound::Undeafen) {
+            return;
+        }
+        if self.streamer_on() && self.settings.streamer_no_sounds {
             return;
         }
         if self.settings.sounds_off.iter().any(|s| s == sound.name()) {
@@ -837,6 +963,7 @@ impl App {
     pub fn window_gone(&mut self) {
         self.images.clear();
         self.has_window = false;
+        self.window_hidden = false;
         self.hide = false;
         self.show = false;
     }
@@ -1003,6 +1130,16 @@ impl App {
         self.notice = Some((text.into(), Instant::now()));
     }
 
+    /// The server voice channel someone is in, when we may see it (the
+    /// bundle's rule for "In voice": a channel hidden from us shows nothing).
+    pub fn user_voice_channel(&self, user: Id) -> Option<&Channel> {
+        let me = self.me_id();
+        self.guilds.iter().find_map(|guild| {
+            let (_, channel) = guild.voice_states.iter().find(|(u, _)| *u == user)?;
+            self.channel(*channel).filter(|channel| guild.can_view(me, channel))
+        })
+    }
+
     /// Who is in a voice channel (guild channels and DM calls), in
     /// Discord's order: by the server nickname, or else the name, in lower
     /// case and compared as JavaScript compares strings (UTF-16 units),
@@ -1052,7 +1189,42 @@ impl App {
     /// Applies what the runtime sent. `ctx` is `None` without a window.
     pub fn pump(&mut self, ctx: Option<&egui::Context>) {
         while let Ok(event) = self.backend.events.try_recv() {
+            self.load.2 += 1;
             self.apply(ctx, event);
+        }
+        if self.update_at_start {
+            match crate::updates::at_start(&self.updates) {
+                crate::updates::AtStart::Wait => {}
+                crate::updates::AtStart::Launch => self.update_at_start = false,
+                crate::updates::AtStart::Install => {
+                    self.update_at_start = false;
+                    // Nobody has seen the window yet; a call would have to have
+                    // been joined from another device's ring in these seconds.
+                    if self.voice.channel.is_none() {
+                        match crate::updates::restart(&self.updates, self.relaunch.clone()) {
+                            Ok(()) => self.quit = true,
+                            Err(error) => log::warn!("update: {error:#}"),
+                        }
+                    }
+                }
+            }
+        }
+        // How busy the window is, to compare with what a call costs.
+        self.load.1 += 1;
+        if let (Some(counts), Some(ctx)) = (&mut self.repaints, ctx) {
+            for cause in ctx.repaint_causes() {
+                *counts.entry(format!("{}:{}", cause.file, cause.line)).or_insert(0) += 1;
+            }
+        }
+        if self.load.0.elapsed() >= Duration::from_secs(30) {
+            log::info!("load: {} frames, {} events in 30 s", self.load.1, self.load.2);
+            if let Some(counts) = &mut self.repaints {
+                let mut top: Vec<_> = counts.drain().collect();
+                top.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+                top.truncate(8);
+                log::info!("repaints: {top:?}");
+            }
+            self.load = (Instant::now(), 0, 0);
         }
         if let Some(ctx) = ctx {
             self.apply_theme(ctx);
@@ -1062,6 +1234,27 @@ impl App {
             list.retain(|(_, at)| now.duration_since(*at) < Duration::from_secs(10));
             !list.is_empty()
         });
+        // Every 15 seconds at most, and only with the automatic switch on.
+        if self.settings.streamer_auto && self.streaming_checked.elapsed() >= Duration::from_secs(15) {
+            self.streaming_checked = Instant::now();
+            self.streaming_app = crate::discord::detect::processes().iter().any(|name| {
+                let name = name.to_lowercase();
+                name.starts_with("obs") || name.starts_with("xsplit")
+            });
+        }
+        if !self.saved_asked && self.connection == Connection::Connected {
+            self.saved_asked = true;
+            self.commands.send(crate::admin::get("saved-ids", "/users/@me/saved-messages?bookmark_ids=true".into()));
+        }
+        if !self.voice_effects.is_empty() {
+            self.voice_effects.retain(|_, (.., at)| at.elapsed() < Duration::from_secs(3));
+            if let Some(ctx) = ctx {
+                ctx.request_repaint_after(Duration::from_millis(500));
+            }
+        }
+        if let Some(frecency) = &self.frecency {
+            self.soundboard.favorites.clone_from(&frecency.favorite_sounds);
+        }
         if let Some(ctx) = ctx {
             if !self.typing.is_empty() {
                 ctx.request_repaint_after(Duration::from_secs(1));
@@ -1081,6 +1274,7 @@ impl App {
         match self.keybinds.pressed.swap(0, std::sync::atomic::Ordering::Relaxed) {
             1 => self.actions.push(Action::ToggleMute),
             2 => self.actions.push(Action::ToggleDeaf),
+            3 => self.overlay.toggle = true,
             _ => {}
         }
         // Timed mutes end on their own, as in Discord.
@@ -1106,7 +1300,7 @@ impl App {
             match event {
                 fastframe_tray::Event::Show => self.show = true,
                 fastframe_tray::Event::Toggle => {
-                    if self.has_window {
+                    if self.has_window && !self.window_hidden {
                         self.hide = true;
                     } else {
                         self.show = true;
@@ -1151,8 +1345,12 @@ impl App {
             Event::Auth(auth) => self.apply_auth(auth),
             Event::Gateway(dispatch) => self.apply_dispatch(dispatch),
             Event::Messages { channel, before, messages } => {
+                // The people a message names, or its mentions read "unknown".
                 for m in &messages {
                     self.learn(&m.author.clone());
+                    for user in &m.mentions {
+                        self.learn(&user.clone());
+                    }
                 }
                 if before.is_some()
                     && let Some((c, _, arrived)) = &mut self.scroll_anchor
@@ -1269,6 +1467,14 @@ impl App {
                     self.settings.save();
                 }
                 self.own_activities = full;
+            }
+            Event::Mfa { ticket, methods, key, method, path, body } => {
+                let code = methods.iter().any(|m| m == "totp" || m == "backup");
+                if code || methods.iter().any(|m| m == "password") {
+                    self.modal = Some(Modal::Mfa { ticket, password: !code, code: String::new(), key, method, path, body });
+                } else {
+                    self.notify(t!("This action needs a verification only Discord's site offers."));
+                }
             }
             Event::Api { key, result } if !key.starts_with("do:") && !matches!(key.as_str(), "guild" | "members" | "invites" | "bans" | "emojis" | "audit") => {
                 self.api_answer(&key, result);
@@ -1418,7 +1624,7 @@ impl App {
                 for guild in &ready.guilds {
                     self.members.insert(
                         (guild.id, me),
-                        Member { nick: None, roles: guild.my_roles.clone() },
+                        Member { nick: None, roles: guild.my_roles.clone(), pending: false },
                     );
                 }
                 self.read = ready.read_states.into_iter().map(|r| (r.channel, r)).collect();
@@ -1538,6 +1744,26 @@ impl App {
                     self.notify(t!("The application did not respond."));
                 }
             }
+            Dispatch::VoiceEffect { channel, user, sound, volume, emoji_id, emoji_name } => {
+                if self.voice.channel.map(|(_, c)| c) == Some(channel) {
+                    if emoji_id.is_some() || emoji_name.is_some() {
+                        self.voice_effects.insert(user, (emoji_id, emoji_name, Instant::now()));
+                    }
+                    // Ours already played when it was sent.
+                    if let Some(sound) = sound
+                        && user != self.me_id()
+                        && !self.voice.deaf
+                        && !self.settings.soundboard_muted.contains(&user.to_string())
+                    {
+                        crate::ui::soundboard::play(self, sound, volume);
+                    }
+                }
+            }
+            Dispatch::Soundboard { guild, sounds } => {
+                self.soundboard.sounds.insert(guild, sounds);
+            }
+            Dispatch::SoundboardChanged(guild) => self.soundboard.changed(guild),
+            Dispatch::SavedChanged => self.saved_asked = false,
             Dispatch::VoiceChannelStatus { channel, status } => {
                 if let Some(c) = self.guilds.iter_mut().flat_map(|g| g.channels.iter_mut()).find(|c| c.id == channel) {
                     c.status = status;
@@ -1614,6 +1840,21 @@ impl App {
             Dispatch::ReactionRemove { channel, message, user, emoji } => {
                 self.reaction(channel, message, user, emoji, false);
             }
+            Dispatch::ReactionEmojiCleared { channel, message, emoji } => {
+                if let Some(m) = self.histories.get_mut(&channel).and_then(|h| h.messages.iter_mut().find(|m| m.id == message)) {
+                    m.reactions.retain(|r| r.emoji.api_name() != emoji.api_name());
+                }
+            }
+            Dispatch::UserUpdate(user) => {
+                if self.me.as_ref().is_some_and(|me| me.id == user.id) {
+                    self.me = Some(user.clone());
+                }
+                self.users.insert(user.id, user);
+            }
+            Dispatch::MemberRemoved { guild, user } => {
+                self.members.remove(&(guild, user));
+                self.requested_members.remove(&(guild, user));
+            }
             Dispatch::ReactionsCleared { channel, message } => {
                 if let Some(m) = self
                     .histories
@@ -1668,6 +1909,7 @@ impl App {
                     }
                 }
                 self.voice_flags.insert(user, (crate::discord::model::voice_muted(&state), crate::discord::model::voice_deaf(&state)));
+                self.voice_stage.insert(user, (state.get("suppress").and_then(serde_json::Value::as_bool).unwrap_or(false), state.get("request_to_speak_timestamp").is_some_and(|at| !at.is_null())));
                 match state.get("guild_id").and_then(sf) {
                     Some(guild_id) => {
                         if let Some(guild) = self.guilds.iter_mut().find(|g| g.id == guild_id) {
@@ -1958,6 +2200,11 @@ impl App {
                     "invites" => crate::admin::Tab::Invites,
                     "bans" => crate::admin::Tab::Bans,
                     "audit" => crate::admin::Tab::Audit,
+                    "webhooks" => crate::admin::Tab::Webhooks,
+                    "automod" => crate::admin::Tab::AutoMod,
+                    "access" => crate::admin::Tab::Access,
+                    "prune" => crate::admin::Tab::Prune,
+                    "soundboard" => crate::admin::Tab::Soundboard,
                     _ => crate::admin::Tab::Overview,
                 };
                 self.run(Action::GuildTab(tab));
@@ -1982,7 +2229,29 @@ impl App {
                 }
             }
             // The account card as during a call (no voice is joined).
-            "call" => {
+            // The member's dialogs and the composer's poll, for screenshots.
+            "events" | "discover" | "onboarding" | "poll" | "password" => {
+                let Some(guild) = self.guilds.first().map(|g| g.id) else { return };
+                self.select_guild(Some(guild));
+                use crate::ui::gates;
+                match what {
+                    "events" => gates::open(self, gates::Gate::Events { guild, draft: None }),
+                    "discover" => gates::open(self, gates::Gate::Discover { query: String::new(), asked: String::new() }),
+                    "onboarding" => gates::open(self, gates::Gate::Onboarding { guild, picked: None, page: 0 }),
+                    "password" => gates::account_dialog(self, gates::AccountEdit::Password),
+                    _ => self.modal = Some(Modal::NewPoll { channel: guild, question: String::new(), answers: vec![String::new(), String::new()], hours: 24, multiple: false }),
+                }
+            }
+            // Starts playing the attachment at this URL.
+            #[cfg(windows)]
+            "playvideo" => {
+                if let Some(id) = self.guilds.first().map(|g| g.id) {
+                    self.select_guild(Some(id));
+                }
+                self.video = Some(crate::video::Player::start(n.to_owned(), self.wake.clone(), None, 0.0));
+            }
+            "call" | "soundboard" => {
+                self.soundboard.open = what == "soundboard";
                 let Some(guild) = self.guilds.first() else { return };
                 let (guild, channel) = (guild.id, guild.channels.iter().find(|c| c.kind == ChannelKind::Voice).map(|c| c.id));
                 self.run(Action::SelectGuild(Some(guild)));
@@ -2052,9 +2321,41 @@ impl App {
 
     /// Answers to the API calls the chat makes (pins, search, joining).
     fn api_answer(&mut self, key: &str, result: Result<serde_json::Value, String>) {
+        // The Server Boost page shows what the slots are now, whatever
+        // happened; a transfer goes on to its new server once removed.
+        if let Some(rest) = key.strip_prefix("boost-transfer:")
+            && result.is_ok()
+            && let Some((slot, to)) = rest.split_once(':')
+            && let (Ok(slot), Ok(to)) = (slot.parse::<Id>(), to.parse::<Id>())
+        {
+            self.commands.send(apply_boost(to, slot));
+            return;
+        }
+        if key == "boost-changed" || key.starts_with("boost-transfer:") {
+            self.commands.send(crate::admin::get("settings:boosts", "/users/@me/guilds/premium/subscription-slots".to_owned()));
+        }
         let value = match result {
             Ok(value) => value,
             Err(error) => {
+                // Nothing saved yet: Discord answers 404, not an empty list.
+                if key == "saved-ids" {
+                    self.saved.clear();
+                    return;
+                }
+                if key == "inbox-saved" {
+                    if let Some(inbox) = &mut self.inbox {
+                        inbox.mentions = Some(Vec::new());
+                    }
+                    return;
+                }
+                if key.starts_with("gate:") {
+                    if key != "gate:event-made" && key != "gate:changed" {
+                        self.gate_data.insert(key.to_owned(), Err(error));
+                    } else {
+                        self.notify(error);
+                    }
+                    return;
+                }
                 if let Some(id) = key.strip_prefix("app:").and_then(|k| k.parse::<Id>().ok()) {
                     self.app_icons.insert(id, None);
                     return;
@@ -2084,6 +2385,70 @@ impl App {
                 return;
             }
         };
+        if key == "connection-authorize" {
+            if let Some(url) = value.get("url").and_then(serde_json::Value::as_str) {
+                let _ = open::that_detached(url);
+            }
+            return;
+        }
+        if key == "gate:account" {
+            // Discord ended the old token: the session goes on with the new one.
+            if let Some(token) = value.get("token").and_then(serde_json::Value::as_str) {
+                self.commands.send(Command::LoginWithToken(token.to_owned()));
+            }
+            self.commands.send(crate::admin::get("settings:me", "/users/@me".into()));
+            self.gate_data.insert(key.to_owned(), Ok(value));
+            return;
+        }
+        if key == "gate:changed" {
+            self.gate_asked.retain(|asked| !asked.starts_with("gate:admin:"));
+            return;
+        }
+        if key == "gate:event-made" {
+            // The list asks again, with the change in it.
+            self.gate_asked.retain(|asked| !asked.starts_with("gate:events:"));
+            return;
+        }
+        if key.starts_with("gate:") {
+            self.gate_data.insert(key.to_owned(), Ok(value));
+            return;
+        }
+        if key == "soundboard-defaults" {
+            let sounds = value.as_array().map_or_else(Vec::new, |list| list.iter().filter_map(crate::discord::model::SoundboardSound::parse).collect());
+            self.soundboard.sounds.insert(0, sounds);
+            return;
+        }
+        if key == "soundboard-sent" {
+            return;
+        }
+        if key == "saved-ids" {
+            self.saved = value.get("bookmark_ids").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|id| id.as_str()?.rsplit('-').next()?.parse().ok()).collect();
+            return;
+        }
+        if key == "inbox-saved" {
+            if let Some(inbox) = &mut self.inbox {
+                // Without bookmark_ids the list holds both kinds: a reminder has a due date.
+                let reminders = inbox.tab == InboxTab::Reminders;
+                let list = value.get("results").and_then(serde_json::Value::as_array);
+                inbox.mentions = Some(list.into_iter().flatten().filter(|saved| !reminders || saved.pointer("/save_data/due_at").is_some_and(|due| !due.is_null())).filter_map(|saved| Message::parse(saved.get("message")?)).collect());
+            }
+            return;
+        }
+        if key == "threads-archived" {
+            let users = self.users.clone();
+            self.archived_threads = Some(value.get("threads").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|thread| Channel::parse(thread, None, &users)).collect());
+            return;
+        }
+        if key == "thread-made" {
+            if let Some(id) = value.get("id").and_then(serde_json::Value::as_str).and_then(|id| id.parse().ok()) {
+                self.actions.push(Action::SelectChannel(id));
+            }
+            return;
+        }
+        if key == "reactors" {
+            self.reactors = Some(value.as_array().into_iter().flatten().filter_map(crate::discord::model::User::parse).collect());
+            return;
+        }
         if let Some((key, _)) = self.settings_data.get_key_value(key) {
             let key: &'static str = key;
             self.settings_data.insert(key, Some(Ok(value)));
@@ -2316,8 +2681,13 @@ impl App {
         }
     }
 
+    /// Streamer Mode is on: chosen, or automatic while OBS or XSplit runs.
+    pub fn streamer_on(&self) -> bool {
+        self.settings.streamer_mode || (self.settings.streamer_auto && self.streaming_app)
+    }
+
     fn system_notify(&mut self, title: &str, body: &str, channel: Id) {
-        if self.settings.notifications {
+        if self.settings.notifications && !(self.streamer_on() && self.settings.streamer_no_notifications) {
             self.commands.send(Command::Notify {
                 title: title.into(),
                 body: body.into(),
@@ -2439,6 +2809,7 @@ impl App {
         } else {
             t!("New message").to_owned()
         };
+        crate::ui::overlay::note_message(self, &title, &body, message.channel_id, Some(message.author.avatar_url()));
         self.commands.send(Command::Notify {
             title,
             body,
@@ -2556,7 +2927,7 @@ impl App {
         if self.selected_channel.is_none() {
             return;
         }
-        self.side = if matches!(self.side, Some(Side::Search { .. })) { None } else { Some(Side::Search { query: String::new(), results: None }) };
+        self.side = if matches!(self.side, Some(Side::Search { .. })) { None } else { Some(Side::Search { query: String::new(), results: None, tab: 0, oldest: false, offset: 0 }) };
     }
 
     /// The member list of a server's channel, shown or hidden.
@@ -2629,6 +3000,14 @@ impl App {
             Action::SelectGuild(guild) => {
                 self.forums.retain(|_, _| false);
                 self.select_guild(guild);
+            }
+            Action::OpenVoiceChannel { guild, channel } => {
+                if self.selected_guild != guild {
+                    self.forums.retain(|_, _| false);
+                    self.select_guild(guild);
+                }
+                self.voice_chat = false;
+                self.open_channel(channel);
             }
             Action::SelectChannel(channel) => {
                 self.remembered.insert(self.selected_guild, channel);
@@ -2925,10 +3304,10 @@ impl App {
                 }
                 // What each page shows from the API, asked for when it opens.
                 let wanted: &[(&str, &str)] = match tab {
-                    SettingsTab::Account => &[("settings:me", "/users/@me"), ("settings:sessions", "/auth/sessions")],
+                    SettingsTab::Account => &[("settings:me", "/users/@me"), ("settings:sessions", "/auth/sessions"), ("settings:standing", "/safety-hub/@me")],
                     SettingsTab::Nitro => &[("settings:me", "/users/@me")],
                     SettingsTab::DataPrivacy => &[("settings:consent", "/users/@me/consent")],
-                    SettingsTab::ServerBoost => &[("settings:boosts", "/users/@me/guilds/premium/subscription-slots")],
+                    SettingsTab::ServerBoost => &[("settings:me", "/users/@me"), ("settings:boosts", "/users/@me/guilds/premium/subscription-slots"), ("settings:subscriptions", "/users/@me/billing/subscriptions")],
                     SettingsTab::Subscriptions => &[("settings:subscriptions", "/users/@me/billing/subscriptions")],
                     SettingsTab::GiftInventory => &[("settings:gifts", "/users/@me/entitlements/gifts"), ("settings:gift-codes", "/users/@me/entitlements/gift-codes")],
                     SettingsTab::Billing => &[("settings:payment-sources", "/users/@me/billing/payment-sources"), ("settings:payments", "/users/@me/billing/payments?limit=20")],
@@ -3053,14 +3432,16 @@ impl App {
                 self.status = status.to_owned();
                 let until = minutes.map(|m| now_ms() + m * 60_000);
                 self.status_until = until;
-                self.commands.send(Command::SetStatus { status: status.to_owned(), until });
+                let settings = self.preloaded.set_status(status, until);
+                self.commands.send(Command::SetStatus { status: status.to_owned(), settings });
             }
             Action::SetCustomStatus { text, minutes } => {
                 let text = text.map(|t| t.trim().to_owned()).filter(|t| !t.is_empty());
                 self.custom_status = text.clone();
                 let until = minutes.map(|m| now_ms() + m * 60_000);
                 self.modal = None;
-                self.commands.send(Command::SetCustomStatus { text, until });
+                let settings = self.preloaded.set_custom_status(text.as_deref(), until);
+                self.commands.send(Command::SetCustomStatus { text, settings });
             }
             Action::MoveChannel { guild, channel, parent, anchor } => self.move_channel(guild, channel, parent, anchor),
             Action::MoveCategory { guild, category, before } => self.move_category(guild, category, before),
@@ -3148,7 +3529,7 @@ impl App {
                     self.commands.send(Command::RemoveAccount(id));
                 }
             }
-            Action::InstallUpdate => match crate::updates::restart(&self.updates) {
+            Action::InstallUpdate => match crate::updates::restart(&self.updates, Vec::new()) {
                 Ok(()) => self.quit = true,
                 Err(error) => self.notify(t!("Couldn't update: {error}", error = format!("{error:#}"))),
             },
@@ -3259,6 +3640,11 @@ impl App {
     fn send(&mut self) {
         let Some(channel) = self.selected_channel else { return };
         let mut content = self.composer.trim().to_owned();
+        // "@silent" goes as a flag, not as text.
+        let silent = content.starts_with("@silent ");
+        if silent {
+            content = content["@silent ".len()..].trim_start().to_owned();
+        }
         let files = std::mem::take(&mut self.files);
         if content.is_empty() && files.is_empty() {
             return;
@@ -3310,6 +3696,7 @@ impl App {
                 pinned: false,
                 poll: None,
                 forwarded: false,
+                flags: 0,
                 components: Vec::new(),
                 origin: None,
                 interaction: None,
@@ -3317,7 +3704,7 @@ impl App {
         }
         self.last_typing = None;
         let ping_reply = !self.plugin(Plugin::NoReplyMention);
-        self.commands.send(Command::Send { channel, content, nonce, reply_to, ping_reply, files });
+        self.commands.send(Command::Send { channel, content, nonce, reply_to, ping_reply, silent, files });
     }
 
     /// Tells the channel we are typing, at most every eight seconds.
@@ -3344,11 +3731,25 @@ impl App {
     pub fn window_logic(&mut self, ctx: &egui::Context) {
         self.focused = ctx.input(|i| i.viewport().focused.unwrap_or(true));
         self.keybinds.focused.store(self.focused, std::sync::atomic::Ordering::Relaxed);
+        if let Some(shots) = &mut self.shots {
+            shots.frame(ctx);
+        }
         if ctx.input(|i| i.viewport().close_requested())
             && !self.quit
             && self.settings.keep_running_in_tray
             && self.tray.as_ref().is_some_and(fastframe_tray::Tray::is_shown)
         {
+            self.hide = true;
+        }
+        // During a call the window only hides: the overlay draws through it,
+        // and a game may still come to the front. The call over, it goes as usual.
+        if self.hide && !self.quit && crate::ui::overlay::wanted_in_tray(self) {
+            self.hide = false;
+            self.window_hidden = true;
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        }
+        if self.window_hidden && !crate::ui::overlay::wanted_in_tray(self) {
             self.hide = true;
         }
         if self.hide {
@@ -3358,9 +3759,12 @@ impl App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         if std::mem::take(&mut self.show) {
+            self.window_hidden = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
+        self.unseen = ctx.input(|i| i.viewport().minimized == Some(true)) || self.window_hidden;
     }
 
     pub fn frame(&mut self, ui: &mut egui::Ui) {
@@ -3377,9 +3781,22 @@ impl App {
         if let Some(text) = self.clipboard.take() {
             ctx.copy_text(text);
         }
-        crate::ui::show(self, ui);
+        self.images.begin_frame(&ctx);
+        if self.splash.is_some() {
+            crate::ui::splash::show(self, ui);
+            self.run_actions();
+            self.images.end_frame(&ctx);
+            return;
+        }
+        // The overlay's window keeps these frames coming for a minimized or
+        // hidden window, which has nothing of its own to draw.
+        if !self.unseen {
+            crate::ui::show(self, ui);
+        }
+        let (focused, unseen) = (self.focused, self.unseen);
+        crate::ui::overlay::show(self, &ctx, focused, unseen);
         self.run_actions();
-        self.images.end_frame();
+        self.images.end_frame(&ctx);
     }
 }
 

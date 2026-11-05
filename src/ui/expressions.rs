@@ -586,8 +586,10 @@ fn section_header(app: &mut App, ui: &mut egui::Ui, rect: Rect, section: &Sectio
 fn paint_pick(app: &mut App, ui: &egui::Ui, pick: &Pick, rect: Rect, ppp: f32) {
     match pick {
         Pick::Custom(emoji, _) => {
-            if let Some(url) = emoji.url()
-                && let Some((texture, size)) = app.images.get(&url, (rect.width() * ppp) as u32)
+            // Still until the pointer is on it, as Discord's picker: a page
+            // of animated emoji would hold many frames for nothing.
+            if let Some(id) = emoji.id
+                && let Some((texture, size)) = app.images.get(&crate::discord::model::emoji_url(id, emoji.animated && ui.rect_contains_pointer(rect), 48), (rect.width() * ppp) as u32)
             {
                 let scale = (rect.width() / size.x).min(rect.height() / size.y);
                 egui::Image::from_texture((texture, size * scale)).paint_at(ui, Rect::from_center_size(rect.center(), size * scale));
@@ -595,7 +597,10 @@ fn paint_pick(app: &mut App, ui: &egui::Ui, pick: &Pick, rect: Rect, ppp: f32) {
         }
         Pick::Unicode(text, _) => fastframe_emoji::paint_cluster(ui, text, rect),
         Pick::Sticker(id, _, format, _) => {
-            let url = crate::discord::model::sticker_url(*id, *format);
+            let mut url = crate::discord::model::sticker_url(*id, *format);
+            if !ui.rect_contains_pointer(rect) {
+                url.push_str(crate::backend::STILL);
+            }
             if let Some((texture, size)) = app.images.get(&url, (rect.width() * ppp) as u32) {
                 let scale = (rect.width() / size.x).min(rect.height() / size.y);
                 egui::Image::from_texture((texture, size * scale)).paint_at(ui, Rect::from_center_size(rect.center(), size * scale));

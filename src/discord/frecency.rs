@@ -17,6 +17,7 @@ pub struct Frecency {
     pub favorite_emojis: Vec<String>,
     pub stickers: Vec<Id>,
     pub favorite_stickers: Vec<Id>,
+    pub favorite_sounds: Vec<Id>,
 }
 
 /// How many the picker keeps (the bundle's `numFrequentlyItems`).
@@ -35,6 +36,7 @@ impl Frecency {
                 .into_iter()
                 .filter_map(|k| k.parse().ok())
                 .collect(),
+                (8, Field::Bytes(b)) => out.favorite_sounds = fields(b).into_iter().filter(|(f, _)| *f == 1).flat_map(|(_, v)| v.fixed64s()).collect(),
                 (5, Field::Bytes(b)) => out.favorite_emojis = fields(b).into_iter().filter_map(|(f, v)| if let (1, Field::Bytes(s)) = (f, v) { std::str::from_utf8(s).ok().map(str::to_owned) } else { None }).collect(),
                 (6, Field::Bytes(b)) => out.emojis = ranked(b, now_ms, |key| match key {
                     Field::Bytes(s) => std::str::from_utf8(s).ok().map(str::to_owned),

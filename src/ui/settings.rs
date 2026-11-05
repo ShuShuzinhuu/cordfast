@@ -40,6 +40,7 @@ const SECTIONS: &[Section] = &[
         (SettingsTab::Voice, Icon::Microphone, n!("Voice & Video")),
         (SettingsTab::Appearance, Icon::Palette, n!("Appearance")),
         (SettingsTab::Accessibility, Icon::Accessibility, n!("Accessibility")),
+        (SettingsTab::Streamer, Icon::Video, n!("Streamer Mode")),
         (SettingsTab::System, Icon::System, n!("System")),
         (SettingsTab::Language, Icon::Language, n!("Language & Time")),
     ]),
@@ -56,26 +57,32 @@ const SECTIONS: &[Section] = &[
     (None, &[(SettingsTab::Developer, Icon::Developer, n!("Developer"))]),
 ];
 
-pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab) {
+pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab, below: Rect) {
     if ui.input(|i| i.key_pressed(Key::Escape)) && app.recording.is_none() && !ui.ctx().egui_wants_keyboard_input() {
         app.actions.push(Action::CloseSettings);
     }
     let mut clicked = None;
     let mut logout = false;
-    let close = form::layer_with(
+    let heading = page_title(tab);
+    let footer = format!("CordFast {}", env!("CARGO_PKG_VERSION"));
+    let close = form::modal(
         ui,
         "settings",
+        below,
         app,
+        heading,
+        &footer,
         |ui, app| {
-            form::nav_search(ui, &mut app.settings_search);
-            let needle = app.settings_search.trim().to_lowercase();
-            if needle.is_empty() {
-                // Discord's profile card: the avatar, the name, Edit Profiles.
-                if profile_card(app, ui, tab == SettingsTab::Profile).clicked() {
-                    clicked = Some(SettingsTab::Profile);
-                }
-                ui.add_space(6.0);
+            // Discord's profile card over the search: the avatar, the name,
+            // Edit Profiles.
+            if profile_card(app, ui, tab == SettingsTab::Profile).clicked() {
+                clicked = Some(SettingsTab::Profile);
             }
+            ui.add_space(8.0);
+            form::nav_search(ui, &mut app.settings_search);
+            ui.add_space(6.0);
+            let needle = app.settings_search.trim().to_lowercase();
+            let mut first = true;
             for (heading, pages) in SECTIONS {
                 let shown: Vec<_> = pages.iter().filter(|(_, _, label)| needle.is_empty() || crate::i18n::tr(label).to_lowercase().contains(&needle)).collect();
                 if shown.is_empty() {
@@ -83,11 +90,23 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab) {
                 }
                 match heading {
                     Some(heading) => form::nav_section(ui, crate::i18n::tr(heading)),
-                    None => ui.add_space(8.0),
+                    None if !first => form::nav_section(ui, ""),
+                    None => {}
                 }
+                first = false;
                 for (id, icon, label) in shown {
-                    if form::nav_icon_item(ui, *icon, crate::i18n::tr(label), *id == tab, false).clicked() {
+                    let item = form::nav_icon_item(ui, *icon, crate::i18n::tr(label), *id == tab, false);
+                    if item.clicked() {
                         clicked = Some(*id);
+                    }
+                    if *id == tab {
+                        // In view when it opens from elsewhere (a shortcut, a menu).
+                        let seen = egui::Id::new("settings-nav-seen");
+                        if ui.data(|d| d.get_temp::<SettingsTab>(seen)) != Some(tab) {
+                            ui.data_mut(|d| d.insert_temp(seen, tab));
+                            item.scroll_to_me(None);
+                        }
+                        form::nav_outline(ui);
                     }
                 }
             }
@@ -104,6 +123,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab) {
                 SettingsTab::MessagingPermissions => messaging(app, ui),
                 SettingsTab::Notifications => notifications(app, ui),
                 SettingsTab::Clips => clips(ui),
+                SettingsTab::Streamer => streamer(app, ui),
                 SettingsTab::Nitro => nitro(app, ui),
                 SettingsTab::ServerBoost => boosts(app, ui),
                 SettingsTab::Subscriptions => subscriptions(app, ui),
@@ -116,7 +136,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab) {
                 SettingsTab::Language => language(app, ui),
                 SettingsTab::RegisteredGames => games(app, ui),
                 SettingsTab::ActivityPrivacy => activity_privacy(app, ui),
-                SettingsTab::Overlay => overlay(ui),
+                SettingsTab::Overlay => super::overlay::settings_page(app, ui),
                 SettingsTab::ConnectedApps => connected_apps(app, ui),
                 SettingsTab::Developer => developer(app, ui),
                 SettingsTab::Plugins => plugins_page(app, ui),
@@ -138,32 +158,36 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab) {
     }
 }
 
+/// The page's name in the window's header: its sidebar label.
+fn page_title(tab: SettingsTab) -> &'static str {
+    if tab == SettingsTab::Profile {
+        return t!("Profiles");
+    }
+    SECTIONS.iter().flat_map(|(_, pages)| pages.iter()).find(|(id, _, _)| *id == tab).map_or("", |(_, _, label)| crate::i18n::tr(label))
+}
+
 /// The card over the sidebar: the avatar, the name and "Edit Profiles".
 fn profile_card(app: &mut App, ui: &mut egui::Ui, selected: bool) -> egui::Response {
     let p = theme::p();
-    let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 64.0), Sense::click());
+    let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 60.0), Sense::click());
     if selected || response.hovered() {
         ui.painter().rect_filled(rect, 8.0, if selected { p.selected } else { p.hover });
     }
     let Some(me) = app.me.clone() else { return response };
-    let avatar = Rect::from_min_size(rect.left_center() + vec2(8.0, -24.0), Vec2::splat(48.0));
-    app.images.circle(ui, avatar, Some(&me.avatar_url()), &super::initials(me.display_name()), 24.0);
-    let x = avatar.right() + 12.0;
-    super::paint_truncated(ui, Rect::from_min_max(egui::pos2(x, rect.top() + 12.0), egui::pos2(rect.right() - 8.0, rect.center().y + 2.0)), me.display_name(), theme::strong(16.0), p.strong);
+    let avatar = Rect::from_min_size(rect.left_center() + vec2(4.0, -26.0), Vec2::splat(52.0));
+    app.images.circle(ui, avatar, Some(&me.avatar_url()), &super::initials(me.display_name()), 26.0);
+    let x = avatar.right() + 10.0;
+    super::paint_truncated(ui, Rect::from_min_max(egui::pos2(x, rect.top() + 10.0), egui::pos2(rect.right() - 8.0, rect.center().y)), me.display_name(), theme::strong(16.0), p.strong);
     let edit = t!("Edit Profiles");
-    let galley = ui.painter().layout_no_wrap(edit.to_owned(), egui::FontId::proportional(13.0), p.muted);
-    let at = egui::pos2(x, rect.center().y + 3.0);
+    let galley = ui.painter().layout_no_wrap(edit.to_owned(), egui::FontId::proportional(14.0), p.muted);
+    let at = egui::pos2(x, rect.center().y + 2.0);
     let width = galley.size().x;
     ui.painter().galley(at, galley, p.muted);
-    crate::icons::paint(ui, Rect::from_min_size(egui::pos2(at.x + width + 4.0, at.y + 2.0), Vec2::splat(12.0)), Icon::Pencil, p.muted);
+    crate::icons::paint(ui, Rect::from_min_size(egui::pos2(at.x + width + 4.0, at.y + 2.0), Vec2::splat(13.0)), Icon::Pencil, p.muted);
     response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 // ---- shared pieces ---------------------------------------------------------------
-
-fn title(ui: &mut egui::Ui, text: &str) {
-    form::title(ui, text);
-}
 
 /// One of the account's switches (PreloadedUserSettings), saved as soon as
 /// it is flipped. `inverted` shows the opposite of what is stored (Discord
@@ -179,14 +203,14 @@ fn account_switch(app: &mut App, ui: &mut egui::Ui, key: PreKey, inverted: bool,
 /// One of the account's choices, as Discord's radio cards.
 fn account_radio(app: &mut App, ui: &mut egui::Ui, key: PreKey, options: &[(u64, &str, &str)]) {
     let current = app.preloaded.number(key);
-    if let Some(value) = form::radio_cards(ui, current, options) {
+    if let Some(value) = form::radios(ui, current, options) {
         app.set_preloaded(key, value);
     }
 }
 
 /// A label over a control, for radio groups.
 fn field_title(ui: &mut egui::Ui, text: &str, note: &str) {
-    ui.label(RichText::new(text).size(16.0).color(theme::p().strong));
+    ui.label(RichText::new(text).font(theme::strong(16.0)).color(theme::p().strong));
     if !note.is_empty() {
         ui.add_space(2.0);
         form::note(ui, note);
@@ -250,7 +274,6 @@ fn date(value: Option<&Value>) -> String {
 // ---- General ------------------------------------------------------------------------
 
 fn profile(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Profiles"));
     let Some(me) = app.me.clone() else { return };
     let Some(draft) = app.profile_draft.as_mut() else {
         ui.spinner();
@@ -299,39 +322,133 @@ fn masked(text: &str) -> String {
 
 fn account(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("Account"));
-    let me = loaded(app, ui, "settings:me").cloned();
+    let devices_id = ui.id().with("account-devices");
+    if ui.data(|d| d.get_temp::<bool>(devices_id)).unwrap_or(false) {
+        if form::link(ui, &format!("‹ {}", t!("Back"))) {
+            ui.data_mut(|d| d.insert_temp(devices_id, false));
+        }
+        ui.add_space(16.0);
+        devices(app, ui);
+        return;
+    }
+    let Some(me) = loaded(app, ui, "settings:me").cloned() else { return };
     let reveal_id = ui.id().with("reveal");
     let mut revealed: (bool, bool) = ui.data(|d| d.get_temp(reveal_id)).unwrap_or_default();
-    if let Some(me) = &me {
-        let text = |k: &str| me.get(k).and_then(Value::as_str).unwrap_or_default().to_owned();
-        form::category(ui, t!("Account Info"), "", |ui| {
-            if form::row(ui, t!("Username"), &text("username"), |ui| form::button(ui, t!("Edit"), Kind::Secondary).clicked()) {
-                open_web("/channels/@me");
-            }
-            let email = text("email");
-            let shown = if revealed.0 { email.clone() } else { masked(&email) };
-            if form::row(ui, t!("Email"), &shown, |ui| form::button(ui, if revealed.0 { t!("Hide") } else { t!("Reveal") }, Kind::Link).clicked()) {
-                revealed.0 = !revealed.0;
-            }
-            let phone = text("phone");
-            let shown = if phone.is_empty() { t!("You haven't added a phone number yet.").to_owned() } else if revealed.1 { phone.clone() } else { masked(&phone) };
-            if form::row(ui, t!("Phone Number"), &shown, |ui| if phone.is_empty() { false } else { form::button(ui, if revealed.1 { t!("Hide") } else { t!("Reveal") }, Kind::Link).clicked() }) {
-                revealed.1 = !revealed.1;
-            }
+    let text = |k: &str| me.get(k).and_then(Value::as_str).unwrap_or_default().to_owned();
+    let hide_personal = app.streamer_on() && app.settings.streamer_hide_personal;
+    // Discord asks for the password in its own dialogs: Edit and Add open it.
+    form::category(ui, t!("Account Info"), "", |ui| {
+        if form::row(ui, t!("Username"), "", |ui| {
+            let edit = form::button(ui, t!("Edit"), Kind::Secondary).clicked();
+            ui.add_space(4.0);
+            form::value(ui, &text("username"));
+            edit
+        }) {
+            super::gates::account_dialog(app, super::gates::AccountEdit::Username);
+        }
+        let email = text("email");
+        let (edit, reveal) = form::row(ui, t!("Email"), "", |ui| {
+            let edit = form::button(ui, t!("Edit"), Kind::Secondary).clicked();
+            ui.add_space(4.0);
+            let reveal = !hide_personal && form::link(ui, if revealed.0 { t!("Hide") } else { t!("Reveal") });
+            form::value(ui, &if revealed.0 && !hide_personal { email.clone() } else { masked(&email) });
+            (edit, reveal)
         });
-        ui.data_mut(|d| d.insert_temp(reveal_id, revealed));
-        form::category(ui, t!("Password & Security"), "", |ui| {
-            if form::row(ui, t!("Password"), "", |ui| form::button(ui, t!("Change Password"), Kind::Primary).clicked()) {
-                open_web("/channels/@me");
+        revealed.0 ^= reveal;
+        if edit {
+            super::gates::account_dialog(app, super::gates::AccountEdit::Email);
+        }
+        let phone = text("phone");
+        let (edit, reveal) = form::row(ui, t!("Phone Number"), "", |ui| {
+            let edit = form::button(ui, if phone.is_empty() { t!("Add") } else { t!("Edit") }, Kind::Secondary).clicked();
+            ui.add_space(4.0);
+            if phone.is_empty() {
+                form::value(ui, t!("You haven't added a phone number yet."));
+                return (edit, false);
             }
-            let mfa = me.get("mfa_enabled").and_then(Value::as_bool).unwrap_or(false);
-            let state = if mfa { t!("Enabled") } else { t!("Disabled") };
-            if form::row(ui, t!("Multi-Factor Authentication"), state, |ui| form::button(ui, t!("Manage"), Kind::Secondary).clicked()) {
-                open_web("/channels/@me");
-            }
+            let reveal = !hide_personal && form::link(ui, if revealed.1 { t!("Hide") } else { t!("Reveal") });
+            form::value(ui, &if revealed.1 && !hide_personal { phone.clone() } else { masked(&phone) });
+            (edit, reveal)
         });
+        revealed.1 ^= reveal;
+        if edit {
+            open_web("/channels/@me");
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(reveal_id, revealed));
+    form::category(ui, t!("Password & Security"), "", |ui| {
+        if form::row(ui, t!("Password"), "", |ui| form::button(ui, t!("Edit"), Kind::Secondary).clicked()) {
+            super::gates::account_dialog(app, super::gates::AccountEdit::Password);
+        }
+        let mfa = me.get("mfa_enabled").and_then(Value::as_bool).unwrap_or(false);
+        if form::link_row(ui, t!("Multi-Factor Authentication"), if mfa { t!("Enabled") } else { t!("Disabled") }) {
+            super::gates::account_dialog(app, if mfa { super::gates::AccountEdit::MfaOff } else { super::gates::AccountEdit::MfaOn });
+        }
+        let count = app.settings_data.get("settings:sessions").and_then(|v| v.as_ref()).and_then(|r| r.as_ref().ok()).and_then(|v| v.get("user_sessions")).and_then(Value::as_array).map_or(0, Vec::len);
+        if form::link_row(ui, t!("Logged-in Devices"), &tn!(count, "{count} device", "{count} devices")) {
+            ui.data_mut(|d| d.insert_temp(devices_id, true));
+        }
+    });
+    form::category(ui, t!("Account Status"), "", |ui| {
+        if let Some(adult) = me.get("nsfw_allowed").and_then(Value::as_bool) {
+            let (state, detail) = if adult {
+                (t!("Adult"), t!("You’re in the adult age group (18+) and have access to age-restricted content, spaces, and settings."))
+            } else {
+                (t!("Teen"), t!("We’ve determined you’re in the teen age group (13-17)"))
+            };
+            form::status_row(ui, Icon::User, p.strong, t!("Age Group"), detail, state, false);
+        }
+        // Discord's safety hub: the account's standing and what it means.
+        let standing = app.settings_data.get("settings:standing").and_then(|v| v.as_ref()).and_then(|r| r.as_ref().ok()).and_then(|v| v.pointer("/account_standing/state")).and_then(Value::as_u64);
+        if let Some(state) = standing {
+            let risk = t!("You may lose access to some parts of Discord if you break the rules again.");
+            let (label, detail, tint) = match state {
+                100 => (t!("All good"), t!("Thank you for upholding Discord's Terms of Service and Community Guidelines. If you have a violation, it will appear here."), p.green),
+                200 => (t!("Limited"), risk, p.warning),
+                300 => (t!("Very limited"), risk, p.warning),
+                400 => (t!("At risk"), risk, p.red),
+                _ => (t!("Suspended"), "", p.red),
+            };
+            if form::status_row(ui, if state == 100 { Icon::Check } else { Icon::Info }, tint, t!("Account Standing"), detail, label, true) {
+                open_web("/channels/@me");
+            }
+        }
+    });
+    form::category(ui, t!("Family Center"), "", |ui| {
+        if form::row(ui, t!("Family Center"), "", |ui| form::button(ui, t!("Open"), Kind::Secondary).clicked()) {
+            open_web("/family-center");
+        }
+    });
+    form::category(ui, "", "", |ui| {
+        if form::row(ui, t!("Disable your account"), t!("Temporarily disable your account."), |ui| form::button(ui, t!("Disable Account"), Kind::Secondary).clicked()) {
+            super::gates::account_dialog(app, super::gates::AccountEdit::Disable);
+        }
+        if form::row(ui, t!("Close your account"), t!("Permanently close your account."), |ui| form::button(ui, t!("Delete Account"), Kind::Danger).clicked()) {
+            super::gates::account_dialog(app, super::gates::AccountEdit::Delete);
+        }
+    });
+}
+
+/// Streamer Mode: what it hides while a stream runs.
+fn streamer(app: &mut App, ui: &mut egui::Ui) {
+    let mut changed = false;
+    form::category(ui, t!("Streamer Mode"), "", |ui| {
+        changed |= form::switch_row(ui, &mut app.settings.streamer_mode, t!("Enable Streamer Mode"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_auto, t!("Automatically Enable/Disable"), "OBS, XSplit");
+    });
+    form::category(ui, t!("Options"), "", |ui| {
+        changed |= form::switch_row(ui, &mut app.settings.streamer_hide_personal, t!("Hide Personal Information"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_hide_invites, t!("Hide Invite Links"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_no_sounds, t!("Disable Sounds"), "");
+        changed |= form::switch_row(ui, &mut app.settings.streamer_no_notifications, t!("Disable Notifications"), "");
+    });
+    if changed {
+        app.actions.push(Action::SettingsChanged);
     }
+}
+
+/// Logged-in Devices, opened from its row on the account page.
+fn devices(app: &mut App, ui: &mut egui::Ui) {
     form::category(ui, t!("Logged-in Devices"), t!("These are all the devices that are currently logged-in with your Discord account. Log out of devices that you don't recognize."), |ui| {
         let Some(sessions) = loaded(app, ui, "settings:sessions").and_then(|v| v.get("user_sessions")).and_then(Value::as_array).cloned() else { return };
         let mut out = Vec::new();
@@ -352,30 +469,9 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
             app.commands.send(crate::admin::get("settings:sessions", "/auth/sessions".into()));
         }
     });
-    form::category(ui, t!("Account Standing"), "", |ui| {
-        if form::row(ui, t!("Account Standing"), "", |ui| form::button(ui, t!("Open"), Kind::Secondary).clicked()) {
-            open_web("/channels/@me");
-        }
-    });
-    form::category(ui, t!("Family Center"), "", |ui| {
-        if form::row(ui, t!("Family Center"), "", |ui| form::button(ui, t!("Open"), Kind::Secondary).clicked()) {
-            open_web("/family-center");
-        }
-    });
-    form::category(ui, "", "", |ui| {
-        // Discord asks for the password in its own dialogs: these open it.
-        if form::row(ui, t!("Disable your account"), t!("Temporarily disable your account."), |ui| form::button(ui, t!("Disable Account"), Kind::Secondary).clicked()) {
-            open_web("/channels/@me");
-        }
-        if form::row(ui, t!("Close your account"), t!("Permanently close your account."), |ui| form::button(ui, t!("Delete Account"), Kind::Danger).clicked()) {
-            open_web("/channels/@me");
-        }
-    });
-    let _ = p;
 }
 
 fn data_privacy(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Data & Privacy"));
     form::category(ui, t!("How Discord Uses My Data"), "", |ui| {
         let mut always = true;
         ui.add_enabled_ui(false, |ui| form::switch_row(ui, &mut always, t!("Use data to make Discord work"), t!("Discord needs to store and process some data in order to provide you the basic Discord service, such as your messages, what servers you’re in and your Direct Messages. By using Discord, you allow Discord to provide this basic service. You can stop this by Disabling or Deleting your account.")));
@@ -413,8 +509,24 @@ fn data_privacy(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn messaging(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Messaging Permissions"));
     form::category(ui, t!("Content Filters"), "", |ui| {
+        // Discord's three places, each to show, blur or block.
+        let names = [t!("Show").to_owned(), t!("Blur").to_owned(), t!("Block").to_owned()];
+        for (which, label) in [(1, t!("Direct messages from friends")), (2, t!("Direct messages from others")), (3, t!("Server channels"))] {
+            // explicit_content_friend_dm, _non_friend_dm and _guilds.
+            let field = match which {
+                1 => 2,
+                2 => 3,
+                _ => 1,
+            };
+            let current = app.preloaded.content_filter(field).clamp(1, 3) as usize - 1;
+            form::label(ui, label);
+            if let Some(picked) = form::select(ui, &format!("content-filter-{which}"), &names[current], &names, 240.0) {
+                let patch = app.preloaded.set_content_filter(field, picked as u64 + 1);
+                app.commands.send(crate::backend::Command::SaveSettings(patch));
+            }
+            ui.add_space(10.0);
+        }
         account_switch(app, ui, pre::NSFW_COMMANDS, false, t!("Allow access to age-restricted commands from apps in DMs"), t!("Allows people 18+ to access commands marked as age-restricted in DMs. Applies to all apps."));
         account_switch(app, ui, pre::NSFW_GUILDS_IOS, false, t!("Allow access to age-restricted servers on iOS"), t!("Access age-restricted servers (18+) on iOS devices, after joining them on desktop."));
     });
@@ -424,7 +536,7 @@ fn messaging(app: &mut App, ui: &mut egui::Ui) {
             0 => 2,
             n => n,
         };
-        if let Some(value) = form::radio_cards(ui, current, &[(3, t!("Filter all spam"), ""), (2, t!("Filter messages from non-friends (Recommended)"), ""), (1, t!("Don't filter spam"), "")]) {
+        if let Some(value) = form::radios(ui, current, &[(3, t!("Filter all spam"), ""), (2, t!("Filter messages from non-friends (Recommended)"), ""), (1, t!("Don't filter spam"), "")]) {
             app.set_preloaded(pre::DM_SPAM_FILTER, value);
         }
     });
@@ -477,7 +589,6 @@ fn sounds_list(app: &mut App, ui: &mut egui::Ui, which: &[crate::sounds::Sound])
 }
 
 fn notifications(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Notifications"));
     form::category(ui, t!("Overview"), "", |ui| {
         let s = &mut app.settings;
         form::switch_row(ui, &mut s.notifications, t!("Enable Desktop Notifications"), t!("If you're looking for per-channel or per-server notifications, right-click the desired server icon and select Notification Settings."));
@@ -506,7 +617,6 @@ fn notifications(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn clips(ui: &mut egui::Ui) {
-    title(ui, t!("Clips"));
     form::unavailable(ui, t!("Clipping needs screen sharing, which isn't in CordFast yet."));
     form::category(ui, t!("Clipping"), t!("Clip any fun or amazing gaming moments by saving them directly to your computer."), |ui| {
         let mut off = false;
@@ -517,7 +627,6 @@ fn clips(ui: &mut egui::Ui) {
 // ---- Billing (read-only) ----------------------------------------------------------------
 
 fn nitro(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Nitro"));
     let Some(me) = loaded(app, ui, "settings:me").cloned() else { return };
     let tier = match me.get("premium_type").and_then(Value::as_u64).unwrap_or(0) {
         1 => Some(t!("Nitro Classic")),
@@ -547,25 +656,207 @@ fn nitro(app: &mut App, ui: &mut egui::Ui) {
     }
 }
 
+/// Server Boost: what Discord's page manages. The boosts can be moved,
+/// applied and moved here; buying more and canceling stay on Discord.
 fn boosts(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Server Boost"));
+    use crate::app::{Confirmed, Modal};
+    use crate::discord::model::sf;
+    let p = theme::p();
     let Some(slots) = loaded(app, ui, "settings:boosts").and_then(Value::as_array).cloned() else { return };
-    form::category(ui, t!("Your Boosts"), "", |ui| {
-        if slots.is_empty() {
-            form::note(ui, t!("You don't have any Boosts."));
-        }
-        for slot in &slots {
-            let guild = slot.pointer("/premium_guild_subscription/guild_id").and_then(crate::discord::model::sf);
-            let name = guild.and_then(|g| app.guild(g)).map_or_else(|| t!("Unused Boost").to_owned(), |g| g.name.clone());
-            let cooldown = date(slot.get("cooldown_ends_at"));
-            let detail = if cooldown.is_empty() { String::new() } else { t!("Cooldown ends {when}", when = cooldown) };
-            item_row(ui, &name, &detail, None);
+    let answer = |app: &App, key: &str| app.settings_data.get(key).and_then(|v| v.as_ref()).and_then(|r| r.as_ref().ok()).cloned();
+    // Nitro includes two (the bundle's getNumIncludedPremiumGuildSubscriptionSlots):
+    // those can only go by canceling Nitro itself.
+    let included = if answer(app, "settings:me").and_then(|me| me.get("premium_type").and_then(Value::as_u64)) == Some(2) { 2 } else { 0 };
+    let subscriptions = answer(app, "settings:subscriptions").and_then(|v| v.as_array().cloned()).unwrap_or_default();
+    let guilds: Vec<(crate::discord::model::Id, String)> = app.guilds.iter().map(|g| (g.id, g.name.clone())).collect();
+    let id_of = |slot: &Value| slot.get("id").and_then(sf);
+    let applied = |slot: &Value| slot.pointer("/premium_guild_subscription/guild_id").and_then(sf);
+    let canceled = |slot: &Value| slot.get("canceled").and_then(Value::as_bool).unwrap_or(false);
+    let active = slots.iter().filter(|s| !canceled(s)).count();
+    let free: Vec<crate::discord::model::Id> = slots.iter().filter(|s| applied(s).is_none() && !on_cooldown(s) && !canceled(s)).filter_map(id_of).collect();
+    let unused = slots.iter().filter(|s| applied(s).is_none()).count();
+    let apply_modal = |guild, slot| Modal::Confirm {
+        title: t!("Boost This Server").into(),
+        body: t!("Boosting this server will prevent you from transferring this Boost to another server for 7 days.").into(),
+        button: t!("Boost this server").into(),
+        then: Confirmed::ApplyBoost { guild, slot },
+    };
+    if slots.is_empty() {
+        form::note(ui, t!("You don't have any Boosts."));
+        ui.add_space(24.0);
+    }
+    if unused > 0 {
+        Frame::new().fill(p.hover).corner_radius(8).inner_margin(Margin::same(16)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                let (icon, _) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::hover());
+                crate::icons::paint(ui, icon, Icon::Boost, BOOST);
+                ui.vertical(|ui| {
+                    ui.label(RichText::new(t!("Your Boosts are waiting!")).font(theme::strong(16.0)).color(p.strong));
+                    ui.label(RichText::new(tn!(unused, "You have {count} unused Boost", "You have {count} unused Boosts")).size(13.0).color(p.muted));
+                });
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    let button = form::button_enabled(ui, t!("Boost any server"), Kind::Primary, !free.is_empty());
+                    if let (Some(guild), Some(slot)) = (guild_menu(&button, &guilds), free.first()) {
+                        app.modal = Some(apply_modal(guild, *slot));
+                    }
+                });
+            });
+        });
+        ui.add_space(32.0);
+    }
+    if !slots.is_empty() {
+        form::category(ui, t!("Active Boosts"), t!("These are your purchased Boosts, powering your favorite servers."), |ui| {
+            let mut groups: Vec<(Option<crate::discord::model::Id>, Vec<&Value>)> = Vec::new();
+            for slot in &slots {
+                let guild = applied(slot);
+                match groups.iter_mut().find(|(g, _)| *g == guild) {
+                    Some((_, group)) => group.push(slot),
+                    None => groups.push((guild, vec![slot])),
+                }
+            }
+            for (guild, group) in groups {
+                Frame::new().stroke(Stroke::new(1.0, p.border)).corner_radius(8).inner_margin(Margin::same(16)).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    if let Some(guild) = guild {
+                        let known = app.guild(guild).map(|g| (g.name.clone(), g.icon_url()));
+                        ui.horizontal(|ui| {
+                            let (icon, _) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::hover());
+                            let name = known.as_ref().map_or_else(|| t!("Unknown Server").to_owned(), |(name, _)| name.clone());
+                            app.images.circle(ui, icon, known.as_ref().and_then(|(_, url)| url.as_deref()), &super::initials(&name), 16.0);
+                            ui.label(RichText::new(&name).font(theme::strong(16.0)).color(p.strong));
+                            if known.is_some() {
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    if form::button(ui, t!("Go to server"), Kind::Secondary).clicked() {
+                                        app.actions.push(Action::CloseSettings);
+                                        app.actions.push(Action::SelectGuild(Some(guild)));
+                                    }
+                                });
+                            }
+                        });
+                        ui.add_space(12.0);
+                    }
+                    for slot in group {
+                        let Some(id) = id_of(slot) else { continue };
+                        let cooldown = on_cooldown(slot);
+                        let is_canceled = canceled(slot);
+                        let ends = subscriptions.iter().find(|s| s.get("id") == slot.get("subscription_id")).map(|s| date(s.get("current_period_end"))).unwrap_or_default();
+                        let status = if is_canceled {
+                            t!("Pending Cancellation: {date}", date = ends.clone())
+                        } else if cooldown {
+                            t!("Cooldown ends {when}", when = date(slot.get("cooldown_ends_at")))
+                        } else if let Some(pgs) = slot.pointer("/premium_guild_subscription/id").and_then(sf) {
+                            // A snowflake's timestamp: when this Boost was applied.
+                            t!("Since {date}", date = crate::text::short_day((pgs >> 22) + 1_420_070_400_000))
+                        } else {
+                            t!("Looks like this Boost could use a new home!").to_owned()
+                        };
+                        ui.horizontal(|ui| {
+                            let (icon, _) = ui.allocate_exact_size(Vec2::splat(18.0), Sense::hover());
+                            crate::icons::paint(ui, icon, Icon::Boost, BOOST);
+                            ui.label(RichText::new(status).size(14.0).color(p.muted));
+                            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                let (more, response) = ui.allocate_exact_size(Vec2::splat(28.0), Sense::click());
+                                if response.hovered() {
+                                    ui.painter().rect_filled(more, 6.0, p.hover);
+                                }
+                                crate::icons::paint(ui, more.shrink(5.0), Icon::More, if response.hovered() { p.strong } else { p.muted });
+                                egui::Popup::menu(&response.on_hover_text(t!("More Options")).on_hover_cursor(egui::CursorIcon::PointingHand)).show(|ui| {
+                                    super::menu::begin(ui);
+                                    let transfer = if applied(slot).is_some() { t!("Transfer Boost") } else { t!("Select a Server") };
+                                    if cooldown {
+                                        ui.add_enabled_ui(false, |ui| super::menu::item_with(ui, transfer, t!("This Boost is on cooldown"), super::menu::Tail::None));
+                                    } else if let Some(Some(to)) = super::menu::submenu(ui, transfer, |ui| guild_list(ui, &guilds)) {
+                                        app.modal = Some(match (applied(slot), slot.pointer("/premium_guild_subscription/id").and_then(sf)) {
+                                            (Some(from), Some(boost)) => Modal::Confirm {
+                                                title: t!("Transfer Boost").into(),
+                                                body: t!("Are you sure you want to transfer this Server Boost? The current server will lose progress if you continue.").into(),
+                                                button: t!("Transfer Boost").into(),
+                                                then: Confirmed::TransferBoost { from, boost, to, slot: id },
+                                            },
+                                            _ => apply_modal(to, id),
+                                        });
+                                        ui.close();
+                                    }
+                                    if is_canceled {
+                                        if super::menu::item(ui, t!("Uncancel Boost Subscription"), super::menu::Tail::None).clicked() {
+                                            open_web("/channels/@me");
+                                            ui.close();
+                                        }
+                                    } else if active > included {
+                                        if super::menu::danger(ui, t!("Cancel Boost Subscription"), super::menu::Tail::None).clicked() {
+                                            // Recurring billing: Discord\'s site, not this client.
+                                            open_web("/channels/@me");
+                                            ui.close();
+                                        }
+                                    } else {
+                                        ui.add_enabled_ui(false, |ui| super::menu::item_with(ui, t!("Cancel Boost Subscription"), t!("This Boost is included with your Nitro subscription"), super::menu::Tail::None));
+                                    }
+                                });
+                            });
+                        });
+                        ui.add_space(4.0);
+                    }
+                });
+                ui.add_space(12.0);
+            }
+        });
+    }
+    // The bundle's list starts from the servers used most; the sidebar's
+    // first ones stand in for them.
+    form::category(ui, t!("These servers could use a Boost"), "", |ui| {
+        for (guild, name) in guilds.iter().take(3) {
+            let url = app.guild(*guild).and_then(|g| g.icon_url());
+            ui.horizontal(|ui| {
+                let (icon, _) = ui.allocate_exact_size(Vec2::splat(40.0), Sense::hover());
+                app.images.circle(ui, icon, url.as_deref(), &super::initials(name), 20.0);
+                ui.label(RichText::new(name).font(theme::strong(16.0)).color(p.strong));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if form::button_enabled(ui, t!("Boost this server"), Kind::Secondary, !free.is_empty()).clicked()
+                        && let Some(slot) = free.first()
+                    {
+                        app.modal = Some(apply_modal(*guild, *slot));
+                    }
+                });
+            });
+            ui.add_space(12.0);
         }
     });
 }
 
+/// Discord's boost pink.
+const BOOST: Color32 = Color32::from_rgb(0xff, 0x73, 0xfa);
+
+/// Whether a slot waits out the days after it moved.
+fn on_cooldown(slot: &Value) -> bool {
+    slot.get("cooldown_ends_at").and_then(Value::as_str).and_then(|d| d.parse::<jiff::Timestamp>().ok()).is_some_and(|t| t > jiff::Timestamp::now())
+}
+
+/// The servers as menu rows: the one clicked.
+fn guild_list(ui: &mut egui::Ui, guilds: &[(crate::discord::model::Id, String)]) -> Option<crate::discord::model::Id> {
+    let mut picked = None;
+    egui::ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
+        for (guild, name) in guilds {
+            if super::menu::item(ui, name, super::menu::Tail::None).clicked() {
+                picked = Some(*guild);
+                ui.close();
+            }
+        }
+    });
+    picked
+}
+
+/// A button's menu of servers: the one picked.
+fn guild_menu(button: &egui::Response, guilds: &[(crate::discord::model::Id, String)]) -> Option<crate::discord::model::Id> {
+    egui::Popup::menu(button)
+        .show(|ui| {
+            super::menu::begin(ui);
+            guild_list(ui, guilds)
+        })
+        .and_then(|shown| shown.inner)
+}
+
 fn subscriptions(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Subscriptions"));
     let Some(list) = loaded(app, ui, "settings:subscriptions").and_then(Value::as_array).cloned() else { return };
     if list.is_empty() {
         form::note(ui, t!("You don't have any subscriptions."));
@@ -580,7 +871,6 @@ fn subscriptions(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn gifts(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Gift Inventory"));
     let codes = app.settings_data.get("settings:gift-codes").and_then(|v| v.as_ref()).and_then(|r| r.as_ref().ok()).and_then(Value::as_array).cloned().unwrap_or_default();
     let Some(gifts) = loaded(app, ui, "settings:gifts").and_then(Value::as_array).cloned() else { return };
     if gifts.is_empty() && codes.is_empty() {
@@ -594,7 +884,6 @@ fn gifts(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn billing(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Billing"));
     form::category(ui, t!("Payment Methods"), "", |ui| {
         let Some(sources) = loaded(app, ui, "settings:payment-sources").and_then(Value::as_array).cloned() else { return };
         if sources.is_empty() {
@@ -629,12 +918,11 @@ fn billing(app: &mut App, ui: &mut egui::Ui) {
 
 fn voice(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("Voice & Video"));
     let (inputs, outputs) = app.devices.clone();
     form::category(ui, t!("Voice"), "", |ui| {
         ui.columns(2, |columns| {
             let pick = |ui: &mut egui::Ui, label: &str, id: &str, list: &[String], chosen: &mut Option<String>| {
-                form::label(ui, label);
+                field_title(ui, label, "");
                 let mut options = vec![super::default_device().to_owned()];
                 options.extend(list.iter().cloned());
                 let shown = chosen.clone().unwrap_or_else(|| options[0].clone());
@@ -648,57 +936,74 @@ fn voice(app: &mut App, ui: &mut egui::Ui) {
         });
         ui.add_space(16.0);
         ui.columns(2, |columns| {
-            form::slider_row(&mut columns[0], t!("Microphone Volume"), "", &mut app.settings.input_volume, 0.0..=2.0, |v| format!("{:.0}%", v * 100.0));
-            form::slider_row(&mut columns[1], t!("Speaker Volume"), "", &mut app.settings.output_volume, 0.0..=2.0, |v| format!("{:.0}%", v * 100.0));
+            form::volume_slider(&mut columns[0], t!("Microphone Volume"), &mut app.settings.input_volume, 0.0..=2.0);
+            form::volume_slider(&mut columns[1], t!("Speaker Volume"), &mut app.settings.output_volume, 0.0..=2.0);
         });
-        // Discord's mic test: hear yourself as others hear you, the level
-        // lit while it runs.
+        // Discord's mic test: hear yourself as others hear you, the ticks
+        // lit with the level while it runs.
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 12.0;
-            let label = if app.mic_test { t!("Stop Testing") } else { t!("Let's Check") };
+            ui.spacing_mut().item_spacing.x = 16.0;
+            let label = if app.mic_test { t!("Stop Testing") } else { t!("Mic Test") };
             if form::button(ui, label, Kind::Primary).clicked() {
                 app.mic_test = !app.mic_test;
                 app.commands.send(crate::backend::Command::Voice(crate::voice::VoiceCommand::MicTest(app.mic_test)));
             }
-            if form::button(ui, t!("Test Audio Output"), Kind::Secondary).clicked() {
-                app.commands.send(crate::backend::Command::Voice(crate::voice::VoiceCommand::TestTone));
-            }
-            let (meter, _) = ui.allocate_exact_size(vec2(ui.available_width().min(420.0), 10.0), Sense::hover());
-            ui.painter().rect_filled(meter, 5.0, p.selected);
+            let level = if app.mic_test { ((app.voice.mic_level + 100.0) / 100.0).clamp(0.0, 1.0) } else { 0.0 };
+            let width = ui.available_width();
+            form::tick_meter(ui, width, level);
             if app.mic_test {
-                let level = ((app.voice.mic_level + 100.0) / 100.0).clamp(0.0, 1.0);
-                ui.painter().rect_filled(Rect::from_min_size(meter.min, vec2(meter.width() * level, meter.height())), 5.0, p.green);
                 ui.ctx().request_repaint_after(std::time::Duration::from_millis(100));
             }
         });
-        ui.add_space(8.0);
-        form::note(ui, t!("Speak and hear yourself the way others hear you."));
-    });
-    form::category(ui, "", "", |ui| {
+        ui.add_space(24.0);
+        ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing.x = 0.0;
+            // Discord's sentence, its link the article it names.
+            let sentence = t!("Need help? Check out our troubleshooting guide.");
+            let link = t!("troubleshooting guide");
+            match sentence.split_once(link) {
+                Some((before, after)) => {
+                    form::note(ui, before);
+                    if form::link(ui, link) {
+                        let _ = open::that_detached("https://support.discord.com/hc/articles/360045138471");
+                    }
+                    form::note(ui, after);
+                }
+                None => form::note(ui, sentence),
+            }
+        });
+        form::divider(ui);
         field_title(ui, t!("Input Profile"), "");
         let current = super::InputProfile::of(&app.settings);
         let options: Vec<(super::InputProfile, &str, &str)> = [super::InputProfile::VoiceIsolation, super::InputProfile::Studio, super::InputProfile::Custom].into_iter().map(|p| (p, p.name(), p.detail())).collect();
-        if let Some(profile) = form::radio_cards(ui, current, &options)
+        if let Some(profile) = form::radios(ui, current, &options)
             && profile != super::InputProfile::Custom
         {
             profile.apply(app);
         }
-        ui.add_space(12.0);
+        ui.add_space(8.0);
         form::switch_row(ui, &mut app.settings.automatic_sensitivity, t!("Automatically Adjust Input Sensitivity"), "");
-        // The live level with the threshold, as Discord's meter.
-        let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 10.0), Sense::hover());
-        ui.painter().rect_filled(rect, 5.0, p.selected);
-        let level = ((app.voice.mic_level + 100.0) / 100.0).clamp(0.0, 1.0);
-        let lit = if app.voice.speaking.contains(&app.me_id()) { p.green } else { p.warning };
-        ui.painter().rect_filled(Rect::from_min_size(rect.min, vec2(rect.width() * level, rect.height())), 5.0, lit);
-        if !app.settings.automatic_sensitivity {
-            let x = rect.left() + rect.width() * ((app.settings.input_sensitivity + 100.0) / 100.0).clamp(0.0, 1.0);
-            ui.painter().vline(x, rect.y_range(), Stroke::new(2.0, p.strong));
-            ui.add_space(8.0);
-            form::slider_row(ui, t!("Input Sensitivity"), "", &mut app.settings.input_sensitivity, -100.0..=0.0, |v| format!("{v:.0} dB"));
+        let level = app.voice.mic_level;
+        if app.settings.automatic_sensitivity {
+            // The live level alone, as Discord's meter under the switch.
+            let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 8.0), Sense::hover());
+            ui.painter().rect_filled(rect, 4.0, p.selected);
+            let lit = if app.voice.speaking.contains(&app.me_id()) { p.green } else { p.warning };
+            ui.painter().rect_filled(Rect::from_min_size(rect.min, vec2(rect.width() * ((level + 100.0) / 100.0).clamp(0.0, 1.0), rect.height())), 4.0, lit);
+            ui.add_space(24.0);
+        } else {
+            field_title(ui, t!("Input Sensitivity"), t!("Controls how much sound Discord transmits from your mic."));
+            form::sensitivity_slider(ui, &mut app.settings.input_sensitivity, level);
+            ui.add_space(24.0);
         }
-        ui.add_space(16.0);
-        form::switch_row(ui, &mut app.settings.noise_suppression, t!("Noise Suppression"), t!("Reduces background noise from your mic."));
+        // Discord's options are Krisp, Standard and None; CordFast's own
+        // suppression (DeepFilterNet) stands as Standard.
+        let options = [t!("Standard").to_owned(), t!("None").to_owned()];
+        let current = if app.settings.noise_suppression { 0 } else { 1 };
+        if let Some(i) = form::row(ui, t!("Noise Suppression"), t!("Reduces background noise from your mic."), |ui| form::select(ui, "noise-suppression", &options[current], &options, 200.0)) {
+            app.settings.noise_suppression = i == 0;
+        }
+        ui.add_space(8.0);
         form::switch_row(ui, &mut app.settings.echo_cancellation, t!("Echo Cancellation"), "");
         form::switch_row(ui, &mut app.settings.push_to_talk, t!("Push to Talk"), t!("Activates your mic only when you hold down a designated key."));
         if app.settings.push_to_talk {
@@ -716,6 +1021,18 @@ fn voice(app: &mut App, ui: &mut egui::Ui) {
     form::category(ui, t!("Sounds"), t!("Enable/disable sounds that play when you’re in a call, like Mute, Unmute, Deafen, and more."), |ui| {
         use crate::sounds::Sound;
         sounds_list(app, ui, &[Sound::Deafen, Sound::Undeafen, Sound::Mute, Sound::Unmute, Sound::Disconnect, Sound::PttStart, Sound::PttStop, Sound::Join, Sound::Leave]);
+    });
+    form::category(ui, t!("Soundboard"), "", |ui| {
+        ui.label(RichText::new(t!("Soundboard Volume")).size(14.0).color(p.text));
+        let mut volume = app.preloaded.soundboard_volume();
+        ui.spacing_mut().slider_width = 300.0;
+        let slider = ui.add(egui::Slider::new(&mut volume, 0.0..=100.0).trailing_fill(true).custom_formatter(|v, _| format!("{v:.0}%")));
+        if slider.drag_stopped() || (slider.changed() && !slider.dragged()) {
+            let patch = app.preloaded.set_soundboard_volume(volume);
+            app.commands.send(crate::backend::Command::SaveSettings(patch));
+        } else if slider.changed() {
+            app.preloaded.set_soundboard_volume(volume);
+        }
     });
     form::category(ui, t!("Voice Region"), t!("Calls always use the region with the lowest ping."), |ui| {
         for (i, (region, ms)) in app.voice.regions.iter().enumerate() {
@@ -831,7 +1148,6 @@ fn advanced_voice(app: &mut App, ui: &mut egui::Ui) {
 
 fn appearance(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("Appearance"));
     form::category(ui, t!("Theme"), "", |ui| {
         let palettes = app.palettes.clone();
         ui.horizontal_wrapped(|ui| {
@@ -989,7 +1305,6 @@ fn preview(ui: &egui::Ui, rect: Rect, palette: &theme::Palette) {
 }
 
 fn accessibility(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Accessibility"));
     form::category(ui, t!("Visual Density"), "", |ui| {
         field_title(ui, t!("Chat Message Display"), t!("Change the appearance of chat messages."));
         let compact = app.settings.compact;
@@ -1019,7 +1334,6 @@ fn accessibility(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn system(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("System"));
     form::category(ui, t!("General"), "", |ui| {
         let state = *app.autostart.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         match state {
@@ -1125,7 +1439,6 @@ fn fixed_keybinds(ui: &mut egui::Ui) {
 /// in the interface's language and its flag; then the time format.
 fn language(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("Language & Time"));
     form::category(ui, t!("Language"), "", |ui| {
         let current = crate::i18n::current();
         for (locale, tag, native, name, flag) in crate::i18n::ALL {
@@ -1151,7 +1464,6 @@ fn language(app: &mut App, ui: &mut egui::Ui) {
 
 fn games(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("Registered Games"));
     form::category(ui, t!("Current Game"), "", |ui| {
         match &app.activity {
             Some(game) => {
@@ -1181,7 +1493,6 @@ fn games(app: &mut App, ui: &mut egui::Ui) {
 }
 
 fn activity_privacy(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Activity Privacy"));
     form::category(ui, t!("What Activity I Share"), "", |ui| {
         account_switch(app, ui, pre::SHOW_CURRENT_GAME, false, t!("Share my activity"), t!("Show the game or app you're using as your status."));
         account_switch(app, ui, pre::NOTIFY_FRIENDS_ON_COME_ONLINE, false, t!("Share when I come online"), t!("Allow friends to receive a push notification when you come online."));
@@ -1197,14 +1508,16 @@ fn activity_privacy(app: &mut App, ui: &mut egui::Ui) {
     });
 }
 
-fn overlay(ui: &mut egui::Ui) {
-    title(ui, t!("Game Overlay"));
-    form::unavailable(ui, t!("The game overlay isn't in CordFast yet."));
-}
-
 fn connected_apps(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Connected Apps"));
     form::category(ui, t!("Connections"), t!("These are accounts from other platforms. Connecting them here can unlock new features on Discord, like the ability to share what you're currently listening to, get paid safely and securely, and more."), |ui| {
+        // Connecting happens on the other service's site, in the browser.
+        const SERVICES: [&str; 10] = ["battlenet", "epicgames", "github", "leagueoflegends", "reddit", "riotgames", "spotify", "steam", "twitch", "youtube"];
+        let names: Vec<String> = SERVICES.iter().map(|name| (*name).to_owned()).collect();
+        form::label(ui, t!("Add Connection"));
+        if let Some(picked) = form::select(ui, "add-connection", t!("Add Connection"), &names, 240.0) {
+            app.commands.send(crate::admin::get("connection-authorize", format!("/connections/{}/authorize", SERVICES[picked])));
+        }
+        ui.add_space(10.0);
         let Some(list) = loaded(app, ui, "settings:connections").and_then(Value::as_array).cloned() else { return };
         if list.is_empty() {
             form::note(ui, t!("You haven't connected any accounts."));
@@ -1213,6 +1526,11 @@ fn connected_apps(app: &mut App, ui: &mut egui::Ui) {
             let kind = c.get("type").and_then(Value::as_str).unwrap_or_default();
             let name = c.get("name").and_then(Value::as_str).unwrap_or_default();
             let id = c.get("id").and_then(Value::as_str).unwrap_or_default();
+            let mut visible = c.get("visibility").and_then(Value::as_u64) == Some(1);
+            if form::switch_row(ui, &mut visible, t!("Display on profile"), name) {
+                app.commands.send(crate::backend::Command::Api { key: "connection-removed".into(), method: "PATCH", path: format!("/users/@me/connections/{kind}/{id}"), body: Some(serde_json::json!({ "visibility": u8::from(visible) })) });
+                app.commands.send(crate::admin::get("settings:connections", "/users/@me/connections".into()));
+            }
             if item_row(ui, name, kind, Some((t!("Remove"), Kind::Secondary))) {
                 app.commands.send(crate::backend::Command::Api { key: "connection-removed".into(), method: "DELETE", path: format!("/users/@me/connections/{kind}/{id}"), body: None });
                 app.commands.send(crate::admin::get("settings:connections", "/users/@me/connections".into()));
@@ -1239,7 +1557,6 @@ fn connected_apps(app: &mut App, ui: &mut egui::Ui) {
 // ---- Other ------------------------------------------------------------------------------------
 
 fn developer(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Developer"));
     form::category(ui, "", "", |ui| {
         account_switch(app, ui, pre::DEVELOPER_MODE, false, t!("Developer Mode"), t!("Developer Mode exposes context menu items helpful for people writing apps using the Discord API."));
     });
@@ -1248,7 +1565,6 @@ fn developer(app: &mut App, ui: &mut egui::Ui) {
 /// Vencord's plugin page: cards two to a row with the name, a switch and
 /// what the plugin does; the required ones first, locked on.
 fn plugins_page(app: &mut App, ui: &mut egui::Ui) {
-    title(ui, t!("Plugins"));
     for required in [true, false] {
         ui.label(RichText::new(if required { t!("Required Plugins") } else { t!("Plugins") }).font(theme::strong(18.0)).color(theme::p().strong));
         ui.add_space(12.0);
@@ -1296,7 +1612,6 @@ fn plugin_card(app: &mut App, ui: &mut egui::Ui, plugin: plugins::Plugin, width:
 
 fn about(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
-    title(ui, t!("About CordFast"));
     form::category(ui, &format!("CordFast {}", env!("CARGO_PKG_VERSION")), t!("A native, light and fast Discord."), |ui| {
         let mut install = false;
         match &*app.updates.lock().unwrap_or_else(std::sync::PoisonError::into_inner) {

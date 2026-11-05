@@ -69,6 +69,15 @@ pub struct Settings {
     /// Discord's sounds switched off in Settings (their asset names:
     /// "message1", "user_join"…).
     pub sounds_off: Vec<String>,
+    /// People whose soundboard is not played here ("Mute Soundboard").
+    pub soundboard_muted: Vec<String>,
+    /// Streamer Mode: on by hand, or while OBS or XSplit runs; what it hides.
+    pub streamer_mode: bool,
+    pub streamer_auto: bool,
+    pub streamer_hide_personal: bool,
+    pub streamer_hide_invites: bool,
+    pub streamer_no_sounds: bool,
+    pub streamer_no_notifications: bool,
     /// The composer's emoji, GIF and sticker buttons (Appearance → Chat
     /// Box).
     pub emoji_button: bool,
@@ -87,6 +96,31 @@ pub struct Settings {
     /// Accounts signed in on this computer (their tokens are in the
     /// credential store), for switching as Discord does.
     pub accounts: Vec<Account>,
+    /// The setup program's first start turned "Open CordFast" at login on, as
+    /// Discord's installer does; once, so turning it off sticks.
+    pub autostart_offered: bool,
+    /// The game overlay (Settings → Game Overlay), with Discord's defaults.
+    pub overlay_enabled: bool,
+    pub overlay_avatar_large: bool,
+    /// The voice widget's names: 0 always, 1 only while speaking, 2 never.
+    pub overlay_names: u8,
+    /// The voice widget's people: 0 always, 1 only while speaking.
+    pub overlay_users: u8,
+    /// How many people it lists at most; 0 is no limit.
+    pub overlay_max_users: u8,
+    pub overlay_notify_messages: bool,
+    /// The widgets switched off, by id.
+    pub overlay_hidden: Vec<String>,
+    /// Widgets moved or pinned by hand, by id.
+    pub overlay_widgets: BTreeMap<String, OverlayWidget>,
+}
+
+/// What differs from a widget's default place in the overlay.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct OverlayWidget {
+    /// Its top left corner, as parts of the game's window.
+    pub at: Option<[f32; 2]>,
+    pub pinned: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -142,6 +176,13 @@ impl Default for Settings {
             sidebar_width: 240.0,
             keybinds: BTreeMap::new(),
             sounds_off: Vec::new(),
+            soundboard_muted: Vec::new(),
+            streamer_mode: false,
+            streamer_auto: false,
+            streamer_hide_personal: true,
+            streamer_hide_invites: true,
+            streamer_no_sounds: true,
+            streamer_no_notifications: true,
             emoji_button: true,
             gif_button: true,
             sticker_button: true,
@@ -150,6 +191,17 @@ impl Default for Settings {
             skin_tone: 0,
             collapsed_expressions: Vec::new(),
             accounts: Vec::new(),
+            autostart_offered: false,
+            overlay_enabled: true,
+            overlay_avatar_large: true,
+            overlay_names: 0,
+            overlay_users: 0,
+            overlay_max_users: 8,
+            overlay_notify_messages: true,
+            // Friends shows the games too, and in the bundle's table the two start
+            // on top of each other.
+            overlay_hidden: vec!["activity".to_owned()],
+            overlay_widgets: BTreeMap::new(),
         }
     }
 }

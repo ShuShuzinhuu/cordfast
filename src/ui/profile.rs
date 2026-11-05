@@ -130,7 +130,7 @@ fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profil
     // The avatar sits on the banner's edge in a ring of the card colour.
     let avatar = Rect::from_min_size(pos2(rect.left() + 16.0, banner.bottom() - AVATAR / 2.0), Vec2::splat(AVATAR));
     ui.painter().circle_filled(avatar.center(), AVATAR / 2.0 + 6.0, p.rail);
-    let url = user.avatar_url().replace("size=64", "size=160");
+    let url = user.avatar_moving(160);
     app.images.circle(ui, avatar, Some(&url), &initials(user.display_name()), AVATAR / 2.0);
     if let Some(decoration) = user.decoration_url()
         && let Some((texture, _)) = app.images.get(&decoration, 240)

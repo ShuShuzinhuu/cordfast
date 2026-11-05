@@ -78,6 +78,81 @@ pub fn play(sound: Sound, device: Option<String>, volume: f32) {
     });
 }
 
+/// Plays a soundboard sound: its file is kept on disk, and only while it
+/// plays in memory, as the account can reach hundreds of them.
+pub fn play_soundboard(id: u64, device: Option<String>, volume: f32) {
+    let _ = std::thread::Builder::new().name("cordfast-sound".into()).spawn(move || {
+        let played = soundboard_file(id).and_then(|bytes| decode(&bytes)).and_then(|(pcm, rate)| output(&pcm, rate, device, volume));
+        if let Err(error) = played {
+            log::warn!("soundboard {id}: {error:#}");
+        }
+    });
+}
+
+/// Plays an audio attachment or a voice message once.
+pub fn play_url(url: String, device: Option<String>, volume: f32) {
+    let _ = std::thread::Builder::new().name("cordfast-sound".into()).spawn(move || {
+        let played = (|| {
+            let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
+            let (pcm, rate) = decode(&bytes)?;
+            output(&pcm, rate, device, volume)
+        })();
+        if let Err(error) = played {
+            log::warn!("audio: {error:#}");
+        }
+    });
+}
+
+fn soundboard_file(id: u64) -> anyhow::Result<Vec<u8>> {
+    let dir = crate::settings::config_dir().join("sounds");
+    let path = dir.join(format!("board-{id}"));
+    if let Ok(bytes) = std::fs::read(&path) {
+        return Ok(bytes);
+    }
+    let bytes = reqwest::blocking::get(format!("https://cdn.discordapp.com/soundboard-sounds/{id}"))?.error_for_status()?.bytes()?.to_vec();
+    let _ = std::fs::create_dir_all(&dir);
+    let _ = std::fs::write(&path, &bytes);
+    Ok(bytes)
+}
+
+/// An Ogg file's packets, in order, over its pages' lacing.
+fn ogg_packets(bytes: &[u8]) -> Vec<Vec<u8>> {
+    let (mut packets, mut packet, mut at) = (Vec::new(), Vec::new(), 0);
+    while bytes.get(at..at + 4) == Some(b"OggS") {
+        let Some(count) = bytes.get(at + 26).map(|n| usize::from(*n)) else { break };
+        let Some(lacing) = bytes.get(at + 27..at + 27 + count) else { break };
+        let mut body = at + 27 + count;
+        for lace in lacing {
+            let Some(part) = bytes.get(body..body + usize::from(*lace)) else { return packets };
+            packet.extend_from_slice(part);
+            body += usize::from(*lace);
+            if *lace < 255 {
+                packets.push(std::mem::take(&mut packet));
+            }
+        }
+        at = body;
+    }
+    packets
+}
+
+/// Ogg Opus, which symphonia does not decode, with the libopus voice uses.
+fn decode_ogg_opus(bytes: &[u8]) -> Option<anyhow::Result<(Vec<f32>, u32)>> {
+    use songbird::driver::opus;
+    let packets = ogg_packets(bytes);
+    let head = packets.first().filter(|head| head.starts_with(b"OpusHead"))?;
+    let skip = head.get(10..12).map_or(0, |b| usize::from(u16::from_le_bytes([b[0], b[1]])));
+    Some((|| {
+        let mut decoder = opus::Decoder::new(48_000, opus::Channels::Stereo)?;
+        let (mut out, mut frame) = (Vec::new(), vec![0.0f32; 5760 * 2]);
+        for packet in packets.iter().skip(2) {
+            let samples = decoder.decode_float(packet, &mut frame, false)?;
+            out.extend_from_slice(&frame[..samples * 2]);
+        }
+        out.drain(..(skip * 2).min(out.len()));
+        Ok((out, 48_000))
+    })())
+}
+
 fn run(sound: Sound, device: Option<String>, volume: f32) -> anyhow::Result<()> {
     let cached = decoded().lock().unwrap_or_else(|e| e.into_inner()).get(&sound).cloned();
     let pcm = match cached {
@@ -105,6 +180,9 @@ fn fetch(sound: Sound) -> anyhow::Result<Vec<u8>> {
 }
 
 fn decode(bytes: &[u8]) -> anyhow::Result<(Vec<f32>, u32)> {
+    if let Some(decoded) = decode_ogg_opus(bytes) {
+        return decoded;
+    }
     use symphonia::core::audio::SampleBuffer;
     use symphonia::core::codecs::DecoderOptions;
     use symphonia::core::formats::FormatOptions;
@@ -215,6 +293,47 @@ fn output(pcm: &[f32], rate: u32, device: Option<String>, volume: f32) -> anyhow
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A page holding `packets`, with their lacing.
+    fn page(packets: &[Vec<u8>]) -> Vec<u8> {
+        let mut lacing = Vec::new();
+        for packet in packets {
+            lacing.extend(std::iter::repeat_n(255u8, packet.len() / 255));
+            lacing.push((packet.len() % 255) as u8);
+        }
+        let mut out = b"OggS".to_vec();
+        out.resize(26, 0);
+        out.push(lacing.len() as u8);
+        out.extend_from_slice(&lacing);
+        out.extend(packets.iter().flatten());
+        out
+    }
+
+    #[test]
+    fn ogg_opus_decodes() {
+        use songbird::driver::opus;
+        let mut encoder = opus::Encoder::new(48_000, opus::Channels::Stereo, opus::Application::Audio).unwrap();
+        let tone: Vec<f32> = (0..1920).map(|i| ((i / 2) as f32 * 0.05).sin() * 0.5).collect();
+        let mut frames = Vec::new();
+        for _ in 0..5 {
+            let mut packet = vec![0u8; 1500];
+            let size = encoder.encode_float(&tone, &mut packet).unwrap();
+            packet.truncate(size);
+            frames.push(packet);
+        }
+        let mut head = b"OpusHead\x01\x02".to_vec();
+        head.extend_from_slice(&312u16.to_le_bytes());
+        head.resize(19, 0);
+        let mut file = page(&[head]);
+        file.extend(page(&[b"OpusTags".to_vec()]));
+        file.extend(page(&frames));
+        // A packet over 255 bytes goes on through its lacing.
+        assert_eq!(ogg_packets(&file).len(), 7);
+        let (pcm, rate) = decode(&file).unwrap();
+        assert_eq!(rate, 48_000);
+        assert_eq!(pcm.len(), (5 * 960 - 312) * 2);
+        assert!(pcm.iter().any(|sample| sample.abs() > 0.1));
+    }
 
     /// Fetches and decodes every sound: `cargo test sounds -- --ignored`.
     #[test]

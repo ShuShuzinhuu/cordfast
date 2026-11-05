@@ -44,6 +44,8 @@ pub enum Command {
         nonce: String,
         reply_to: Option<Id>,
         ping_reply: bool,
+        /// "@silent": nobody gets notified.
+        silent: bool,
         files: Vec<Upload>,
     },
     Edit { channel: Id, message: Id, content: String },
@@ -57,6 +59,9 @@ pub enum Command {
     AckBulk(Vec<(Id, Id)>),
     Typing { channel: Id },
     Subscribe { guild: Id },
+    RequestSoundboard { guilds: Vec<Id> },
+    /// A new sticker, as the multipart upload Discord asks for.
+    UploadSticker { guild: Id, name: String, tags: String, path: PathBuf },
     MemberList { guild: Id, channel: Id, rows: u64 },
     RequestMembers { guild: Id, users: Vec<Id> },
     /// Downloads and decodes a picture no larger than `max` pixels a side.
@@ -79,19 +84,21 @@ pub enum Command {
     CloseDm(Id),
     LeaveGuild(Id),
     /// A status, until a moment in Unix milliseconds or for good.
-    SetStatus { status: String, until: Option<u64> },
+    SetStatus { status: String, settings: Vec<u8> },
     /// Part of the account's PreloadedUserSettings, merged into it.
     SaveSettings(Vec<u8>),
     /// A button press or menu choice, sent to the bot that owns it.
     Interact { origin: crate::discord::components::Origin, data: Value },
     /// A slash command (kind 2) or an autocomplete request (kind 4).
     SlashCommand { guild: Option<Id>, channel: Id, application: Id, kind: u64, data: Value, nonce: String },
-    SetCustomStatus { text: Option<String>, until: Option<u64> },
+    SetCustomStatus { text: Option<String>, settings: Vec<u8> },
     AddFriend(String),
     /// `Some(1)` accepts a request, `Some(2)` blocks, `None` removes.
     Relationship { user: Id, kind: Option<u64> },
     /// A call the server settings pages make; answered by `Event::Api`.
     Api { key: String, method: &'static str, path: String, body: Option<Value> },
+    /// A call Discord held for a second factor, with the answer to it.
+    MfaFinish { ticket: String, mfa_type: &'static str, code: String, key: String, method: &'static str, path: String, body: Option<Value> },
 }
 
 /// A file waiting in the composer, as Discord's upload card holds it: the
@@ -148,7 +155,7 @@ pub enum Event {
     MessagesFailed { channel: Id, error: String },
     SendFailed { channel: Id, nonce: String, error: String },
     Error(String),
-    Image { url: String, image: Option<egui::ColorImage> },
+    Image { url: String, image: Option<Picture> },
     Profile { user: Id, profile: Result<Box<Profile>, String> },
     DmOpened(Channel),
     ForumPosts { forum: Id, posts: Vec<(Channel, Option<Message>)> },
@@ -158,6 +165,8 @@ pub enum Event {
     /// and every activity in full, for your own profile.
     Activity(Option<String>, Vec<crate::discord::gateway::Activity>),
     Api { key: String, result: Result<Value, String> },
+    /// A `Command::Api` waiting for a second factor.
+    Mfa { ticket: String, methods: Vec<String>, key: String, method: &'static str, path: String, body: Option<Value> },
 }
 
 /// Wakes whatever is showing: a window, or the headless shell loop.
@@ -167,6 +176,8 @@ pub type Wake = Arc<dyn Fn() + Send + Sync>;
 pub struct Events {
     tx: std::sync::mpsc::Sender<Event>,
     wake: Wake,
+    /// Lazy events waiting for the next beat of the window.
+    pending: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Events {
@@ -174,6 +185,26 @@ impl Events {
         if self.tx.send(event).is_ok() {
             (self.wake)();
         }
+    }
+
+    /// An event the eye can wait for. Accounts in many servers get presences
+    /// and member updates all the time, and drawing the window for each kept
+    /// a core busy: these wait for a beat, four times a second.
+    pub fn send_lazy(&self, event: Event) {
+        if self.tx.send(event).is_ok() {
+            self.pending.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Starts the beat: it only wakes the window when something waits.
+    fn beat(&self) {
+        let (pending, wake) = (self.pending.clone(), self.wake.clone());
+        let _ = std::thread::Builder::new().name("cordfast-beat".into()).spawn(move || loop {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+            if pending.swap(false, std::sync::atomic::Ordering::Relaxed) {
+                wake();
+            }
+        });
     }
 }
 
@@ -196,7 +227,8 @@ impl Backend {
     pub fn spawn(wake: Wake, logo: Vec<u8>) -> Self {
         let (command_tx, command_rx) = mpsc::unbounded_channel();
         let (event_tx, event_rx) = std::sync::mpsc::channel();
-        let events = Events { tx: event_tx, wake };
+        let events = Events { tx: event_tx, wake, pending: Default::default() };
+        events.beat();
         std::thread::Builder::new()
             .name("cordfast-backend".into())
             .spawn(move || {
@@ -221,8 +253,91 @@ fn keyring_entry() -> Option<keyring::Entry> {
     keyring::Entry::new(KEYRING_SERVICE, KEYRING_USER).ok()
 }
 
-fn saved_token() -> Option<String> {
+pub fn saved_token() -> Option<String> {
     keyring_entry()?.get_password().ok().filter(|t| !t.is_empty())
+}
+
+/// `CORDFAST_SELFTEST=<file>`: asks Discord, with the saved session and only
+/// by GET, for what the newer pages read, and writes each answer's shape to the
+/// file: its type, size and field names, no values, no window and no gateway.
+/// It tells whether the calls and the parsers agree with the real API.
+pub fn selftest(out: &str) {
+    fn shape(value: &Value) -> String {
+        match value {
+            Value::Array(list) => format!("[{}] {}", list.len(), list.first().map(shape).unwrap_or_default()),
+            Value::Object(map) => {
+                let mut keys: Vec<String> = map.iter().map(|(key, value)| if matches!(value, Value::Array(_) | Value::Object(_)) { format!("{key}: {}", shape(value)) } else { key.clone() }).collect();
+                keys.sort_unstable();
+                format!("{{{}}}", keys.join(", "))
+            }
+            Value::String(_) => "string".into(),
+            Value::Number(_) => "number".into(),
+            Value::Bool(_) => "bool".into(),
+            Value::Null => "null".into(),
+        }
+    }
+    let Some(token) = saved_token() else {
+        let _ = std::fs::write(out, "no saved session\n");
+        return;
+    };
+    let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("unable to start the async runtime");
+    runtime.block_on(async {
+        let api = Api::new(crate::discord::rest::http(), token);
+        let mut lines = Vec::new();
+        let mut parse_note = String::new();
+        let mut ask = async |label: &str, path: String| -> Option<Value> {
+            tokio::time::sleep(Duration::from_millis(400)).await;
+            match api.raw("GET", &path, None, None).await {
+                Ok(value) => {
+                    lines.push(format!("OK   {label}: {}", shape(&value)));
+                    Some(value)
+                }
+                Err(error) => {
+                    lines.push(format!("FAIL {label}: {error:#}"));
+                    None
+                }
+            }
+        };
+        let guilds = ask("guilds", "/users/@me/guilds".into()).await.unwrap_or_default();
+        let list = guilds.as_array().cloned().unwrap_or_default();
+        let perms = |g: &Value| g.get("permissions").and_then(Value::as_str).and_then(|p| p.parse::<u64>().ok()).unwrap_or(0);
+        let id = |g: &Value| g.get("id").and_then(Value::as_str).unwrap_or_default().to_owned();
+        let member = list.first().map(id).unwrap_or_default();
+        // A server this account manages, where the settings pages can read.
+        let managed = list.iter().find(|g| perms(g) & (1 << 5 | 1 << 3) != 0).map(id);
+        let community = list.iter().find(|g| g.get("features").and_then(Value::as_array).is_some_and(|f| f.iter().any(|f| f == "GUILD_ONBOARDING"))).map(id).unwrap_or_else(|| member.clone());
+        let gated = list.iter().find(|g| g.get("features").and_then(Value::as_array).is_some_and(|f| f.iter().any(|f| f == "MEMBER_VERIFICATION_GATE_ENABLED"))).map(id);
+        if let Some(sounds) = ask("soundboard defaults", "/soundboard-default-sounds".into()).await {
+            let all = sounds.as_array().map_or(0, Vec::len);
+            let parsed = sounds.as_array().into_iter().flatten().filter_map(crate::discord::model::SoundboardSound::parse).count();
+            parse_note = format!("PARSE soundboard: {parsed}/{all}");
+        }
+        ask("saved ids", "/users/@me/saved-messages?bookmark_ids=true".into()).await;
+        ask("bookmarks", "/users/@me/saved-messages/bookmarks?limit=25".into()).await;
+        ask("guild sounds", format!("/guilds/{member}/soundboard-sounds")).await;
+        ask("top sounds", format!("/guilds/{member}/top-soundboard-sounds")).await;
+        ask("events", format!("/guilds/{community}/scheduled-events?with_user_count=true")).await;
+        ask("onboarding", format!("/guilds/{community}/onboarding")).await;
+        if let Some(gated) = gated {
+            ask("verification", format!("/guilds/{gated}/member-verification?with_guild=false")).await;
+        }
+        ask("discover", "/discoverable-guilds?limit=3&offset=0".into()).await;
+        ask("discover search", "/discoverable-guilds/search?query=rust&limit=3&offset=0&with_counts=true".into()).await;
+        let channels = ask("channels", format!("/guilds/{member}/channels")).await.unwrap_or_default();
+        if let Some(text) = channels.as_array().into_iter().flatten().find(|c| c.get("type").and_then(Value::as_u64) == Some(0)).map(id) {
+            ask("archived threads", format!("/channels/{text}/threads/archived/public?limit=25")).await;
+        }
+        ask("search media", format!("/guilds/{member}/messages/search?content=a&has=image&has=video&offset=0")).await;
+        ask("search oldest", format!("/guilds/{member}/messages/search?content=a&sort_by=timestamp&sort_order=asc&offset=25")).await;
+        ask("connections", "/users/@me/connections".into()).await;
+        if let Some(guild) = managed {
+            for (label, path) in [("stickers", "stickers"), ("sounds admin", "soundboard-sounds"), ("webhooks", "webhooks"), ("integrations", "integrations?include_applications=true"), ("automod", "auto-moderation/rules"), ("vanity", "vanity-url"), ("widget", "widget"), ("templates", "templates"), ("prune", "prune?days=30")] {
+                ask(label, format!("/guilds/{guild}/{path}")).await;
+            }
+        }
+        lines.push(parse_note);
+        let _ = std::fs::write(out, lines.join("\n"));
+    });
 }
 
 fn save_token(token: &str) {
@@ -294,7 +409,7 @@ async fn run(events: Events, mut commands: mpsc::UnboundedReceiver<Command>, log
         gateway: None,
         login: None,
         token: None,
-        images: Arc::new(Semaphore::new(6)),
+        images: Arc::new(Semaphore::new(12)),
         requested: HashSet::new(),
         hooks,
         notifications,
@@ -358,7 +473,11 @@ impl Worker {
                 }
                 _ => {}
             }
-            events.send(Event::Gateway(dispatch));
+            if matches!(dispatch, Dispatch::Presences(_) | Dispatch::Members { .. } | Dispatch::MemberList(_)) {
+                events.send_lazy(Event::Gateway(dispatch));
+            } else {
+                events.send(Event::Gateway(dispatch));
+            }
         });
         tokio::spawn(gateway::run(token, sink, control_rx));
     }
@@ -627,6 +746,7 @@ impl Worker {
                 }
             }
             Command::Subscribe { guild } => self.control(Control::Subscribe(guild)),
+            Command::RequestSoundboard { guilds } => self.control(Control::RequestSoundboard(guilds)),
             Command::MemberList { guild, channel, rows } => {
                 self.control(Control::MemberList { guild, channel, rows });
             }
@@ -661,7 +781,7 @@ impl Worker {
                     let _permit = permits.acquire_owned().await;
                     let image = fetch_image(&http, &url, max).await;
                     if let Err(error) = &image {
-                        log::debug!("image {url}: {error:#}");
+                        log::info!("image {}: {error:#}", url.split('?').next().unwrap_or_default());
                     }
                     events.send(Event::Image { url, image: image.ok() });
                 });
@@ -723,13 +843,13 @@ impl Worker {
                     }
                 });
             }
-            Command::SetCustomStatus { text, until } => {
+            Command::SetCustomStatus { text, settings } => {
                 self.custom_status = text.clone();
                 self.send_presence();
                 if let Some(api) = self.api.clone() {
                     let events = self.events.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = api.set_custom_status(text.as_deref(), until).await {
+                        if let Err(error) = api.save_settings(&settings).await {
                             events.send(Event::Error(t!("Couldn't save the status: {error}", error = format!("{error:#}"))));
                         }
                     });
@@ -745,13 +865,13 @@ impl Worker {
                     });
                 }
             }
-            Command::SetStatus { status, until } => {
+            Command::SetStatus { status, settings } => {
                 self.status = status.clone();
                 self.send_presence();
                 if let Some(api) = self.api.clone() {
                     let events = self.events.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = api.set_status(&status, until).await {
+                        if let Err(error) = api.save_settings(&settings).await {
                             events.send(Event::Error(t!("Couldn't save the status: {error}", error = format!("{error:#}"))));
                         }
                     });
@@ -801,9 +921,9 @@ async fn api_call(api: Api, events: Events, command: Command) {
                 error: format!("{error:#}"),
             }),
         },
-        Command::Send { channel, content, nonce, reply_to, ping_reply, files } => {
+        Command::Send { channel, content, nonce, reply_to, ping_reply, silent, files } => {
             if let Err(error) = api
-                .send_message(channel, &content, &nonce, reply_to, ping_reply, files)
+                .send_message(channel, &content, &nonce, reply_to, ping_reply, silent, files)
                 .await
             {
                 events.send(Event::SendFailed {
@@ -857,9 +977,24 @@ async fn api_call(api: Api, events: Events, command: Command) {
             Ok(posts) => events.send(Event::ForumPosts { forum, posts }),
             Err(error) => fail(t!("Couldn't load the forum"), error),
         },
-        Command::Api { key, method, path, body } => {
-            let result = api.raw(method, &path, body, None).await.map_err(|e| format!("{e:#}"));
-            events.send(Event::Api { key, result });
+        Command::Api { key, method, path, body } => match api.raw(method, &path, body.clone(), None).await {
+            Err(error) if error.is::<crate::discord::rest::MfaRequired>() => {
+                if let Ok(mfa) = error.downcast::<crate::discord::rest::MfaRequired>() {
+                    events.send(Event::Mfa { ticket: mfa.ticket, methods: mfa.methods, key, method, path, body });
+                }
+            }
+            result => events.send(Event::Api { key, result: result.map_err(|e| format!("{e:#}")) }),
+        },
+        Command::MfaFinish { ticket, mfa_type, code, key, method, path, body } => {
+            let result = match api.mfa_finish(&ticket, mfa_type, &code).await {
+                Ok(token) => api.raw_with_mfa(method, &path, body, &token).await,
+                Err(error) => Err(error),
+            };
+            events.send(Event::Api { key, result: result.map_err(|e| format!("{e:#}")) });
+        }
+        Command::UploadSticker { guild, name, tags, path } => {
+            let result = api.upload_sticker(guild, &name, &tags, &path).await;
+            events.send(Event::Api { key: "gate:changed".into(), result: result.map_err(|e| format!("{e:#}")) });
         }
         Command::AddFriend(username) => match api.add_friend(&username).await {
             Ok(()) => events.send(Event::Error(t!("Friend request sent to {name}.", name = username))),
@@ -912,8 +1047,10 @@ async fn fetch_image(
     http: &reqwest::Client,
     url: &str,
     max: u32,
-) -> anyhow::Result<egui::ColorImage> {
+) -> anyhow::Result<Picture> {
     // A file waiting to be sent: its picture for the upload card.
+    // A picture only ever drawn still (a grid of stickers) skips its other frames.
+    let (url, still) = url.strip_suffix(STILL).map_or((url, false), |url| (url, true));
     let bytes = match url.strip_prefix("file://") {
         Some(path) => tokio::fs::read(path).await?.into(),
         None => http.get(url).send().await?.error_for_status()?.bytes().await?,
@@ -921,19 +1058,122 @@ async fn fetch_image(
     let lottie = url.ends_with(".json");
     tokio::task::spawn_blocking(move || {
         if lottie {
-            return lottie_frame(&bytes, max);
+            return lottie_frames(&bytes, max, still);
         }
-        let mut image = image::load_from_memory(&bytes)?;
-        if image.width() > max || image.height() > max {
-            image = image.resize(max, max, image::imageops::FilterType::Triangle);
-        }
-        let rgba = image.to_rgba8();
-        Ok(egui::ColorImage::from_rgba_unmultiplied(
-            [rgba.width() as usize, rgba.height() as usize],
-            rgba.as_raw(),
-        ))
+        decode_picture(&bytes, max, still)
     })
     .await?
+}
+
+/// Ending a picture's URL: only its first frame is wanted.
+pub const STILL: &str = "#still";
+
+/// A decoded picture: one frame, or an animation's with how long each shows
+/// in milliseconds.
+pub struct Picture {
+    pub frames: Vec<egui::ColorImage>,
+    pub delays: Vec<u32>,
+}
+
+/// Most an animation may hold in memory: past it, frames are dropped evenly
+/// and the ones left show longer, so a long GIF plays coarser, not shorter.
+const ANIMATION_BYTES: usize = 12 << 20;
+/// Most frames, for tiny animations the bytes would not stop.
+const ANIMATION_FRAMES: usize = 300;
+
+/// Frames as they decode, never holding more than the limits.
+struct Reel {
+    max: u32,
+    frames: Vec<egui::ColorImage>,
+    delays: Vec<u32>,
+    stride: usize,
+    seen: usize,
+}
+
+impl Reel {
+    fn new(max: u32) -> Self {
+        Self { max, frames: Vec::new(), delays: Vec::new(), stride: 1, seen: 0 }
+    }
+
+    fn push(&mut self, mut image: image::RgbaImage, delay: u32) {
+        // As browsers read them: a delay too short to mean anything is 100 ms.
+        let delay = if delay < 20 { 100 } else { delay };
+        self.seen += 1;
+        if (self.seen - 1) % self.stride != 0 {
+            if let Some(last) = self.delays.last_mut() {
+                *last += delay;
+            }
+            return;
+        }
+        if image.width() > self.max || image.height() > self.max {
+            let scale = self.max as f32 / image.width().max(image.height()) as f32;
+            let (w, h) = (((image.width() as f32 * scale) as u32).max(1), ((image.height() as f32 * scale) as u32).max(1));
+            image = image::imageops::resize(&image, w, h, image::imageops::FilterType::Triangle);
+        }
+        self.frames.push(egui::ColorImage::from_rgba_unmultiplied([image.width() as usize, image.height() as usize], image.as_raw()));
+        self.delays.push(delay);
+        let bytes: usize = self.frames.iter().map(|f| f.pixels.len() * 4).sum();
+        if bytes > ANIMATION_BYTES || self.frames.len() >= ANIMATION_FRAMES {
+            self.halve();
+        }
+    }
+
+    /// Every other frame goes, its time to the one before.
+    fn halve(&mut self) {
+        let frames = std::mem::take(&mut self.frames);
+        let delays = std::mem::take(&mut self.delays);
+        for (i, frame) in frames.into_iter().enumerate() {
+            if i % 2 == 0 {
+                self.frames.push(frame);
+            }
+        }
+        for pair in delays.chunks(2) {
+            self.delays.push(pair.iter().sum());
+        }
+        self.stride *= 2;
+    }
+
+    fn take(mut self) -> Picture {
+        if self.frames.len() < 2 {
+            self.delays.clear();
+        }
+        Picture { frames: self.frames, delays: self.delays }
+    }
+}
+
+/// Decodes a picture no larger than `max` a side, every frame of an animated
+/// GIF, WebP or APNG.
+fn decode_picture(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
+    use image::AnimationDecoder;
+    use std::io::Cursor;
+    let frames: Option<image::Frames<'_>> = match image::guess_format(bytes) {
+        Ok(image::ImageFormat::Gif) => Some(image::codecs::gif::GifDecoder::new(Cursor::new(bytes))?.into_frames()),
+        Ok(image::ImageFormat::WebP) => {
+            let decoder = image::codecs::webp::WebPDecoder::new(Cursor::new(bytes))?;
+            decoder.has_animation().then(|| decoder.into_frames())
+        }
+        Ok(image::ImageFormat::Png) => {
+            let decoder = image::codecs::png::PngDecoder::new(Cursor::new(bytes))?;
+            if decoder.is_apng()? { Some(decoder.apng()?.into_frames()) } else { None }
+        }
+        _ => None,
+    };
+    let mut reel = Reel::new(max);
+    if let Some(frames) = frames {
+        for frame in frames {
+            // A broken frame ends it; what came before still plays.
+            let Ok(frame) = frame else { break };
+            let (numerator, denominator) = frame.delay().numer_denom_ms();
+            reel.push(frame.into_buffer(), numerator / denominator.max(1));
+            if still {
+                break;
+            }
+        }
+    }
+    if reel.frames.is_empty() {
+        reel.push(image::load_from_memory(bytes)?.to_rgba8(), 0);
+    }
+    Ok(reel.take())
 }
 
 /// Downloads a picture into the downloads folder under its own name, with
@@ -969,7 +1209,7 @@ async fn copy_image(http: &reqwest::Client, url: &str) -> anyhow::Result<()> {
 /// A Lottie sticker (Discord's own packs) as a picture `max` pixels a
 /// side: its first frame, or its middle one when it starts empty. Features
 /// the renderer lacks are left out rather than losing the whole sticker.
-pub fn lottie_frame(bytes: &[u8], max: u32) -> anyhow::Result<egui::ColorImage> {
+pub fn lottie_frames(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
     let animation = rasterlottie::Animation::from_json_str(std::str::from_utf8(bytes)?)?;
     let mut profile = rasterlottie::SupportProfile::target_corpus();
     profile.allow_unknown_shape_items = true;
@@ -978,12 +1218,29 @@ pub fn lottie_frame(bytes: &[u8], max: u32) -> anyhow::Result<egui::ColorImage> 
     let prepared = rasterlottie::Renderer::new(profile).prepare(&animation)?;
     let scale = max as f32 / animation.width.max(animation.height).max(1) as f32;
     let config = rasterlottie::RenderConfig::new(rasterlottie::Rgba8::TRANSPARENT, scale);
-    let mut frame = prepared.render_frame(animation.in_point, config)?;
-    if frame.pixels.chunks_exact(4).all(|pixel| pixel[3] == 0) {
-        frame = prepared.render_frame((animation.in_point + animation.out_point) / 2.0, config)?;
+    if still {
+        let mut frame = prepared.render_frame(animation.in_point, config)?;
+        if frame.pixels.chunks_exact(4).all(|pixel| pixel[3] == 0) {
+            frame = prepared.render_frame((animation.in_point + animation.out_point) / 2.0, config)?;
+        }
+        return Ok(Picture { frames: vec![egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels)], delays: Vec::new() });
     }
-    // tiny-skia's pixels come premultiplied.
-    Ok(egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels))
+    // At most 30 frames a second, and 90 in all: stickers run a few seconds.
+    let span = (animation.out_point - animation.in_point).max(1.0);
+    let rate = animation.frame_rate.max(1.0);
+    let step = (rate / 30.0).max(span / 90.0).max(1.0);
+    let delay = (step / rate * 1000.0) as u32;
+    let mut reel = Reel::new(max);
+    let mut at = animation.in_point;
+    while at < animation.out_point {
+        let frame = prepared.render_frame(at, config)?;
+        // tiny-skia's pixels come premultiplied.
+        reel.frames.push(egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels));
+        reel.delays.push(delay);
+        at += step;
+    }
+    anyhow::ensure!(!reel.frames.is_empty(), "an empty animation");
+    Ok(reel.take())
 }
 
 /// Audio settings for the voice task, from the app's preferences.
@@ -1011,7 +1268,7 @@ pub fn audio_settings(settings: &crate::settings::Settings) -> AudioSettings {
 
 #[cfg(test)]
 mod tests {
-    use super::lottie_frame;
+    use super::lottie_frames;
 
     /// A Lottie sticker's frame: a blue circle in the middle of a clear
     /// square, drawn at the size asked.
@@ -1024,10 +1281,68 @@ mod tests {
                 {"ty":"el","p":{"a":0,"k":[0,0]},"s":{"a":0,"k":[60,60]}},
                 {"ty":"fl","c":{"a":0,"k":[0.35,0.4,0.95,1]},"o":{"a":0,"k":100}},
                 {"ty":"tr","p":{"a":0,"k":[0,0]},"a":{"a":0,"k":[0,0]},"s":{"a":0,"k":[100,100]},"r":{"a":0,"k":0},"o":{"a":0,"k":100}}]}]}]}"#;
-        let image = lottie_frame(circle.as_bytes(), 160).unwrap();
+        let picture = lottie_frames(circle.as_bytes(), 160, false).unwrap();
+        assert_eq!(picture.frames.len(), 30);
+        assert_eq!(picture.delays[0], 33);
+        assert_eq!(lottie_frames(circle.as_bytes(), 160, true).unwrap().frames.len(), 1);
+        let image = &picture.frames[0];
         assert_eq!(image.size, [160, 160]);
         let middle = image.pixels[80 * 160 + 80];
         assert!(middle.a() == 255 && middle.b() > 200 && middle.r() < 120, "{middle:?}");
         assert_eq!(image.pixels[0].a(), 0);
+    }
+}
+
+#[cfg(test)]
+mod picture_tests {
+    use super::*;
+
+    fn gif(frames: usize, side: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        {
+            let mut encoder = image::codecs::gif::GifEncoder::new(&mut bytes);
+            for i in 0..frames {
+                let buffer = image::RgbaImage::from_pixel(side, side, image::Rgba([(i * 40 % 255) as u8, 0, 0, 255]));
+                let delay = image::Delay::from_numer_denom_ms(50, 1);
+                encoder.encode_frame(image::Frame::from_parts(buffer, 0, 0, delay)).unwrap();
+            }
+        }
+        bytes
+    }
+
+    #[test]
+    fn a_gif_keeps_its_frames_and_times() {
+        assert_eq!(decode_picture(&gif(4, 16), 64, true).unwrap().frames.len(), 1);
+        let picture = decode_picture(&gif(4, 16), 64, false).unwrap();
+        assert_eq!(picture.frames.len(), 4);
+        assert_eq!(picture.delays, [50, 50, 50, 50]);
+    }
+
+    #[test]
+    fn a_still_picture_has_one_frame_and_no_clock() {
+        let mut bytes = Vec::new();
+        image::RgbaImage::new(8, 8).write_to(&mut std::io::Cursor::new(&mut bytes), image::ImageFormat::Png).unwrap();
+        let picture = decode_picture(&bytes, 64, false).unwrap();
+        assert_eq!(picture.frames.len(), 1);
+        assert!(picture.delays.is_empty());
+    }
+
+    #[test]
+    fn a_long_animation_stays_in_its_budget_and_its_length() {
+        let mut reel = Reel::new(512);
+        for _ in 0..200 {
+            reel.push(image::RgbaImage::new(512, 512), 50);
+        }
+        let picture = reel.take();
+        let bytes: usize = picture.frames.iter().map(|f| f.pixels.len() * 4).sum();
+        assert!(bytes <= ANIMATION_BYTES, "{bytes} bytes");
+        assert_eq!(picture.frames.len(), picture.delays.len());
+        assert_eq!(picture.delays.iter().sum::<u32>(), 200 * 50, "it lasts as long");
+    }
+
+    #[test]
+    fn large_frames_shrink_to_what_is_drawn() {
+        let picture = decode_picture(&gif(2, 100), 25, false).unwrap();
+        assert_eq!(picture.frames[0].size, [25, 25]);
     }
 }

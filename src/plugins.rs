@@ -30,7 +30,6 @@ pub enum Plugin {
     ShowHiddenChannels,
     ShowMeYourName,
     MessageClickActions,
-    ImageZoom,
     ViewRaw,
     CopyMessageLink,
     ReverseImageSearch,
@@ -67,7 +66,6 @@ pub const ALL: &[Plugin] = &[
     Plugin::ShowHiddenChannels,
     Plugin::ShowMeYourName,
     Plugin::MessageClickActions,
-    Plugin::ImageZoom,
     Plugin::ViewRaw,
     Plugin::CopyMessageLink,
     Plugin::ReverseImageSearch,
@@ -136,12 +134,6 @@ impl Plugin {
                 "message-click-actions",
                 "MessageClickActions",
                 n!("Double click: edits your message or replies to someone else's."),
-                false,
-            ),
-            Self::ImageZoom => (
-                "image-zoom",
-                "ImageZoom",
-                n!("Opens images in a viewer with zoom (mouse wheel) instead of the browser."),
                 false,
             ),
             Self::ViewRaw => (

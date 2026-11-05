@@ -1,8 +1,10 @@
 //! The account's own settings, as Discord keeps them for every client:
 //! PreloadedUserSettings (`settings-proto/1`), field numbers from the web
 //! client's descriptors. READY brings the whole message; each change Discord
-//! sends (USER_SETTINGS_PROTO_UPDATE) or we save (a partial PATCH, merged
-//! on its side as protobuf merges) lies over it until the next whole one.
+//! sends (USER_SETTINGS_PROTO_UPDATE) lies over it until the next whole one.
+//! A save carries the changed section whole, as the web client's does: fields
+//! left out of a section may go back to their defaults on Discord's side, and
+//! what this client has no name for travels along untouched.
 
 use super::model::proto::{self, Field};
 
@@ -139,21 +141,108 @@ impl Preloaded {
         }
     }
 
+    /// text_and_images.explicit_content_settings: 1 guilds, 2 friends' DMs,
+    /// 3 others' DMs, each 1 show, 2 blur or 3 block.
+    pub fn content_filter(&self, which: u32) -> u64 {
+        let read = |message: &[u8]| {
+            let section = proto::fields(message).into_iter().filter(|(n, _)| *n == 6).filter_map(|(_, v)| v.bytes()).last()?;
+            let settings = proto::fields(section).into_iter().filter(|(n, _)| *n == 29).filter_map(|(_, v)| v.bytes()).last()?;
+            proto::fields(settings).into_iter().filter(|(n, _)| *n == which).find_map(|(_, v)| match v {
+                Field::Varint(value) => Some(value),
+                _ => None,
+            })
+        };
+        self.patches.iter().rev().find_map(|patch| read(patch)).or_else(|| read(&self.whole)).unwrap_or(2)
+    }
+
+    /// Sets one of them and returns the message that saves it.
+    pub fn set_content_filter(&mut self, which: u32, value: u64) -> Vec<u8> {
+        self.save(6, &length_field(29, &varint_field(which, value)))
+    }
+
+    /// voice_and_video.soundboard_settings.volume, a float from 0 to 100.
+    pub fn soundboard_volume(&self) -> f32 {
+        let read = |message: &[u8]| {
+            let section = proto::fields(message).into_iter().filter(|(n, _)| *n == 5).filter_map(|(_, v)| v.bytes()).last()?;
+            let settings = proto::fields(section).into_iter().filter(|(n, _)| *n == 9).filter_map(|(_, v)| v.bytes()).last()?;
+            proto::fields(settings).into_iter().find_map(|(n, v)| match (n, v) {
+                (1, Field::Fixed32(bits)) => Some(f32::from_bits(bits)),
+                _ => None,
+            })
+        };
+        self.patches.iter().rev().find_map(|patch| read(patch)).or_else(|| read(&self.whole)).unwrap_or(100.0)
+    }
+
+    /// Sets it and returns the message that saves it.
+    pub fn set_soundboard_volume(&mut self, volume: f32) -> Vec<u8> {
+        let mut settings = vec![(1 << 3) | 5];
+        settings.extend_from_slice(&volume.to_le_bytes());
+        self.save(5, &length_field(9, &settings))
+    }
+
     /// Sets a number here and returns the message that saves it.
     pub fn set_number(&mut self, key: Key, value: u64) -> Vec<u8> {
         let inner = match key.kind {
             Kind::Plain => varint_field(key.field, value),
             _ => length_field(key.field, &varint_field(1, value)),
         };
-        let patch = length_field(key.section, &inner);
-        self.patches.push(patch.clone());
-        patch
+        self.save(key.section, &inner)
     }
 
     pub fn set_text(&mut self, key: Key, value: &str) -> Vec<u8> {
-        let patch = length_field(key.section, &length_field(key.field, &length_field(1, value.as_bytes())));
-        self.patches.push(patch.clone());
-        patch
+        self.save(key.section, &length_field(key.field, &length_field(1, value.as_bytes())))
+    }
+
+    /// Saves our status (online, idle, dnd, invisible), until `expires_ms`
+    /// or for good: StatusSettings { 1: status (a StringValue), 4:
+    /// status_expires_at_ms (fixed64) }.
+    pub fn set_status(&mut self, status: &str, expires_ms: Option<u64>) -> Vec<u8> {
+        let mut inner = length_field(1, &length_field(1, status.as_bytes()));
+        inner.extend(fixed64_field(4, expires_ms.unwrap_or(0)));
+        self.save(STATUS_SECTION, &inner)
+    }
+
+    /// Sets (or clears, with `None`) the custom status:
+    /// StatusSettings.custom_status (2) → CustomStatus { 1: text, 4:
+    /// expires_at_ms }. It replaces the old one, whose emoji would otherwise
+    /// merge into the new text.
+    pub fn set_custom_status(&mut self, text: Option<&str>, expires_ms: Option<u64>) -> Vec<u8> {
+        let mut custom = length_field(1, text.unwrap_or_default().as_bytes());
+        // An empty status that ended a moment ago clears it everywhere.
+        custom.extend(fixed64_field(4, if text.is_some() { expires_ms.unwrap_or(0) } else { 1 }));
+        let mut section = without(&self.section(STATUS_SECTION), 2);
+        section.extend(length_field(2, &custom));
+        self.replace(STATUS_SECTION, section)
+    }
+
+    /// A section as it stands: every copy of it, oldest first, which
+    /// protobuf reads as one message with the newest values winning.
+    fn section(&self, section: u32) -> Vec<u8> {
+        let mut out = Vec::new();
+        for message in std::iter::once(&self.whole).chain(&self.patches) {
+            for (_, value) in proto::fields(message).into_iter().filter(|(n, _)| *n == section) {
+                out.extend_from_slice(value.bytes().unwrap_or_default());
+            }
+        }
+        out
+    }
+
+    fn save(&mut self, section: u32, change: &[u8]) -> Vec<u8> {
+        let mut whole = self.section(section);
+        whole.extend_from_slice(change);
+        self.replace(section, whole)
+    }
+
+    /// Makes `body` the section here and returns the message that saves it.
+    fn replace(&mut self, section: u32, body: Vec<u8>) -> Vec<u8> {
+        let message = length_field(section, &body);
+        self.whole = without(&self.whole, section);
+        self.whole.extend_from_slice(&message);
+        for patch in &mut self.patches {
+            *patch = without(patch, section);
+        }
+        self.patches.retain(|patch| !patch.is_empty());
+        message
     }
 }
 
@@ -161,6 +250,45 @@ impl Preloaded {
 enum Value {
     Number(u64),
     Text(String),
+}
+
+/// PreloadedUserSettings.status.
+const STATUS_SECTION: u32 = 11;
+
+/// A message without a field, every other byte as it came (fields this
+/// client has no name for included). Stops copying at anything malformed.
+fn without(message: &[u8], field: u32) -> Vec<u8> {
+    fn tag(buf: &[u8], pos: &mut usize) -> Option<u64> {
+        let mut value = 0u64;
+        for shift in (0..64).step_by(7) {
+            let byte = *buf.get(*pos)?;
+            *pos += 1;
+            value |= u64::from(byte & 0x7f) << shift;
+            if byte & 0x80 == 0 {
+                return Some(value);
+            }
+        }
+        None
+    }
+    let mut out = Vec::with_capacity(message.len());
+    let mut pos = 0;
+    while pos < message.len() {
+        let start = pos;
+        let Some(key) = tag(message, &mut pos) else { break };
+        let size = match key & 7 {
+            0 => tag(message, &mut pos).map(|_| 0),
+            1 => Some(8),
+            2 => tag(message, &mut pos),
+            5 => Some(4),
+            _ => None,
+        };
+        let Some(end) = size.and_then(|size| pos.checked_add(size as usize)).filter(|end| *end <= message.len()) else { break };
+        pos = end;
+        if key >> 3 != u64::from(field) {
+            out.extend_from_slice(&message[start..end]);
+        }
+    }
+    out
 }
 
 fn varint(mut value: u64, out: &mut Vec<u8>) {
@@ -179,6 +307,13 @@ fn varint_field(field: u32, value: u64) -> Vec<u8> {
     let mut out = Vec::new();
     varint(u64::from(field) << 3, &mut out);
     varint(value, &mut out);
+    out
+}
+
+fn fixed64_field(field: u32, value: u64) -> Vec<u8> {
+    let mut out = Vec::new();
+    varint(u64::from(field) << 3 | 1, &mut out);
+    out.extend_from_slice(&value.to_le_bytes());
     out
 }
 
@@ -204,12 +339,54 @@ mod tests {
         assert!(!settings.flag(RENDER_EMBEDS));
         assert!(settings.flag(RENDER_REACTIONS), "unset takes the default");
         let patch = settings.set_number(RENDER_EMBEDS, 1);
-        assert_eq!(patch, [0x32, 4, 0x62, 2, 0x08, 1]);
+        // The section whole: the old value, then the new, which wins.
+        assert_eq!(patch, [0x32, 8, 0x62, 2, 0x08, 0, 0x62, 2, 0x08, 1]);
         assert!(settings.flag(RENDER_EMBEDS));
         settings.set_text(RENDER_SPOILERS, "ALWAYS");
         assert_eq!(settings.text(RENDER_SPOILERS).as_deref(), Some("ALWAYS"));
         settings.update(Vec::new(), false);
         assert!(settings.flag(RENDER_EMBEDS));
         assert_eq!(settings.text(RENDER_SPOILERS), None);
+    }
+
+    /// A save keeps the section's other fields, ones this client does not
+    /// know included, and leaves other sections out.
+    #[test]
+    fn a_save_carries_the_whole_section() {
+        // text_and_images { 99: 7 (unknown) }, privacy { 1: 1 }
+        let mut whole = length_field(6, &varint_field(99, 7));
+        whole.extend(length_field(2, &varint_field(1, 1)));
+        let mut settings = Preloaded::new(whole);
+        let saved = settings.set_number(RENDER_EMBEDS, 0);
+        let fields = proto::fields(&saved);
+        assert_eq!(fields.len(), 1);
+        assert_eq!(fields[0].0, 6);
+        let section = proto::fields(fields[0].1.bytes().unwrap());
+        assert!(section.iter().any(|(n, _)| *n == 99), "unknown field kept");
+        assert!(section.iter().any(|(n, _)| *n == RENDER_EMBEDS.field));
+        assert!(!settings.flag(RENDER_EMBEDS));
+        // A second save still has both, without growing other sections.
+        let saved = settings.set_number(RENDER_REACTIONS, 0);
+        let section = proto::fields(proto::fields(&saved)[0].1.bytes().unwrap()).into_iter().map(|(n, _)| n).collect::<Vec<_>>();
+        assert!(section.contains(&99) && section.contains(&RENDER_EMBEDS.field) && section.contains(&RENDER_REACTIONS.field));
+    }
+
+    /// A new custom status replaces the old, emoji and all, and leaves the
+    /// status beside it alone.
+    #[test]
+    fn a_custom_status_replaces_the_old_one() {
+        let mut settings = Preloaded::new(Vec::new());
+        settings.set_status("dnd", None);
+        // custom_status { 3: emoji name }
+        let mut old = settings.section(STATUS_SECTION);
+        old.extend(length_field(2, &length_field(3, b"wave")));
+        settings.replace(STATUS_SECTION, old);
+        let saved = settings.set_custom_status(Some("hi"), None);
+        let fields = proto::fields(&saved);
+        let section = proto::fields(fields[0].1.bytes().unwrap());
+        assert!(section.iter().any(|(n, _)| *n == 1), "the status stays");
+        let customs: Vec<_> = section.iter().filter(|(n, _)| *n == 2).collect();
+        assert_eq!(customs.len(), 1);
+        assert!(!proto::fields(customs[0].1.bytes().unwrap()).iter().any(|(n, _)| *n == 3), "the old emoji goes");
     }
 }

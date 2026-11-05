@@ -42,7 +42,8 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                         form::nav_separator(ui);
                         form::nav_header(ui, crate::i18n::tr(heading));
                     }
-                    None => form::nav_header(ui, &guild.name),
+                    None if pages[0].0 == Tab::Overview => form::nav_header(ui, &guild.name),
+                    None => form::nav_separator(ui),
                 }
                 for (id, label, needs) in *pages {
                     let allowed = *needs == 0 || perms & needs != 0;
@@ -71,10 +72,12 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
                 Tab::Bans => bans(app, ui, guild_id),
                 Tab::Emojis => emojis(app, ui, guild_id),
                 Tab::Audit => audit(app, ui),
+                other => super::guild_more::show(app, ui, guild_id, other),
             }
         },
     );
     if let Some(tab) = clicked {
+        app.gate_asked.retain(|asked| !asked.starts_with("gate:admin:"));
         app.actions.push(Action::GuildTab(tab));
     }
     if close {

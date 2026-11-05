@@ -1,9 +1,12 @@
-//! Updates, as Discord does them: a check at start and every few hours, the
-//! download in the background, then a green button to restart into the new
-//! version. fastframe-update reads the GitHub release, verifies the signed
-//! checksums, swaps the executable through a helper and rolls back if the
-//! new version does not start.
+//! Updates, as Discord does them: at start the splash waits for the check and
+//! installs what it finds before the app opens (`ui::splash`); after that a
+//! check every few hours, the download in the background, then a green button
+//! to restart into the new version. fastframe-update reads the GitHub
+//! release, verifies the signed checksums, swaps the executable (or runs the
+//! next setup program silently) through a helper and rolls back if the new
+//! version does not start.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -38,17 +41,51 @@ fn updater() -> anyhow::Result<Updater> {
     Ok(Updater::new(CONFIG, transport))
 }
 
+/// The first check has answered, found nothing, or failed: the splash stops
+/// waiting for it (see `ui::splash`). A download it started goes on.
+pub static CHECKED: AtomicBool = AtomicBool::new(false);
+
+/// Whether this copy can update itself at all: an installed or portable copy,
+/// not a build run from `target`. Reads files only, so it is quick.
+pub fn installable() -> bool {
+    updater().is_ok_and(|updater| updater.installation().is_ok())
+}
+
 /// Checks now and every six hours, downloading what it finds.
 pub fn spawn(state: Shared, wake: crate::backend::Wake) {
     std::thread::Builder::new()
         .name("cordfast-updates".into())
         .spawn(move || loop {
-            if let Err(error) = check(&state, &wake) {
+            let result = check(&state, &wake, &|| {
+                CHECKED.store(true, Ordering::Relaxed);
+                wake();
+            });
+            if let Err(error) = result {
                 log::info!("update: {error:#}");
             }
+            CHECKED.store(true, Ordering::Relaxed);
+            wake();
             std::thread::sleep(Duration::from_secs(6 * 3600));
         })
         .expect("unable to start the update thread");
+}
+
+/// What starting up waits for, as Discord's splash does: nothing to update
+/// goes on to the app; an update found is downloaded and installed first.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum AtStart {
+    Wait,
+    Install,
+    Launch,
+}
+
+pub fn at_start(state: &Shared) -> AtStart {
+    match &*state.lock().unwrap_or_else(std::sync::PoisonError::into_inner) {
+        State::Downloading { .. } => AtStart::Wait,
+        State::Ready { prepared: Some(_), .. } => AtStart::Install,
+        _ if CHECKED.load(Ordering::Relaxed) => AtStart::Launch,
+        _ => AtStart::Wait,
+    }
 }
 
 fn set(state: &Shared, value: State, wake: &crate::backend::Wake) {
@@ -56,7 +93,9 @@ fn set(state: &Shared, value: State, wake: &crate::backend::Wake) {
     wake();
 }
 
-fn check(state: &Shared, wake: &crate::backend::Wake) -> anyhow::Result<()> {
+/// `found` is told when the check found something to download, before the
+/// download, so the splash shows its progress instead of moving on.
+fn check(state: &Shared, wake: &crate::backend::Wake, found: &dyn Fn()) -> anyhow::Result<()> {
     if matches!(*state.lock().unwrap_or_else(std::sync::PoisonError::into_inner), State::Ready { .. }) {
         return Ok(());
     }
@@ -68,6 +107,8 @@ fn check(state: &Shared, wake: &crate::backend::Wake) -> anyhow::Result<()> {
         set(state, State::Unsupported { version: release.version, url: release.url }, wake);
         return Ok(());
     }
+    set(state, State::Downloading { version: release.version.clone(), percent: 0 }, wake);
+    found();
     let version = release.version.clone();
     let prepared = updater.download(&release, |received, total| {
         let percent = if total > 0 { (received * 100 / total) as u8 } else { 0 };
@@ -80,12 +121,13 @@ fn check(state: &Shared, wake: &crate::backend::Wake) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Hands the downloaded version to the helper; the app must quit after.
-pub fn restart(state: &Shared) -> anyhow::Result<()> {
+/// Hands the downloaded version to the helper, which starts it with
+/// `arguments`; the app must quit after.
+pub fn restart(state: &Shared, arguments: Vec<String>) -> anyhow::Result<()> {
     let prepared = match &mut *state.lock().unwrap_or_else(std::sync::PoisonError::into_inner) {
         State::Ready { prepared, .. } => prepared.take(),
         _ => None,
     };
     let Some(prepared) = prepared else { anyhow::bail!("no update ready") };
-    updater()?.handoff(prepared, Vec::new())
+    updater()?.handoff(prepared, arguments)
 }

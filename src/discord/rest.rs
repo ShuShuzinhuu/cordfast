@@ -46,6 +46,28 @@ pub fn http() -> reqwest::Client {
         .expect("unable to build the HTTP client")
 }
 
+/// Discord asking for a second factor before a sensitive call: 401 with code
+/// 60003, a ticket and the ways this account can answer.
+#[derive(Debug)]
+pub struct MfaRequired {
+    pub ticket: String,
+    pub methods: Vec<String>,
+}
+
+impl std::fmt::Display for MfaRequired {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", t!("Multi-Factor Authentication"))
+    }
+}
+
+impl std::error::Error for MfaRequired {}
+
+/// Up to here files go inside the message's own request.
+const DIRECT_UPLOAD: u64 = 8 * 1024 * 1024;
+
+/// The token each ack's answer gives for the next, as the web client keeps it.
+static ACK_TOKEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
 #[derive(Clone)]
 pub struct Api {
     http: reqwest::Client,
@@ -85,8 +107,14 @@ impl Api {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
         if !status.is_success() {
-            let message = serde_json::from_str::<Value>(&body)
-                .ok()
+            let answer = serde_json::from_str::<Value>(&body).ok();
+            if let Some(mfa) = answer.as_ref().filter(|v| v.get("code").and_then(Value::as_u64) == Some(60003)).and_then(|v| v.get("mfa"))
+                && let Some(ticket) = mfa.get("ticket").and_then(Value::as_str)
+            {
+                let methods = mfa.get("methods").and_then(Value::as_array).into_iter().flatten().filter_map(|m| m.get("type")?.as_str().map(str::to_owned)).collect();
+                return Err(MfaRequired { ticket: ticket.to_owned(), methods }.into());
+            }
+            let message = answer
                 .and_then(|v| v.get("message")?.as_str().map(str::to_owned))
                 .unwrap_or_else(|| status.to_string());
             bail!("{message} ({})", status.as_u16());
@@ -119,9 +147,11 @@ impl Api {
         nonce: &str,
         reply_to: Option<Id>,
         ping_reply: bool,
+        silent: bool,
         files: Vec<crate::backend::Upload>,
     ) -> Result<()> {
-        let mut body = json!({ "content": content, "nonce": nonce, "tts": false, "flags": 0 });
+        // SUPPRESS_NOTIFICATIONS, what "@silent" asks for.
+        let mut body = json!({ "content": content, "nonce": nonce, "tts": false, "flags": if silent { 4096 } else { 0 } });
         if let Some(reply) = reply_to {
             body["message_reference"] =
                 json!({ "channel_id": channel.to_string(), "message_id": reply.to_string() });
@@ -132,6 +162,15 @@ impl Api {
         }
         let request = self.request(reqwest::Method::POST, &format!("/channels/{channel}/messages"));
         if files.is_empty() {
+            return self.send(request.json(&body)).await.map(drop);
+        }
+        // Large files go up on their own, read from disk as they are sent.
+        let mut total = 0;
+        for upload in &files {
+            total += tokio::fs::metadata(&upload.path).await.map_or(0, |meta| meta.len());
+        }
+        if total > DIRECT_UPLOAD {
+            body["attachments"] = self.upload_files(channel, &files).await?;
             return self.send(request.json(&body)).await.map(drop);
         }
         let mut attachments = Vec::new();
@@ -154,6 +193,45 @@ impl Api {
         body["attachments"] = Value::Array(attachments);
         form = form.text("payload_json", body.to_string());
         self.send(request.multipart(form)).await.map(drop)
+    }
+
+    pub async fn upload_sticker(&self, guild: Id, name: &str, tags: &str, path: &std::path::Path) -> Result<Value> {
+        let bytes = tokio::fs::read(path).await?;
+        let file = path.file_name().map_or_else(|| "sticker.png".to_owned(), |n| n.to_string_lossy().into_owned());
+        // Discord refuses a sticker sent with no type ("Invalid Asset").
+        let mime = match path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).as_deref() {
+            Some("json") => "application/json",
+            Some("gif") => "image/gif",
+            _ => "image/png",
+        };
+        let form = reqwest::multipart::Form::new().text("name", name.to_owned()).text("tags", tags.to_owned()).text("description", String::new()).part("file", reqwest::multipart::Part::bytes(bytes).file_name(file).mime_str(mime)?);
+        self.send(self.request(reqwest::Method::POST, &format!("/guilds/{guild}/stickers")).multipart(form)).await
+    }
+
+    /// The web client's way: ask where each file goes, send it there, and the
+    /// message then names what was sent.
+    async fn upload_files(&self, channel: Id, files: &[crate::backend::Upload]) -> Result<Value> {
+        let mut asked = Vec::new();
+        for (index, upload) in files.iter().enumerate() {
+            let size = tokio::fs::metadata(&upload.path).await.with_context(|| t!("couldn't read {name}", name = upload.name))?.len();
+            asked.push(json!({ "filename": upload.sent_name(), "file_size": size, "id": index.to_string() }));
+        }
+        let answer = self.send(self.request(reqwest::Method::POST, &format!("/channels/{channel}/attachments")).json(&json!({ "files": asked }))).await?;
+        let places = answer.get("attachments").and_then(Value::as_array).context("no upload address")?;
+        let mut attachments = Vec::new();
+        for (index, (upload, place)) in files.iter().zip(places).enumerate() {
+            let url = place.get("upload_url").and_then(Value::as_str).context("no upload address")?;
+            let uploaded = place.get("upload_filename").and_then(Value::as_str).context("no upload name")?;
+            let file = tokio::fs::File::open(&upload.path).await.with_context(|| t!("couldn't read {name}", name = upload.name))?;
+            let size = file.metadata().await?.len();
+            self.http.put(url).header("Content-Type", "application/octet-stream").header("Content-Length", size).body(file).send().await.context(t!("no connection"))?.error_for_status()?;
+            let mut attachment = json!({ "id": index.to_string(), "filename": upload.sent_name(), "uploaded_filename": uploaded });
+            if !upload.description.trim().is_empty() {
+                attachment["description"] = json!(upload.description.trim());
+            }
+            attachments.push(attachment);
+        }
+        Ok(Value::Array(attachments))
     }
 
     pub async fn react(&self, channel: Id, message: Id, emoji: &str, add: bool) -> Result<()> {
@@ -341,15 +419,20 @@ impl Api {
 
     /// Marks a channel read up to `message`, on every device.
     pub async fn ack(&self, channel: Id, message: Id) -> Result<()> {
-        self.send(
-            self.request(
-                reqwest::Method::POST,
-                &format!("/channels/{channel}/messages/{message}/ack"),
+        let token = ACK_TOKEN.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let answer = self
+            .send(
+                self.request(
+                    reqwest::Method::POST,
+                    &format!("/channels/{channel}/messages/{message}/ack"),
+                )
+                .json(&json!({ "token": token })),
             )
-            .json(&json!({ "token": null })),
-        )
-        .await
-        .map(drop)
+            .await?;
+        if let Some(token) = answer.get("token").and_then(Value::as_str) {
+            *ACK_TOKEN.lock().unwrap_or_else(|e| e.into_inner()) = Some(token.to_owned());
+        }
+        Ok(())
     }
 
     pub async fn typing(&self, channel: Id) -> Result<()> {
@@ -359,7 +442,7 @@ impl Api {
     }
 }
 
-fn percent_encode(text: &str) -> String {
+pub fn percent_encode(text: &str) -> String {
     let mut out = String::new();
     for byte in text.bytes() {
         if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~' | b':') {
@@ -589,6 +672,25 @@ impl Api {
 impl Api {
     /// Any API call, for the server settings pages: `method` is GET, POST,
     /// PATCH, PUT or DELETE, `path` starts after `/api/v9`.
+    /// Answers an [`MfaRequired`]: the token that lets the call through,
+    /// good for five minutes.
+    pub async fn mfa_finish(&self, ticket: &str, mfa_type: &str, data: &str) -> Result<String> {
+        let answer = self
+            .send(self.request(reqwest::Method::POST, "/mfa/finish").json(&json!({ "ticket": ticket, "mfa_type": mfa_type, "data": data })))
+            .await?;
+        answer.get("token").and_then(Value::as_str).map(str::to_owned).context("no token")
+    }
+
+    /// A call again, with the token from [`Api::mfa_finish`].
+    pub async fn raw_with_mfa(&self, method: &str, path: &str, body: Option<Value>, token: &str) -> Result<Value> {
+        let method = reqwest::Method::from_bytes(method.as_bytes())?;
+        let mut request = self.request(method, path).header("X-Discord-MFA-Authorization", token);
+        if let Some(body) = body {
+            request = request.json(&body);
+        }
+        self.send(request).await
+    }
+
     pub async fn raw(&self, method: &str, path: &str, body: Option<Value>, reason: Option<&str>) -> Result<Value> {
         let method = reqwest::Method::from_bytes(method.as_bytes())?;
         let mut request = self.request(method, path);
@@ -603,28 +705,6 @@ impl Api {
 }
 
 impl Api {
-    /// Saves our status (online, idle, dnd, invisible), until `expires_ms`
-    /// or for good, in the settings protobuf, as the web client does:
-    /// PreloadedUserSettings.status (11) → StatusSettings { 1: status (a
-    /// StringValue), 4: status_expires_at_ms (fixed64) }.
-    pub async fn set_status(&self, status: &str, expires_ms: Option<u64>) -> Result<()> {
-        let mut status_settings = proto::message(1, &proto::message(1, status.as_bytes()));
-        status_settings.extend(proto::fixed64(4, expires_ms.unwrap_or(0)));
-        self.save_settings(&proto::message(11, &status_settings)).await
-    }
-
-    /// Sets (or clears, with `None`) the custom status:
-    /// StatusSettings.custom_status (2) → CustomStatus { 1: text,
-    /// 4: expires_at_ms }.
-    pub async fn set_custom_status(&self, text: Option<&str>, expires_ms: Option<u64>) -> Result<()> {
-        let mut custom = proto::message(1, text.unwrap_or_default().as_bytes());
-        // An empty status that ended a moment ago clears it everywhere.
-        let expires = if text.is_some() { expires_ms.unwrap_or(0) } else { 1 };
-        custom.extend(proto::fixed64(4, expires));
-        let status_settings = proto::message(2, &custom);
-        self.save_settings(&proto::message(11, &status_settings)).await
-    }
-
     pub async fn save_settings(&self, settings: &[u8]) -> Result<()> {
         let encoded = base64::engine::general_purpose::STANDARD.encode(settings);
         self.send(
@@ -654,49 +734,6 @@ impl Api {
             None => self.request(reqwest::Method::DELETE, &format!("/users/@me/relationships/{user}")),
         };
         self.send(request).await.map(drop)
-    }
-}
-
-/// Protobuf encoding, just the field shapes the settings use.
-mod proto {
-    fn varint(mut value: u64, out: &mut Vec<u8>) {
-        loop {
-            let byte = (value & 0x7f) as u8;
-            value >>= 7;
-            if value == 0 {
-                out.push(byte);
-                return;
-            }
-            out.push(byte | 0x80);
-        }
-    }
-
-    /// A length-delimited field: a string, bytes or a nested message.
-    pub fn message(field: u32, body: &[u8]) -> Vec<u8> {
-        let mut out = Vec::with_capacity(body.len() + 4);
-        varint(u64::from(field) << 3 | 2, &mut out);
-        varint(body.len() as u64, &mut out);
-        out.extend_from_slice(body);
-        out
-    }
-
-    pub fn fixed64(field: u32, value: u64) -> Vec<u8> {
-        let mut out = Vec::with_capacity(9);
-        varint(u64::from(field) << 3 | 1, &mut out);
-        out.extend_from_slice(&value.to_le_bytes());
-        out
-    }
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn encodes_status_like_the_web_client() {
-            let status = super::message(11, &super::message(1, &super::message(1, b"dnd")));
-            assert_eq!(status, vec![0x5a, 7, 0x0a, 5, 0x0a, 3, b'd', b'n', b'd']);
-            assert_eq!(super::fixed64(4, 1)[0], 0x21);
-            // Long texts need a two-byte length.
-            assert_eq!(&super::message(1, &[0u8; 200])[..3], &[0x0a, 0xc8, 0x01]);
-        }
     }
 }
 

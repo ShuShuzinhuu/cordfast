@@ -847,7 +847,28 @@ struct Denoiser {
     pending: Vec<f32>,
     /// Samples (scaled as RNNoise wants) waiting for detection alone.
     probe: Vec<f32>,
+    /// RNNoise's detection steering the model's strength, see `guide`.
+    guided: bool,
+    /// The attenuation limit now, in dB.
+    limit: f32,
+    /// Frames left of the voice's hold.
+    hold: u32,
 }
+
+/// How far the model may go while someone speaks: it takes quiet speech
+/// for noise (a voice 9 dB over the room lost everything it was allowed
+/// to), so speech keeps nearly all of itself and the noise under it is
+/// masked anyway.
+const VOICE_LIMIT: f32 = 8.0;
+/// How far between words, where only noise is left.
+const QUIET_LIMIT: f32 = 30.0;
+/// RNNoise's probability that counts as speech, low because a missed
+/// syllable costs more than some noise let through.
+const VOICE_PROBABILITY: f32 = 0.3;
+/// Frames (10 ms) the voice's limit outlasts the speech, for word ends.
+const VOICE_HOLD: u32 = 30;
+/// dB per frame back to the quiet limit, so the noise fades in no steps.
+const LIMIT_RISE: f32 = 1.0;
 
 struct DeepFilter {
     tract: df::tract::DfTract,
@@ -859,15 +880,42 @@ impl Denoiser {
     /// With DeepFilterNet3 loaded: done before the microphone starts, as
     /// the load takes longer than an audio callback may.
     fn with_model() -> Self {
+        // No post filter, which dulled the voice further. The stages stay
+        // on at any SNR (35 is the top of the model's range), as flipping
+        // them frame by frame jumps the level; below -15 dB, a zero mask.
+        Self::with_params(&df::tract::RuntimeParams::default_with_ch(1).with_post_filter(0.0).with_atten_lim(QUIET_LIMIT).with_thresholds(-15.0, 35.0, 35.0)).guided()
+    }
+
+    /// With the model's strength following the voice detection.
+    fn guided(mut self) -> Self {
+        self.guided = true;
+        self.limit = QUIET_LIMIT;
+        self
+    }
+
+    /// One frame's strength: at once to the voice's limit when RNNoise hears
+    /// speech (it runs ahead of the model's output), slowly back after.
+    fn guide(&mut self, probability: f32) {
+        if !self.guided {
+            return;
+        }
+        if probability > VOICE_PROBABILITY {
+            self.hold = VOICE_HOLD;
+        } else {
+            self.hold = self.hold.saturating_sub(1);
+        }
+        let limit = if self.hold > 0 { VOICE_LIMIT } else { (self.limit + LIMIT_RISE).min(QUIET_LIMIT) };
+        if limit != self.limit {
+            self.limit = limit;
+            if let Some(model) = &mut self.model {
+                model.tract.set_atten_lim(limit);
+            }
+        }
+    }
+
+    fn with_params(params: &df::tract::RuntimeParams) -> Self {
         let started = std::time::Instant::now();
-        // No post filter, which dulled the voice further, and the
-        // attenuation held to 20 dB: at full strength the model took
-        // 15-20 dB off 1-4 kHz and zeroed quiet syllables it judged noise
-        // (frames under -10 dB of local SNR), which people heard as a
-        // muffled voice with pops and gaps. The thresholds let quieter
-        // speech through before that zero mask applies.
-        let params = df::tract::RuntimeParams::default_with_ch(1).with_post_filter(0.0).with_atten_lim(20.0).with_thresholds(-15.0, 30.0, 20.0);
-        let model = df::tract::DfTract::new(df::tract::DfParams::default(), &params)
+        let model = df::tract::DfTract::new(df::tract::DfParams::default(), params)
             .map_err(|e| log::warn!("voice: noise suppression: {e:#}"))
             .ok()
             .filter(|m| m.sr == RATE as usize && m.hop_size == nnnoiseless::DenoiseState::FRAME_SIZE)
@@ -900,7 +948,7 @@ impl Denoiser {
     }
 
     fn run(&mut self, input: &[f32]) -> (Vec<f32>, Option<f32>) {
-        let state = self.state.get_or_insert_with(nnnoiseless::DenoiseState::new);
+        let mut state = self.state.take().unwrap_or_else(nnnoiseless::DenoiseState::new);
         self.pending.extend_from_slice(input);
         let frame = nnnoiseless::DenoiseState::FRAME_SIZE;
         let mut out = Vec::with_capacity(self.pending.len());
@@ -914,6 +962,7 @@ impl Denoiser {
             }
             let p = state.process_frame(&mut buffer, &scaled);
             probability = Some(probability.map_or(p, |q| q.max(p)));
+            self.guide(p);
             let cleaned = self.model.as_mut().and_then(|m| {
                 for (n, x) in m.noisy.iter_mut().zip(&chunk) {
                     *n = x.clamp(-0.999, 0.999);
@@ -926,6 +975,7 @@ impl Denoiser {
                 None => out.extend(buffer.iter().map(|s| s / 32768.0)),
             }
         }
+        self.state = Some(state);
         (out, probability)
     }
 }
@@ -1285,8 +1335,6 @@ pub enum VoiceCommand {
     RankRegions,
     /// Mic test on or off: hear yourself as others would.
     MicTest(bool),
-    /// Plays a short tone through the speakers.
-    TestTone,
     /// Records 20 s of what we hear in the call, for diagnosis.
     Record,
 }
@@ -1390,20 +1438,6 @@ pub async fn run(
                     VoiceCommand::Record => {
                         *shared.recording.lock().unwrap_or_else(|e| e.into_inner()) = Some(Recording::default());
                         log::info!("voice: recording {RECORD_SECONDS} s for the diagnostic");
-                    }
-                    VoiceCommand::TestTone => {
-                        if audio.is_none() {
-                            audio = Some(start_audio(&shared, &gate_tx));
-                        }
-                        // A second of A4, faded in and out.
-                        let mut output = shared.output.lock().unwrap_or_else(|e| e.into_inner());
-                        for i in 0..RATE as usize {
-                            let t = i as f32 / RATE as f32;
-                            let fade = (t * 20.0).min(1.0).min((1.0 - t) * 20.0);
-                            let s = (t * 440.0 * std::f32::consts::TAU).sin() * 0.25 * fade;
-                            output.push_back(s);
-                            output.push_back(s);
-                        }
                     }
                     VoiceCommand::RankRegions => {
                         regions = rank_regions(&http).await;
@@ -2035,7 +2069,7 @@ mod devices_test {
             const N: usize = 4096;
             let edges = [0.0, 300.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];
             let mut sum = vec![0.0f64; edges.len() - 1];
-            for window in x.chunks_exact(N).step_by(2) {
+            for window in x.chunks_exact(N).step_by(8) {
                 for k in 1..N / 2 {
                     let f = k as f32 * RATE as f32 / N as f32;
                     let Some(b) = edges.windows(2).position(|e| f >= e[0] && f < e[1]) else { continue };
@@ -2095,6 +2129,45 @@ mod devices_test {
         let mut gain = Processor::gain();
         let gained: Vec<f32> = both.chunks(FRAME).flat_map(|c| gain.run(c, None)).collect();
         report("+ gain", &gained);
+
+        // The model against a voice at four microphone levels over a steady
+        // room noise: how much of the speech and of the room it takes.
+        use df::tract::RuntimeParams;
+        let rms_db = |x: &[f32]| 10.0 * (x.iter().map(|s| s * s).sum::<f32>() / x.len().max(1) as f32 + 1e-12).log10();
+        println!("the voice is {:.1} dB, the noise -58.8 dB", rms_db(&voice));
+        for level in [1.0f32, 0.1, 0.03, 0.01] {
+            let mut seed = 0x2545_f491u32;
+            let noisy: Vec<f32> = voice.iter().map(|s| {
+                seed ^= seed << 13;
+                seed ^= seed >> 17;
+                seed ^= seed << 5;
+                s * level + (seed as f32 / u32::MAX as f32 - 0.5) * 0.004
+            }).collect();
+            println!("-- voice at {:.0} dB", 20.0 * level.log10());
+            for (name, guided) in [("0.3.4", false), ("guided", true)] {
+                let mut d = if guided {
+                    Denoiser::with_model()
+                } else {
+                    Denoiser::with_params(&RuntimeParams::default_with_ch(1).with_post_filter(0.0).with_atten_lim(20.0).with_thresholds(-15.0, 30.0, 20.0))
+                };
+                let out: Vec<f32> = noisy.chunks(FRAME).flat_map(|c| d.run(c).0).collect();
+                const W: usize = 2400;
+                let whole = rms_db(&voice);
+                let (mut speech, mut quiet) = (Vec::new(), Vec::new());
+                for ((v, i), o) in voice.chunks_exact(W).zip(noisy.chunks_exact(W)).zip(out.chunks_exact(W)) {
+                    let loss = rms_db(i) - rms_db(o);
+                    if rms_db(v) > whole - 10.0 { speech.push(loss) } else if rms_db(v) < whole - 40.0 { quiet.push(loss) }
+                }
+                speech.sort_by(f32::total_cmp);
+                quiet.sort_by(f32::total_cmp);
+                let median = |l: &[f32]| l.get(l.len() / 2).copied().unwrap_or(0.0);
+                let holes = speech.iter().filter(|l| **l > 6.0).count();
+                let b = bands(&out);
+                let i = bands(&noisy);
+                let tone: Vec<String> = b.iter().zip(&i).map(|(o, i)| format!("{:6.1}", o - i)).collect();
+                println!("{name:<8} speech loses {:5.1} dB, over 6 dB in {holes:3}/{}, the room loses {:5.1} dB, bands {}", median(&speech), speech.len(), median(&quiet), tone.join(" "));
+            }
+        }
     }
 
     /// What the echo canceller and the gain cost on this machine:

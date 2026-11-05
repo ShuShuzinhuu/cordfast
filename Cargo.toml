@@ -1,6 +1,6 @@
 [package]
 name = "cordfast"
-version = "0.3.4"
+version = "0.3.5"
 edition = "2024"
 rust-version = "1.98"
 license = "MIT"
@@ -17,7 +17,7 @@ fastframe-log = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2" }
 # songbird reports through tracing; this forwards its events to the log.
 tracing = { version = "0.1", features = ["log"] }
 # UI framework. glow avoids the larger wgpu dependency, as in ZapFast.
-eframe = { version = "0.36.2", default-features = false, features = ["accesskit", "glow", "default_fonts", "persistence", "wayland", "x11"] }
+eframe = { version = "0.36.2", default-features = false, features = ["accesskit", "glow", "default_fonts", "links", "persistence", "wayland", "x11"] }
 egui = "0.36.2"
 # Decodes avatars and attachments on the runtime thread, never in a frame.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp", "gif"] }
@@ -43,7 +43,7 @@ symphonia-core = "0.5"
 # Discord's call sounds come as mp3; "pcm" is the decoder songbird needs
 # for the microphone's raw f32 track: without it the track fails with "no
 # compatible track found" and nothing reaches the call.
-symphonia = { version = "0.5", default-features = false, features = ["mp3", "pcm"] }
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "pcm", "ogg", "vorbis"] }
 async-trait = "0.1"
 # Unicode emoji names, groups and shortcodes for the picker.
 emojis = "0.9"
@@ -144,5 +144,7 @@ fastframe-i18n = { git = "https://github.com/crmne/fastframe", tag = "v0.15.2", 
 embed-resource = "3"
 
 [target.'cfg(windows)'.dependencies]
+# The video player: Media Foundation reads and decodes attachments.
+windows = { version = "0.62", features = ["Win32_Media_MediaFoundation", "Win32_System_Com", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
 # Push-to-talk reads the key's state wherever focus is.
-windows-sys = { version = "0.60", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_Media", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.60", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_Media", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi", "Win32_UI_Shell"] }
