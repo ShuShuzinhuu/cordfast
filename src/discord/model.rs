@@ -1282,13 +1282,42 @@ impl Relationship {
     }
 }
 
+/// A sound of the soundboard: a server's, or one of the defaults.
+#[derive(Clone, Debug, Default)]
+pub struct SoundboardSound {
+    pub id: Id,
+    pub name: String,
+    /// Its own volume, 0 to 1.
+    pub volume: f32,
+    pub emoji_id: Option<Id>,
+    pub emoji_name: Option<String>,
+    /// None for the defaults, which Discord files under "0".
+    pub guild: Option<Id>,
+    pub available: bool,
+}
+
+impl SoundboardSound {
+    pub fn parse(value: &Value) -> Option<Self> {
+        let text = |key: &str| value.get(key).and_then(Value::as_str);
+        Some(Self {
+            id: text("sound_id")?.parse().ok()?,
+            name: text("name").unwrap_or_default().to_owned(),
+            volume: value.get("volume").and_then(Value::as_f64).unwrap_or(1.0) as f32,
+            emoji_id: text("emoji_id").and_then(|id| id.parse().ok()),
+            emoji_name: text("emoji_name").map(str::to_owned),
+            guild: text("guild_id").and_then(|id| id.parse().ok()).filter(|id| *id != 0),
+            available: value.get("available").and_then(Value::as_bool).unwrap_or(true),
+        })
+    }
+}
+
 /// Just enough protobuf to read the settings blob.
 pub mod proto {
     pub enum Field<'a> {
         Varint(u64),
         Fixed64(u64),
         Bytes(&'a [u8]),
-        Fixed32,
+        Fixed32(u32),
     }
 
     impl<'a> Field<'a> {
@@ -1367,8 +1396,9 @@ pub mod proto {
                     Field::Bytes(bytes)
                 }
                 5 => {
+                    let Some(bytes) = buf.get(pos..pos + 4) else { break };
                     pos += 4;
-                    Field::Fixed32
+                    Field::Fixed32(u32::from_le_bytes(bytes.try_into().unwrap_or_default()))
                 }
                 _ => break,
             };

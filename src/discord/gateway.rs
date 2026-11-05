@@ -74,6 +74,11 @@ pub enum Dispatch {
     PollVote { channel: Id, message: Id, user: Id, answer: u64, add: bool },
     /// A voice channel's status changed (none when cleared).
     VoiceChannelStatus { channel: Id, status: Option<String> },
+    /// Someone in a call sent a sound or an emoji effect.
+    VoiceEffect { channel: Id, user: Id, sound: Option<Id>, volume: f32, emoji_id: Option<Id>, emoji_name: Option<String> },
+    /// A server's sounds, as answers to op 31.
+    Soundboard { guild: Id, sounds: Vec<super::model::SoundboardSound> },
+    SoundboardChanged(Id),
     /// An application's suggestions for the option being typed.
     Autocomplete { nonce: String, choices: Vec<(String, Value)> },
     /// A command or button got no answer from its application.
@@ -327,6 +332,8 @@ pub enum Control {
     /// Asks for a guild's message events, which large guilds send only to
     /// clients looking at them.
     Subscribe(Id),
+    /// Op 31: the soundboards of these servers.
+    RequestSoundboard(Vec<Id>),
     /// Asks for a channel's member list, first `rows` rows (opcode 37).
     MemberList { guild: Id, channel: Id, rows: u64 },
     /// Asks for these members' nicknames and roles (opcode 8).
@@ -458,6 +465,11 @@ async fn connect(
                     // as the web client asks them (answered by CHANNEL_INFO).
                     let info = json!({"op": 43, "d": {"guild_id": guild.to_string(), "fields": ["status", "voice_start_time"]}});
                     tx.send(WsMessage::text(info.to_string())).await?;
+                }
+                Some(Control::RequestSoundboard(guilds)) => {
+                    let ids: Vec<String> = guilds.iter().map(Id::to_string).collect();
+                    let ask = json!({"op": 31, "d": {"guild_ids": ids}});
+                    tx.send(WsMessage::text(ask.to_string())).await?;
                 }
                 Some(Control::MemberList { guild, channel, rows }) => {
                     // Ranges of 100 rows, as the web client asks them.
@@ -744,6 +756,20 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
             .flatten()
             .filter_map(|c| Some(Dispatch::VoiceChannelStatus { channel: c.get("id").and_then(sf)?, status: voice_status(c) }))
             .collect(),
+        "VOICE_CHANNEL_EFFECT_SEND" => one((|| {
+            Some(Dispatch::VoiceEffect {
+                channel: id("channel_id")?,
+                user: id("user_id")?,
+                sound: d.get("sound_id").and_then(sf),
+                volume: d.get("sound_volume").and_then(Value::as_f64).unwrap_or(1.0) as f32,
+                emoji_id: d.pointer("/emoji/id").and_then(sf),
+                emoji_name: d.pointer("/emoji/name").and_then(Value::as_str).map(str::to_owned),
+            })
+        })()),
+        "SOUNDBOARD_SOUNDS" => one((|| {
+            Some(Dispatch::Soundboard { guild: id("guild_id")?, sounds: d.get("soundboard_sounds")?.as_array()?.iter().filter_map(super::model::SoundboardSound::parse).collect() })
+        })()),
+        "GUILD_SOUNDBOARD_SOUND_CREATE" | "GUILD_SOUNDBOARD_SOUND_UPDATE" | "GUILD_SOUNDBOARD_SOUND_DELETE" | "GUILD_SOUNDBOARD_SOUNDS_UPDATE" => one(id("guild_id").map(Dispatch::SoundboardChanged)),
         "VOICE_SERVER_UPDATE" => vec![Dispatch::VoiceServer(d.clone())],
         "CALL_CREATE" | "CALL_UPDATE" => vec![Dispatch::Call(d.clone())],
         "CALL_DELETE" => one(id("channel_id").map(Dispatch::CallEnded)),

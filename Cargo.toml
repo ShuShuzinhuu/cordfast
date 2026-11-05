@@ -43,7 +43,7 @@ symphonia-core = "0.5"
 # Discord's call sounds come as mp3; "pcm" is the decoder songbird needs
 # for the microphone's raw f32 track: without it the track fails with "no
 # compatible track found" and nothing reaches the call.
-symphonia = { version = "0.5", default-features = false, features = ["mp3", "pcm"] }
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "pcm", "ogg", "vorbis"] }
 async-trait = "0.1"
 # Unicode emoji names, groups and shortcodes for the picker.
 emojis = "0.9"

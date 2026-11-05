@@ -141,6 +141,26 @@ impl Preloaded {
         }
     }
 
+    /// voice_and_video.soundboard_settings.volume, a float from 0 to 100.
+    pub fn soundboard_volume(&self) -> f32 {
+        let read = |message: &[u8]| {
+            let section = proto::fields(message).into_iter().filter(|(n, _)| *n == 5).filter_map(|(_, v)| v.bytes()).last()?;
+            let settings = proto::fields(section).into_iter().filter(|(n, _)| *n == 9).filter_map(|(_, v)| v.bytes()).last()?;
+            proto::fields(settings).into_iter().find_map(|(n, v)| match (n, v) {
+                (1, Field::Fixed32(bits)) => Some(f32::from_bits(bits)),
+                _ => None,
+            })
+        };
+        self.patches.iter().rev().find_map(|patch| read(patch)).or_else(|| read(&self.whole)).unwrap_or(100.0)
+    }
+
+    /// Sets it and returns the message that saves it.
+    pub fn set_soundboard_volume(&mut self, volume: f32) -> Vec<u8> {
+        let mut settings = vec![(1 << 3) | 5];
+        settings.extend_from_slice(&volume.to_le_bytes());
+        self.save(5, &length_field(9, &settings))
+    }
+
     /// Sets a number here and returns the message that saves it.
     pub fn set_number(&mut self, key: Key, value: u64) -> Vec<u8> {
         let inner = match key.kind {

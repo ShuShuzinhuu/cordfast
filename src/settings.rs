@@ -69,6 +69,8 @@ pub struct Settings {
     /// Discord's sounds switched off in Settings (their asset names:
     /// "message1", "user_join"…).
     pub sounds_off: Vec<String>,
+    /// People whose soundboard is not played here ("Mute Soundboard").
+    pub soundboard_muted: Vec<String>,
     /// The composer's emoji, GIF and sticker buttons (Appearance → Chat
     /// Box).
     pub emoji_button: bool,
@@ -142,6 +144,7 @@ impl Default for Settings {
             sidebar_width: 240.0,
             keybinds: BTreeMap::new(),
             sounds_off: Vec::new(),
+            soundboard_muted: Vec::new(),
             emoji_button: true,
             gif_button: true,
             sticker_button: true,

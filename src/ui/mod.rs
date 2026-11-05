@@ -14,6 +14,7 @@ pub mod markdown;
 pub mod menu;
 mod profile;
 mod settings;
+pub mod soundboard;
 mod titlebar;
 
 use egui::{
@@ -1442,6 +1443,20 @@ fn voice_member(app: &mut App, ui: &mut egui::Ui, guild: Option<Id>, user_id: Id
     }
     let (muted, deaf) = app.voice_flags.get(&user_id).copied().unwrap_or_default();
     let mut right = rect.right() - 6.0;
+    // An emoji effect or a sound they just sent, beside them for a moment.
+    if let Some((id, emoji, _)) = app.voice_effects.get(&user_id).cloned() {
+        let r = Rect::from_center_size(pos2(right - 9.0, rect.center().y), Vec2::splat(18.0));
+        match (id, emoji) {
+            (Some(id), _) => {
+                if let Some((texture, _)) = app.images.get(&crate::discord::model::emoji_url(id, true, 48), 48) {
+                    egui::Image::from_texture((texture, r.size())).paint_at(ui, r);
+                }
+            }
+            (None, Some(emoji)) => markdown::paint_twemoji(app, ui, &emoji, r),
+            _ => {}
+        }
+        right -= 22.0;
+    }
     for (on, icon) in [(deaf, Icon::HeadphonesSlash), (muted, Icon::MicrophoneSlash)] {
         if on {
             let r = Rect::from_center_size(pos2(right - 8.0, rect.center().y), Vec2::splat(15.0));
@@ -1480,6 +1495,15 @@ fn voice_member(app: &mut App, ui: &mut egui::Ui, guild: Option<Id>, user_id: Id
                 app.settings.user_volumes.insert(key.clone(), if locally_muted { 1.0 } else { 0.0 });
                 app.actions.push(Action::SettingsChanged);
             }
+            let quiet = app.settings.soundboard_muted.contains(&key);
+            if menu::item(ui, t!("Mute Soundboard"), menu::Tail::Check(quiet)).clicked() {
+                if quiet {
+                    app.settings.soundboard_muted.retain(|user| *user != key);
+                } else {
+                    app.settings.soundboard_muted.push(key.clone());
+                }
+                app.actions.push(Action::SettingsChanged);
+            }
             ui.add_space(4.0);
             ui.label(RichText::new(t!("User Volume")).size(12.0).color(p.muted));
             let max = if app.plugin(crate::plugins::Plugin::VolumeBooster) { 4.0 } else { 2.0 };
@@ -1509,6 +1533,20 @@ fn voice_member(app: &mut App, ui: &mut egui::Ui, guild: Option<Id>, user_id: Id
             if perms & (1 << 24) != 0 && menu::danger(ui, t!("Disconnect"), menu::Tail::None).clicked() {
                 app.commands.send(member(serde_json::json!({ "channel_id": null })));
                 ui.close();
+            }
+            if perms & (1 << 24) != 0 {
+                let here = app.user_voice_channel(user_id).map(|channel| channel.id);
+                let targets: Vec<(Id, String)> = app.guild(guild).map_or_else(Vec::new, |g| g.channels.iter().filter(|c| c.kind == crate::discord::model::ChannelKind::Voice && Some(c.id) != here && g.can_view(me, c)).map(|c| (c.id, c.title())).collect());
+                if !targets.is_empty() {
+                    menu::submenu(ui, t!("Move to"), |ui| {
+                        for (channel, name) in &targets {
+                            if menu::item(ui, name, menu::Tail::None).clicked() {
+                                app.commands.send(member(serde_json::json!({ "channel_id": channel.to_string() })));
+                                ui.close();
+                            }
+                        }
+                    });
+                }
             }
             if perms & ((1 << 22) | (1 << 23) | (1 << 24)) != 0 {
                 menu::separator(ui);
@@ -1955,7 +1993,9 @@ fn voice_panel(app: &mut App, ui: &mut egui::Ui) {
     }
     let response = response.on_hover_text(if on { t!("Noise Suppression On") } else { t!("Noise Suppression Off") });
     noise_popout(app, &response);
-    ui.add_space(4.0);
+    ui.add_space(2.0);
+    soundboard::buttons(app, ui);
+    ui.add_space(6.0);
     let line = ui.cursor().top();
     ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.selected));
     ui.add_space(4.0);

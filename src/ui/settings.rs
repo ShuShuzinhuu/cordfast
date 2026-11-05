@@ -984,6 +984,18 @@ fn voice(app: &mut App, ui: &mut egui::Ui) {
         use crate::sounds::Sound;
         sounds_list(app, ui, &[Sound::Deafen, Sound::Undeafen, Sound::Mute, Sound::Unmute, Sound::Disconnect, Sound::PttStart, Sound::PttStop, Sound::Join, Sound::Leave]);
     });
+    form::category(ui, t!("Soundboard"), "", |ui| {
+        ui.label(RichText::new(t!("Soundboard Volume")).size(14.0).color(p.text));
+        let mut volume = app.preloaded.soundboard_volume();
+        ui.spacing_mut().slider_width = 300.0;
+        let slider = ui.add(egui::Slider::new(&mut volume, 0.0..=100.0).trailing_fill(true).custom_formatter(|v, _| format!("{v:.0}%")));
+        if slider.drag_stopped() || (slider.changed() && !slider.dragged()) {
+            let patch = app.preloaded.set_soundboard_volume(volume);
+            app.commands.send(crate::backend::Command::SaveSettings(patch));
+        } else if slider.changed() {
+            app.preloaded.set_soundboard_volume(volume);
+        }
+    });
     form::category(ui, t!("Voice Region"), t!("Calls always use the region with the lowest ping."), |ui| {
         for (i, (region, ms)) in app.voice.regions.iter().enumerate() {
             let best = if i == 0 { format!("  ← {}", t!("best route")) } else { String::new() };

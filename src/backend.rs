@@ -57,6 +57,7 @@ pub enum Command {
     AckBulk(Vec<(Id, Id)>),
     Typing { channel: Id },
     Subscribe { guild: Id },
+    RequestSoundboard { guilds: Vec<Id> },
     MemberList { guild: Id, channel: Id, rows: u64 },
     RequestMembers { guild: Id, users: Vec<Id> },
     /// Downloads and decodes a picture no larger than `max` pixels a side.
@@ -658,6 +659,7 @@ impl Worker {
                 }
             }
             Command::Subscribe { guild } => self.control(Control::Subscribe(guild)),
+            Command::RequestSoundboard { guilds } => self.control(Control::RequestSoundboard(guilds)),
             Command::MemberList { guild, channel, rows } => {
                 self.control(Control::MemberList { guild, channel, rows });
             }

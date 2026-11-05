@@ -527,6 +527,9 @@ pub struct App {
     pub show_dm_profile: bool,
     /// A voice channel showing its text chat instead of the people.
     pub voice_chat: bool,
+    pub soundboard: crate::ui::soundboard::Board,
+    /// The emoji someone in the call just sent, and since when.
+    pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
     /// Since when, frames drawn and events applied, for the log's line.
     load: (Instant, u32, u32),
     /// `CORDFAST_SHOT`: the window saves what it draws.
@@ -715,6 +718,8 @@ impl App {
             guild_profiles: HashMap::new(),
             show_dm_profile: true,
             voice_chat: false,
+            soundboard: Default::default(),
+            voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
             shots: crate::shots::Shots::from_env(),
             requested_profiles: HashSet::new(),
@@ -1110,6 +1115,15 @@ impl App {
             list.retain(|(_, at)| now.duration_since(*at) < Duration::from_secs(10));
             !list.is_empty()
         });
+        if !self.voice_effects.is_empty() {
+            self.voice_effects.retain(|_, (.., at)| at.elapsed() < Duration::from_secs(3));
+            if let Some(ctx) = ctx {
+                ctx.request_repaint_after(Duration::from_millis(500));
+            }
+        }
+        if let Some(frecency) = &self.frecency {
+            self.soundboard.favorites.clone_from(&frecency.favorite_sounds);
+        }
         if let Some(ctx) = ctx {
             if !self.typing.is_empty() {
                 ctx.request_repaint_after(Duration::from_secs(1));
@@ -1598,6 +1612,25 @@ impl App {
                     self.notify(t!("The application did not respond."));
                 }
             }
+            Dispatch::VoiceEffect { channel, user, sound, volume, emoji_id, emoji_name } => {
+                if self.voice.channel.map(|(_, c)| c) == Some(channel) {
+                    if emoji_id.is_some() || emoji_name.is_some() {
+                        self.voice_effects.insert(user, (emoji_id, emoji_name, Instant::now()));
+                    }
+                    // Ours already played when it was sent.
+                    if let Some(sound) = sound
+                        && user != self.me_id()
+                        && !self.voice.deaf
+                        && !self.settings.soundboard_muted.contains(&user.to_string())
+                    {
+                        crate::ui::soundboard::play(self, sound, volume);
+                    }
+                }
+            }
+            Dispatch::Soundboard { guild, sounds } => {
+                self.soundboard.sounds.insert(guild, sounds);
+            }
+            Dispatch::SoundboardChanged(guild) => self.soundboard.changed(guild),
             Dispatch::VoiceChannelStatus { channel, status } => {
                 if let Some(c) = self.guilds.iter_mut().flat_map(|g| g.channels.iter_mut()).find(|c| c.id == channel) {
                     c.status = status;
@@ -2057,7 +2090,8 @@ impl App {
                 }
             }
             // The account card as during a call (no voice is joined).
-            "call" => {
+            "call" | "soundboard" => {
+                self.soundboard.open = what == "soundboard";
                 let Some(guild) = self.guilds.first() else { return };
                 let (guild, channel) = (guild.id, guild.channels.iter().find(|c| c.kind == ChannelKind::Voice).map(|c| c.id));
                 self.run(Action::SelectGuild(Some(guild)));
@@ -2172,6 +2206,14 @@ impl App {
                 return;
             }
         };
+        if key == "soundboard-defaults" {
+            let sounds = value.as_array().map_or_else(Vec::new, |list| list.iter().filter_map(crate::discord::model::SoundboardSound::parse).collect());
+            self.soundboard.sounds.insert(0, sounds);
+            return;
+        }
+        if key == "soundboard-sent" {
+            return;
+        }
         if let Some((key, _)) = self.settings_data.get_key_value(key) {
             let key: &'static str = key;
             self.settings_data.insert(key, Some(Ok(value)));
