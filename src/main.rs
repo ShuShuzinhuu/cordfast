@@ -18,6 +18,7 @@ mod images;
 mod keybinds;
 mod plugins;
 mod settings;
+mod shots;
 mod sounds;
 mod text;
 mod theme;

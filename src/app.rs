@@ -529,6 +529,8 @@ pub struct App {
     pub voice_chat: bool,
     /// Since when, frames drawn and events applied, for the log's line.
     load: (Instant, u32, u32),
+    /// `CORDFAST_SHOT`: the window saves what it draws.
+    shots: Option<crate::shots::Shots>,
     pub requested_profiles: HashSet<Id>,
     pub status: String,
     /// When a timed status ends and we are back online.
@@ -714,6 +716,7 @@ impl App {
             show_dm_profile: true,
             voice_chat: false,
             load: (Instant::now(), 0, 0),
+            shots: crate::shots::Shots::from_env(),
             requested_profiles: HashSet::new(),
             status: "online".into(),
             status_until: None,
@@ -3439,6 +3442,9 @@ impl App {
     pub fn window_logic(&mut self, ctx: &egui::Context) {
         self.focused = ctx.input(|i| i.viewport().focused.unwrap_or(true));
         self.keybinds.focused.store(self.focused, std::sync::atomic::Ordering::Relaxed);
+        if let Some(shots) = &mut self.shots {
+            shots.frame(ctx);
+        }
         if ctx.input(|i| i.viewport().close_requested())
             && !self.quit
             && self.settings.keep_running_in_tray

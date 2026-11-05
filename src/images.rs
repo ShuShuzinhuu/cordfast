@@ -160,7 +160,7 @@ impl Images {
     pub fn begin_frame(&mut self, ctx: &egui::Context) {
         let (time, focused) = ctx.input(|i| (i.time, i.viewport().focused.unwrap_or(true)));
         self.now = (time * 1000.0) as u64;
-        self.focused = focused;
+        self.focused = focused || crate::shots::active();
         self.next = None;
     }
 
