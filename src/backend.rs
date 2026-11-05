@@ -60,6 +60,8 @@ pub enum Command {
     Typing { channel: Id },
     Subscribe { guild: Id },
     RequestSoundboard { guilds: Vec<Id> },
+    /// A new sticker, as the multipart upload Discord asks for.
+    UploadSticker { guild: Id, name: String, tags: String, path: PathBuf },
     MemberList { guild: Id, channel: Id, rows: u64 },
     RequestMembers { guild: Id, users: Vec<Id> },
     /// Downloads and decodes a picture no larger than `max` pixels a side.
@@ -906,6 +908,10 @@ async fn api_call(api: Api, events: Events, command: Command) {
                 Err(error) => Err(error),
             };
             events.send(Event::Api { key, result: result.map_err(|e| format!("{e:#}")) });
+        }
+        Command::UploadSticker { guild, name, tags, path } => {
+            let result = api.upload_sticker(guild, &name, &tags, &path).await;
+            events.send(Event::Api { key: "gate:changed".into(), result: result.map_err(|e| format!("{e:#}")) });
         }
         Command::AddFriend(username) => match api.add_friend(&username).await {
             Ok(()) => events.send(Event::Error(t!("Friend request sent to {name}.", name = username))),

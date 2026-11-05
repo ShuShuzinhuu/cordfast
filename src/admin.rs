@@ -19,15 +19,27 @@ pub enum Tab {
     Emojis,
     Audit,
     Safety,
+    Stickers,
+    Soundboard,
+    Webhooks,
+    Integrations,
+    AutoMod,
+    Access,
+    Templates,
+    Prune,
+    Delete,
 }
 
 /// The side column as Discord groups it: the server's own pages, then
 /// moderation, then people. Each page with the permission it needs (none
 /// for 0). "Channels" is CordFast's: every channel's settings in one place.
 pub const SECTIONS: &[(Option<&str>, &[(Tab, &str, u64)])] = &[
-    (None, &[(Tab::Overview, n!("Overview"), 1 << 5), (Tab::Roles, n!("Roles"), 1 << 28), (Tab::Emojis, n!("Emoji"), 1 << 30), (Tab::Channels, n!("Channels"), 1 << 4)]),
-    (Some(n!("Moderation")), &[(Tab::Safety, n!("Safety Setup"), 1 << 5), (Tab::Audit, n!("Audit Log"), 1 << 7), (Tab::Bans, n!("Bans"), 1 << 2)]),
-    (Some(n!("User Management")), &[(Tab::Members, n!("Members"), 0), (Tab::Invites, n!("Invites"), 1 << 5)]),
+    (None, &[(Tab::Overview, n!("Overview"), 1 << 5), (Tab::Roles, n!("Roles"), 1 << 28), (Tab::Channels, n!("Channels"), 1 << 4)]),
+    (Some(n!("Expression")), &[(Tab::Emojis, n!("Emoji"), 1 << 30), (Tab::Stickers, n!("Stickers"), 1 << 30), (Tab::Soundboard, n!("Soundboard"), 1 << 30)]),
+    (Some(n!("People")), &[(Tab::Members, n!("Members"), 0), (Tab::Invites, n!("Invites"), 1 << 5), (Tab::Access, n!("Access"), 1 << 5), (Tab::Prune, n!("Prune Members"), 1 << 1)]),
+    (Some(n!("Apps")), &[(Tab::Integrations, n!("Integrations"), 1 << 5), (Tab::Webhooks, n!("Webhooks"), 1 << 29)]),
+    (Some(n!("Moderation")), &[(Tab::Safety, n!("Safety Setup"), 1 << 5), (Tab::Audit, n!("Audit Log"), 1 << 7), (Tab::Bans, n!("Bans"), 1 << 2), (Tab::AutoMod, n!("AutoMod"), 1 << 5)]),
+    (None, &[(Tab::Templates, n!("Server Template"), 1 << 5), (Tab::Delete, n!("Delete Server"), 0)]),
 ];
 
 /// What the overview and safety pages change, saved together through the
@@ -258,7 +270,7 @@ impl GuildAdmin {
             Tab::Bans => ("bans", format!("/guilds/{g}/bans?limit=1000")),
             Tab::Emojis => ("emojis", format!("/guilds/{g}/emojis")),
             Tab::Audit => ("audit", format!("/guilds/{g}/audit-logs?limit=50")),
-            Tab::Roles | Tab::Channels => return None,
+            Tab::Roles | Tab::Channels | Tab::Stickers | Tab::Soundboard | Tab::Webhooks | Tab::Integrations | Tab::AutoMod | Tab::Access | Tab::Templates | Tab::Prune | Tab::Delete => return None,
         };
         Some(get(key, path))
     }

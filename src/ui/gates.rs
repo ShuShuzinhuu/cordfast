@@ -41,6 +41,8 @@ pub enum AccountEdit {
 }
 
 pub enum Gate {
+    /// A channel's permission overwrites, for the role picked.
+    Overwrites { channel: Id, picked: Option<Id> },
     /// `first` is the new value; `code` the emailed code or the authenticator's.
     Account { what: AccountEdit, first: String, password: String, code: String, secret: String, sent: bool },
     Verification { guild: Id, answers: BTreeMap<usize, Value>, agreed: bool },
@@ -57,11 +59,12 @@ fn call(key: &str, method: &'static str, path: String, body: Option<Value>) -> C
 /// Opens a dialog, forgetting what an earlier one fetched.
 pub fn open(app: &mut App, gate: Gate) {
     app.gate_data.clear();
+    app.gate_asked.clear();
     app.modal = Some(crate::app::Modal::Gate(gate));
 }
 
 /// What `key` answered, asking the first time.
-fn fetch<'a>(app: &'a mut App, key: &str, path: impl FnOnce() -> String) -> Option<&'a Result<Value, String>> {
+pub fn fetch<'a>(app: &'a mut App, key: &str, path: impl FnOnce() -> String) -> Option<&'a Result<Value, String>> {
     if !app.gate_asked.contains(key) {
         app.gate_asked.insert(key.to_owned());
         app.gate_data.remove(key);
@@ -102,6 +105,7 @@ fn answered(ui: &mut egui::Ui, answer: Option<Result<Value, String>>) -> Option<
 /// Draws the dialog; false when it closes.
 pub fn show(app: &mut App, ui: &mut egui::Ui, gate: &mut Gate) -> bool {
     match gate {
+        Gate::Overwrites { channel, picked } => super::guild_more::overwrites(app, ui, *channel, picked),
         Gate::Account { what, first, password, code, secret, sent } => account(app, ui, *what, first, password, code, secret, sent),
         Gate::Verification { guild, answers, agreed } => verification(app, ui, *guild, answers, agreed),
         Gate::Onboarding { guild, picked, page } => onboarding(app, ui, *guild, picked, page),

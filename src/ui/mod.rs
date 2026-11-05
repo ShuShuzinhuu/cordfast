@@ -15,6 +15,7 @@ pub mod menu;
 mod profile;
 mod settings;
 pub mod gates;
+mod guild_more;
 pub mod soundboard;
 mod titlebar;
 
@@ -1434,6 +1435,10 @@ fn channel_menu(app: &mut App, response: &egui::Response, channel: &Channel) {
         if menu::item(ui, t!("Copy Link"), menu::Tail::None).clicked() {
             let guild = guild.map_or_else(|| "@me".into(), |g| g.to_string());
             ui.ctx().copy_text(format!("https://discord.com/channels/{guild}/{id}"));
+            ui.close();
+        }
+        if perms & (1 << 28) != 0 && !matches!(channel.kind, ChannelKind::Thread) && menu::item(ui, t!("Permissions"), menu::Tail::None).clicked() {
+            gates::open(app, gates::Gate::Overwrites { channel: id, picked: None });
             ui.close();
         }
         if channel.kind == ChannelKind::Thread {

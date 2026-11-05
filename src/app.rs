@@ -2252,7 +2252,7 @@ impl App {
             Ok(value) => value,
             Err(error) => {
                 if key.starts_with("gate:") {
-                    if key != "gate:event-made" {
+                    if key != "gate:event-made" && key != "gate:changed" {
                         self.gate_data.insert(key.to_owned(), Err(error));
                     } else {
                         self.notify(error);
@@ -2301,6 +2301,10 @@ impl App {
             }
             self.commands.send(crate::admin::get("settings:me", "/users/@me".into()));
             self.gate_data.insert(key.to_owned(), Ok(value));
+            return;
+        }
+        if key == "gate:changed" {
+            self.gate_asked.retain(|asked| !asked.starts_with("gate:admin:"));
             return;
         }
         if key == "gate:event-made" {
