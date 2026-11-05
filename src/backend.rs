@@ -253,7 +253,7 @@ fn keyring_entry() -> Option<keyring::Entry> {
     keyring::Entry::new(KEYRING_SERVICE, KEYRING_USER).ok()
 }
 
-fn saved_token() -> Option<String> {
+pub fn saved_token() -> Option<String> {
     keyring_entry()?.get_password().ok().filter(|t| !t.is_empty())
 }
 

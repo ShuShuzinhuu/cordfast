@@ -17,6 +17,7 @@ mod icons;
 mod images;
 mod keybinds;
 mod plugins;
+mod servertest;
 mod settings;
 mod shots;
 mod sounds;
@@ -78,6 +79,10 @@ fn main() -> eframe::Result {
     // The version probe the updater runs on a downloaded copy.
     if launch.arguments.iter().any(|a| a == "--version") {
         println!("cordfast {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+    if let Ok(out) = std::env::var("CORDFAST_SERVERTEST") {
+        servertest::run(&out);
         return Ok(());
     }
     if let Ok(out) = std::env::var("CORDFAST_SELFTEST") {

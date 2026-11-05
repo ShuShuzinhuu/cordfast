@@ -198,7 +198,13 @@ impl Api {
     pub async fn upload_sticker(&self, guild: Id, name: &str, tags: &str, path: &std::path::Path) -> Result<Value> {
         let bytes = tokio::fs::read(path).await?;
         let file = path.file_name().map_or_else(|| "sticker.png".to_owned(), |n| n.to_string_lossy().into_owned());
-        let form = reqwest::multipart::Form::new().text("name", name.to_owned()).text("tags", tags.to_owned()).text("description", String::new()).part("file", reqwest::multipart::Part::bytes(bytes).file_name(file));
+        // Discord refuses a sticker sent with no type ("Invalid Asset").
+        let mime = match path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).as_deref() {
+            Some("json") => "application/json",
+            Some("gif") => "image/gif",
+            _ => "image/png",
+        };
+        let form = reqwest::multipart::Form::new().text("name", name.to_owned()).text("tags", tags.to_owned()).text("description", String::new()).part("file", reqwest::multipart::Part::bytes(bytes).file_name(file).mime_str(mime)?);
         self.send(self.request(reqwest::Method::POST, &format!("/guilds/{guild}/stickers")).multipart(form)).await
     }
 

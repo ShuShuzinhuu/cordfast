@@ -233,8 +233,11 @@ fn loading(app: &mut App, ui: &mut egui::Ui) {
             }
         }
     });
-    // Only this screen animates; it goes once the session is ready.
-    ui.ctx().request_repaint_after(std::time::Duration::from_millis(16));
+    // Only this screen animates; it goes once the session is ready. At 30
+    // frames a second: egui repaints at once when asked for less than a frame's
+    // time away, and with the window still appearing nothing held it to the
+    // screen's rate, which made over a thousand frames a second at startup.
+    ui.ctx().request_repaint_after(std::time::Duration::from_millis(33));
 }
 
 // ---- login -------------------------------------------------------------------
@@ -986,7 +989,12 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
         ui.set_height(48.0);
         ui.set_width(ui.available_width());
         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-            ui.add(Label::new(RichText::new(title).font(theme::strong(16.0)).color(p.strong)).truncate());
+            // A long name stops short of the arrow.
+            let room = ui.available_width() - if app.selected_guild.is_some() { 26.0 } else { 0.0 };
+            ui.scope(|ui| {
+                ui.set_max_width(room);
+                ui.add(Label::new(RichText::new(title).font(theme::strong(16.0)).color(p.strong)).truncate());
+            });
             if app.selected_guild.is_some() {
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     let (rect, _) = ui.allocate_exact_size(Vec2::splat(18.0), Sense::hover());
@@ -1266,7 +1274,8 @@ fn channel_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel, visible: boo
     let mut name_right = rect.right() - 30.0;
     if voice {
         let mut x = rect.right() - 6.0;
-        if channel.user_limit > 0 {
+        // A Stage's limit (10000) is the API's default, not one anyone set.
+        if channel.user_limit > 0 && channel.kind != ChannelKind::Stage {
             let count = app.voice_members(channel).len();
             x = count_pill(ui, pos2(x, rect.center().y), count as u64, channel.user_limit);
             x -= 6.0;

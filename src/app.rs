@@ -582,6 +582,8 @@ pub struct App {
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
     /// Since when, frames drawn and events applied, for the log's line.
     load: (Instant, u32, u32),
+    /// `CORDFAST_REPAINTS`: who asks for immediate repaints, for the log.
+    repaints: Option<HashMap<String, u32>>,
     /// `CORDFAST_SHOT`: the window saves what it draws.
     shots: Option<crate::shots::Shots>,
     pub requested_profiles: HashSet<Id>,
@@ -786,6 +788,7 @@ impl App {
             wake: wake_for_video,
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
+            repaints: std::env::var_os("CORDFAST_REPAINTS").map(|_| HashMap::new()),
             shots: crate::shots::Shots::from_env(),
             requested_profiles: HashSet::new(),
             status: "online".into(),
@@ -1171,8 +1174,19 @@ impl App {
         }
         // How busy the window is, to compare with what a call costs.
         self.load.1 += 1;
+        if let (Some(counts), Some(ctx)) = (&mut self.repaints, ctx) {
+            for cause in ctx.repaint_causes() {
+                *counts.entry(format!("{}:{}", cause.file, cause.line)).or_insert(0) += 1;
+            }
+        }
         if self.load.0.elapsed() >= Duration::from_secs(30) {
             log::info!("load: {} frames, {} events in 30 s", self.load.1, self.load.2);
+            if let Some(counts) = &mut self.repaints {
+                let mut top: Vec<_> = counts.drain().collect();
+                top.sort_by_key(|(_, count)| std::cmp::Reverse(*count));
+                top.truncate(8);
+                log::info!("repaints: {top:?}");
+            }
             self.load = (Instant::now(), 0, 0);
         }
         if let Some(ctx) = ctx {
@@ -2375,8 +2389,10 @@ impl App {
         }
         if key == "inbox-saved" {
             if let Some(inbox) = &mut self.inbox {
-                let list = value.get("results").or_else(|| value.get("reminders")).and_then(serde_json::Value::as_array);
-                inbox.mentions = Some(list.into_iter().flatten().filter_map(|saved| Message::parse(saved.get("message")?)).collect());
+                // Without bookmark_ids the list holds both kinds: a reminder has a due date.
+                let reminders = inbox.tab == InboxTab::Reminders;
+                let list = value.get("results").and_then(serde_json::Value::as_array);
+                inbox.mentions = Some(list.into_iter().flatten().filter(|saved| !reminders || saved.pointer("/save_data/due_at").is_some_and(|due| !due.is_null())).filter_map(|saved| Message::parse(saved.get("message")?)).collect());
             }
             return;
         }
