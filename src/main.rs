@@ -24,6 +24,7 @@ mod text;
 mod theme;
 mod ui;
 mod updates;
+mod video;
 mod voice;
 
 use std::sync::Arc;

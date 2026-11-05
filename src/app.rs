@@ -574,6 +574,10 @@ pub struct App {
     /// When the running programs were last looked at.
     streaming_checked: Instant,
     pub soundboard: crate::ui::soundboard::Board,
+    /// The one video playing in a message.
+    #[cfg(windows)]
+    pub video: Option<crate::video::Player>,
+    pub wake: crate::backend::Wake,
     /// The emoji someone in the call just sent, and since when.
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
     /// Since when, frames drawn and events applied, for the log's line.
@@ -699,6 +703,7 @@ impl App {
             settings.plugin(Plugin::NoTrack),
             std::sync::atomic::Ordering::Relaxed,
         );
+        let wake_for_video = wake.clone();
         let backend = Backend::spawn(wake, crate::icon::png(256));
         let commands = backend.commands.clone();
         commands.send(Command::RichPresence(settings.plugins.get("rich-presence").copied().unwrap_or(true)));
@@ -776,6 +781,9 @@ impl App {
             ignored: HashSet::new(),
             streaming_checked: Instant::now(),
             soundboard: Default::default(),
+            #[cfg(windows)]
+            video: None,
+            wake: wake_for_video,
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
             shots: crate::shots::Shots::from_env(),
@@ -2181,6 +2189,14 @@ impl App {
                     "password" => gates::account_dialog(self, gates::AccountEdit::Password),
                     _ => self.modal = Some(Modal::NewPoll { channel: guild, question: String::new(), answers: vec![String::new(), String::new()], hours: 24, multiple: false }),
                 }
+            }
+            // Starts playing the attachment at this URL.
+            #[cfg(windows)]
+            "playvideo" => {
+                if let Some(id) = self.guilds.first().map(|g| g.id) {
+                    self.select_guild(Some(id));
+                }
+                self.video = Some(crate::video::Player::start(n.to_owned(), self.wake.clone(), None, 0.0));
             }
             "call" | "soundboard" => {
                 self.soundboard.open = what == "soundboard";

@@ -1076,6 +1076,7 @@ dependencies = [
  "tract-hir",
  "tract-onnx",
  "tract-pulse",
+ "windows 0.62.2",
  "windows-sys 0.60.2",
 ]
 

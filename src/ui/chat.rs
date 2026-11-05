@@ -2832,6 +2832,11 @@ fn video_view(app: &mut App, ui: &mut egui::Ui, proxy: &str, original: &str, w: 
     let frame = format!("{proxy}{separator}format=jpeg&width={}&height={}", (size.x * ppp) as u32, (size.y * ppp) as u32);
     ui.add_space(4.0);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
+    #[cfg(windows)]
+    if app.video.as_ref().is_some_and(|video| video.url == original) {
+        video_playing(app, ui, rect, &response);
+        return;
+    }
     match app.images.get(&frame, (size.x.max(size.y) * ppp) as u32) {
         Some((texture, _)) => {
             egui::Image::from_texture((texture, size)).corner_radius(6.0).paint_at(ui, rect);
@@ -2849,7 +2854,59 @@ fn video_view(app: &mut App, ui: &mut egui::Ui, proxy: &str, original: &str, w: 
         Stroke::NONE,
     ));
     if response.on_hover_cursor(egui::CursorIcon::PointingHand).on_hover_text(t!("Play")).clicked() {
+        #[cfg(windows)]
+        {
+            let volume = app.settings.output_volume.min(1.0);
+            app.video = Some(crate::video::Player::start(original.to_owned(), app.wake.clone(), app.settings.output_device.clone(), volume));
+        }
+        #[cfg(not(windows))]
         let _ = open::that_detached(original);
+    }
+}
+
+/// The video playing in its message: the picture, a click to pause, and the
+/// time over a bar along the bottom.
+#[cfg(windows)]
+fn video_playing(app: &mut App, ui: &mut egui::Ui, rect: Rect, response: &egui::Response) {
+    let p = theme::p();
+    let Some(video) = app.video.as_mut() else { return };
+    if let Some(error) = video.error() {
+        // What Windows cannot read still opens in the system's player.
+        log::warn!("video: {error}");
+        let url = video.url.clone();
+        app.video = None;
+        let _ = open::that_detached(url);
+        return;
+    }
+    let ctx = ui.ctx().clone();
+    match video.frame(&ctx) {
+        Some(texture) => {
+            egui::Image::from_texture((texture.id(), rect.size())).corner_radius(6.0).paint_at(ui, rect);
+        }
+        None => {
+            ui.painter().rect_filled(rect, 6.0, p.rail);
+            ui.put(Rect::from_center_size(rect.center(), Vec2::splat(24.0)), egui::Spinner::new());
+        }
+    }
+    let (at, length) = video.times();
+    let clock = |ms: u64| format!("{}:{:02}", ms / 60_000, ms / 1000 % 60);
+    let bar = Rect::from_min_max(egui::pos2(rect.left(), rect.bottom() - 26.0), rect.right_bottom());
+    if response.hovered() || video.paused() || video.finished() {
+        ui.painter().rect_filled(bar, 0.0, Color32::from_black_alpha(150));
+        ui.painter().text(egui::pos2(bar.left() + 8.0, bar.center().y), Align2::LEFT_CENTER, format!("{} / {}", clock(at), clock(length)), FontId::proportional(12.0), Color32::WHITE);
+        if length > 0 {
+            let full = bar.width() - 90.0;
+            let track = Rect::from_min_size(egui::pos2(bar.left() + 82.0, bar.center().y - 2.0), vec2(full, 4.0));
+            ui.painter().rect_filled(track, 2.0, Color32::from_white_alpha(70));
+            ui.painter().rect_filled(Rect::from_min_size(track.min, vec2(full * at as f32 / length as f32, 4.0)), 2.0, p.accent);
+        }
+    }
+    if response.clicked() {
+        if video.finished() {
+            app.video = None;
+        } else {
+            video.toggle_pause();
+        }
     }
 }
 
