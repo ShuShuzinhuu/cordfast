@@ -35,6 +35,10 @@ colours and sounds, in about 100 MB of RAM and next to no CPU while idle.
   <img src="docs/images/screenshot.png" alt="CordFast showing a server with its channels, a conversation, an embed and the member list">
 </p>
 
+<p align="center">
+  <img src="docs/images/settings.png" alt="CordFast's settings window on the Voice and Video page, with the microphone, speaker and input profile">
+</p>
+
 [Features](#features) · [Install](#install) · [Build](#build) · [Languages](#languages)
 
 ## Features

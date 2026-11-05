@@ -41,8 +41,13 @@ pub struct Splash {
     since: Instant,
     /// When "Starting…" began.
     starting: Option<Instant>,
+    /// An update is being installed: the frame on which the window went
+    /// back to the app's place, so the place eframe saves on quitting
+    /// is the app's and not the splash's (the updated version opened at the
+    /// smallest size otherwise).
+    installing: Option<u8>,
     /// The update was handed to the helper.
-    installing: bool,
+    handed: bool,
     /// The app window's place as eframe restored it (maximized, or where and
     /// how big), given back when the splash grows into it.
     restore: Option<(bool, Option<Rect>)>,
@@ -52,7 +57,7 @@ pub struct Splash {
 
 impl Splash {
     pub fn new() -> Self {
-        Self { since: Instant::now(), starting: None, installing: false, restore: None, frames: 0 }
+        Self { since: Instant::now(), starting: None, installing: None, handed: false, restore: None, frames: 0 }
     }
 }
 
@@ -92,17 +97,42 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let quitting = app.quit;
     let Some(splash) = app.splash.as_mut() else { return };
     place(splash, ui.ctx());
+    let restore = splash.restore.unwrap_or((false, None));
+    if let Some(since) = splash.installing {
+        if !splash.handed {
+            // A few frames for the window to get back to its place first.
+            if splash.frames >= since.saturating_add(3) {
+                splash.handed = true;
+                app.actions.push(Action::InstallUpdate);
+            }
+            ui.ctx().request_repaint();
+        } else if !quitting {
+            // Not handed over (the helper did not start): the app opens where
+            // it already is, and the error shows there.
+            app.splash = None;
+            ui.ctx().request_repaint();
+        }
+        // The app's background meanwhile, not a stretched splash.
+        egui::CentralPanel::default().frame(Frame::new().fill(crate::theme::p().chat)).show(ui, |_| {});
+        return;
+    }
     let mut status = match at_start {
-        // Handed over: the app quits now. Not handed over (the helper did
-        // not start): the app opens, and the error shows there.
-        _ if splash.installing && quitting => Status::Installing,
         AtStart::Wait if splash.since.elapsed() < DEADLINE || percent.is_some() => match percent {
             Some(percent) => Status::Downloading(percent),
             None => Status::Checking,
         },
-        AtStart::Install if !splash.installing => {
-            splash.installing = true;
-            app.actions.push(Action::InstallUpdate);
+        AtStart::Install => {
+            // "Installing update 1 of 1…" for a moment, then the window goes
+            // back to its place and the helper takes over. Not hidden first:
+            // eframe runs no frames for a hidden window, and the handover
+            // happens on one.
+            let since = *splash.starting.get_or_insert_with(Instant::now);
+            if since.elapsed() >= STARTING && splash.frames > 3 {
+                splash.installing = Some(splash.frames);
+                grow(ui.ctx(), restore);
+                return;
+            }
+            ui.ctx().request_repaint_after(Duration::from_millis(33));
             Status::Installing
         }
         _ => Status::Starting,
@@ -110,12 +140,11 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     if matches!(status, Status::Starting) {
         let since = *splash.starting.get_or_insert_with(Instant::now);
         if since.elapsed() >= STARTING && splash.frames > 3 {
-            let restore = splash.restore.unwrap_or((false, None));
             app.splash = None;
             grow(ui.ctx(), restore);
             return;
         }
-    } else if splash.starting.is_some() {
+    } else if splash.starting.is_some() && !matches!(status, Status::Installing) {
         status = Status::Starting;
     }
     let elapsed = splash.since.elapsed().as_secs_f32();

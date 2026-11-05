@@ -8,6 +8,7 @@ Copies installed this way update themselves to later signed versions.
 
 ## What's new
 
+- **0.3.6**: after an update installed when CordFast opens, the window keeps its size and place (it opened at the smallest size).
 - **Game overlay**, like Discord's new one: a window over the game, never inside it (no anti-cheat risk). Voice, quick actions, notifications, text chat and friends; Shift+` unlocks it. Settings → Game Overlay. Games must run windowed or borderless.
 - **Updates as Discord does them**: CordFast checks for updates when it opens ("Checking for updates…") and installs one before the app starts.
 - **Server settings**: emoji and stickers, webhooks, AutoMod, access, pruning and channel permissions.
