@@ -136,7 +136,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, tab: SettingsTab, below: Rect) {
                 SettingsTab::Language => language(app, ui),
                 SettingsTab::RegisteredGames => games(app, ui),
                 SettingsTab::ActivityPrivacy => activity_privacy(app, ui),
-                SettingsTab::Overlay => overlay(ui),
+                SettingsTab::Overlay => super::overlay::settings_page(app, ui),
                 SettingsTab::ConnectedApps => connected_apps(app, ui),
                 SettingsTab::Developer => developer(app, ui),
                 SettingsTab::Plugins => plugins_page(app, ui),
@@ -1506,10 +1506,6 @@ fn activity_privacy(app: &mut App, ui: &mut egui::Ui) {
         account_switch(app, ui, pre::ACTIVITY_JOIN_FRIENDS, false, t!("Allow friends to join my game"), t!("Allows friends to join without sending a request."));
         account_switch(app, ui, pre::ACTIVITY_JOIN_VOICE, false, t!("Allow voice channel participants to join my game"), t!("Allow anyone in a shared voice channel to join my game without sending a request. This feature only works in non-Community enabled servers."));
     });
-}
-
-fn overlay(ui: &mut egui::Ui) {
-    form::unavailable(ui, t!("The game overlay isn't in CordFast yet."));
 }
 
 fn connected_apps(app: &mut App, ui: &mut egui::Ui) {

@@ -49,6 +49,7 @@ pub enum Shortcut {
     ZoomIn,
     ZoomOut,
     ZoomReset,
+    ToggleOverlayLock,
 }
 
 /// Every shortcut: its id in the settings file, its name and Discord's
@@ -57,6 +58,7 @@ pub const ALL: &[(Shortcut, &str, &str, &str)] = &[
     (Shortcut::ToggleMute, "toggle_mute", n!("Toggle Mute"), "Ctrl+Shift+M"),
     (Shortcut::ToggleDeaf, "toggle_deaf", n!("Toggle Deafen"), "Ctrl+Shift+D"),
     (Shortcut::ReturnToVoice, "return_to_voice", n!("Return to Connected Voice Channel"), "Ctrl+Alt+ArrowLeft"),
+    (Shortcut::ToggleOverlayLock, "toggle_overlay_lock", n!("Toggle Overlay Lock"), "Shift+Backtick"),
     (Shortcut::JumpToCall, "jump_to_call", n!("Navigate to current call"), "Ctrl+Alt+Shift+V"),
     (Shortcut::AnswerCall, "answer_call", n!("Answer Incoming Call"), "Ctrl+Enter"),
     (Shortcut::StartCall, "start_call", n!("Start Call in Conversation"), "Ctrl+Quote"),
@@ -94,7 +96,7 @@ pub const ALL: &[(Shortcut, &str, &str, &str)] = &[
 
 /// How the settings page groups them.
 pub const SECTIONS: &[(&str, &[Shortcut])] = &[
-    (n!("Voice and Calls"), &[Shortcut::ToggleMute, Shortcut::ToggleDeaf, Shortcut::ReturnToVoice, Shortcut::JumpToCall, Shortcut::AnswerCall, Shortcut::StartCall]),
+    (n!("Voice and Calls"), &[Shortcut::ToggleMute, Shortcut::ToggleDeaf, Shortcut::ReturnToVoice, Shortcut::JumpToCall, Shortcut::AnswerCall, Shortcut::StartCall, Shortcut::ToggleOverlayLock]),
     (
         n!("Navigation"),
         &[
@@ -210,11 +212,11 @@ pub fn pressed(ui: &egui::Ui, settings: &Settings, shortcut: Shortcut) -> bool {
 /// Flags the global watcher raises for the window to act on.
 #[derive(Default)]
 pub struct Global {
-    /// 1 toggle mute, 2 toggle deafen.
+    /// 1 toggle mute, 2 toggle deafen, 3 lock or unlock the overlay.
     pub pressed: AtomicU8,
     /// While the window has focus egui handles the keys itself.
     pub focused: AtomicBool,
-    pub binds: std::sync::Mutex<(Option<Bind>, Option<Bind>)>,
+    pub binds: std::sync::Mutex<(Option<Bind>, Option<Bind>, Option<Bind>)>,
 }
 
 #[cfg(windows)]
@@ -283,21 +285,25 @@ pub fn watch(global: Arc<Global>, wake: crate::backend::Wake) {
                     && bind.modifiers.shift == held(0x10)
                     && bind.modifiers.alt == held(0x12)
             };
-            let mut was = (false, false);
+            let mut was = (false, false, false);
             loop {
                 std::thread::sleep(std::time::Duration::from_millis(30));
                 if global.focused.load(Ordering::Relaxed) {
-                    was = (false, false);
+                    was = (false, false, false);
                     continue;
                 }
-                let (mute, deaf) = *global.binds.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-                let now = (combo(mute), combo(deaf));
+                let (mute, deaf, overlay) = *global.binds.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+                let now = (combo(mute), combo(deaf), combo(overlay));
                 if now.0 && !was.0 {
                     global.pressed.store(1, Ordering::Relaxed);
                     wake();
                 }
                 if now.1 && !was.1 {
                     global.pressed.store(2, Ordering::Relaxed);
+                    wake();
+                }
+                if now.2 && !was.2 {
+                    global.pressed.store(3, Ordering::Relaxed);
                     wake();
                 }
                 was = now;

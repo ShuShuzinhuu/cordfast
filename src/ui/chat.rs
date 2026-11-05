@@ -80,6 +80,27 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     messages(app, ui, channel_id);
 }
 
+/// The overlay's Text Chat: the conversation open in the app, or else the
+/// call's. Its own ids, so its scroll stays apart from the main window's.
+pub fn overlay_widget(app: &mut App, ui: &mut egui::Ui) {
+    let p = theme::p();
+    let picked = app.selected_channel.or_else(|| app.voice.channel.map(|(_, channel)| channel));
+    let Some(channel) = picked.and_then(|id| app.channel(id).cloned()) else {
+        ui.painter().text(ui.max_rect().center(), egui::Align2::CENTER_CENTER, t!("Pick a channel"), egui::FontId::proportional(13.0), p.muted);
+        return;
+    };
+    if app.selected_channel.is_none() {
+        app.actions.push(Action::SelectChannel(channel.id));
+    }
+    ui.push_id("overlay-chat", |ui| {
+        egui::Panel::bottom("overlay-composer")
+            .show_separator_line(false)
+            .frame(Frame::new().inner_margin(Margin { left: 8, right: 8, top: 0, bottom: 6 }))
+            .show(ui, |ui| composer(app, ui, &channel));
+        messages(app, ui, channel.id);
+    });
+}
+
 fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let p = theme::p();
     let dm = channel.guild_id.is_none();

@@ -96,6 +96,28 @@ pub struct Settings {
     /// Accounts signed in on this computer (their tokens are in the
     /// credential store), for switching as Discord does.
     pub accounts: Vec<Account>,
+    /// The game overlay (Settings → Game Overlay), with Discord's defaults.
+    pub overlay_enabled: bool,
+    pub overlay_avatar_large: bool,
+    /// The voice widget's names: 0 always, 1 only while speaking, 2 never.
+    pub overlay_names: u8,
+    /// The voice widget's people: 0 always, 1 only while speaking.
+    pub overlay_users: u8,
+    /// How many people it lists at most; 0 is no limit.
+    pub overlay_max_users: u8,
+    pub overlay_notify_messages: bool,
+    /// The widgets switched off, by id.
+    pub overlay_hidden: Vec<String>,
+    /// Widgets moved or pinned by hand, by id.
+    pub overlay_widgets: BTreeMap<String, OverlayWidget>,
+}
+
+/// What differs from a widget's default place in the overlay.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct OverlayWidget {
+    /// Its top left corner, as parts of the game's window.
+    pub at: Option<[f32; 2]>,
+    pub pinned: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -166,6 +188,16 @@ impl Default for Settings {
             skin_tone: 0,
             collapsed_expressions: Vec::new(),
             accounts: Vec::new(),
+            overlay_enabled: true,
+            overlay_avatar_large: true,
+            overlay_names: 0,
+            overlay_users: 0,
+            overlay_max_users: 8,
+            overlay_notify_messages: true,
+            // Friends shows the games too, and in the bundle's table the two start
+            // on top of each other.
+            overlay_hidden: vec!["activity".to_owned()],
+            overlay_widgets: BTreeMap::new(),
         }
     }
 }

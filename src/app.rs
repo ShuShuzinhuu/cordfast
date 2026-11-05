@@ -641,6 +641,11 @@ pub struct App {
     // Window and tray.
     pub focused: bool,
     pub has_window: bool,
+    /// Hidden to the tray but kept, during a call, for the game overlay.
+    pub window_hidden: bool,
+    /// Minimized or hidden: nobody sees the main window.
+    pub unseen: bool,
+    pub overlay: crate::ui::overlay::Overlay,
     pub quit: bool,
     pub hide: bool,
     pub show: bool,
@@ -826,6 +831,9 @@ impl App {
             devices: (Vec::new(), Vec::new()),
             focused: true,
             has_window: false,
+            window_hidden: false,
+            unseen: false,
+            overlay: crate::ui::overlay::Overlay::default(),
             quit: false,
             hide: false,
             show: false,
@@ -845,7 +853,7 @@ impl App {
     pub fn sync_global_keybinds(&self) {
         use crate::keybinds::{Shortcut, bind};
         *self.keybinds.binds.lock().unwrap_or_else(std::sync::PoisonError::into_inner) =
-            (bind(&self.settings, Shortcut::ToggleMute), bind(&self.settings, Shortcut::ToggleDeaf));
+            (bind(&self.settings, Shortcut::ToggleMute), bind(&self.settings, Shortcut::ToggleDeaf), bind(&self.settings, Shortcut::ToggleOverlayLock));
     }
 
     fn autostart_entry() -> fastframe_autostart::Autostart {
@@ -944,6 +952,7 @@ impl App {
     pub fn window_gone(&mut self) {
         self.images.clear();
         self.has_window = false;
+        self.window_hidden = false;
         self.hide = false;
         self.show = false;
     }
@@ -1237,6 +1246,7 @@ impl App {
         match self.keybinds.pressed.swap(0, std::sync::atomic::Ordering::Relaxed) {
             1 => self.actions.push(Action::ToggleMute),
             2 => self.actions.push(Action::ToggleDeaf),
+            3 => self.overlay.toggle = true,
             _ => {}
         }
         // Timed mutes end on their own, as in Discord.
@@ -1262,7 +1272,7 @@ impl App {
             match event {
                 fastframe_tray::Event::Show => self.show = true,
                 fastframe_tray::Event::Toggle => {
-                    if self.has_window {
+                    if self.has_window && !self.window_hidden {
                         self.hide = true;
                     } else {
                         self.show = true;
@@ -2771,6 +2781,7 @@ impl App {
         } else {
             t!("New message").to_owned()
         };
+        crate::ui::overlay::note_message(self, &title, &body, message.channel_id, Some(message.author.avatar_url()));
         self.commands.send(Command::Notify {
             title,
             body,
@@ -3702,6 +3713,17 @@ impl App {
         {
             self.hide = true;
         }
+        // During a call the window only hides: the overlay draws through it,
+        // and a game may still come to the front. The call over, it goes as usual.
+        if self.hide && !self.quit && crate::ui::overlay::wanted_in_tray(self) {
+            self.hide = false;
+            self.window_hidden = true;
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        }
+        if self.window_hidden && !crate::ui::overlay::wanted_in_tray(self) {
+            self.hide = true;
+        }
         if self.hide {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
@@ -3709,9 +3731,12 @@ impl App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         if std::mem::take(&mut self.show) {
+            self.window_hidden = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
+        self.unseen = ctx.input(|i| i.viewport().minimized == Some(true)) || self.window_hidden;
     }
 
     pub fn frame(&mut self, ui: &mut egui::Ui) {
@@ -3729,7 +3754,13 @@ impl App {
             ctx.copy_text(text);
         }
         self.images.begin_frame(&ctx);
-        crate::ui::show(self, ui);
+        // The overlay's window keeps these frames coming for a minimized or
+        // hidden window, which has nothing of its own to draw.
+        if !self.unseen {
+            crate::ui::show(self, ui);
+        }
+        let (focused, unseen) = (self.focused, self.unseen);
+        crate::ui::overlay::show(self, &ctx, focused, unseen);
         self.run_actions();
         self.images.end_frame(&ctx);
     }

@@ -8,6 +8,7 @@
 //! match other entries: PUBG's execpubg.exe is "PUBG: Test Server").
 
 use std::collections::{HashMap, HashSet};
+use std::sync::{Mutex, OnceLock, PoisonError};
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -117,6 +118,7 @@ pub async fn run(api: super::rest::Api, out: mpsc::UnboundedSender<RpcEvent>) {
     };
     log::info!("detect: {} executables known", table.paths.len());
     let table = std::sync::Arc::new(table);
+    let _ = TABLE.set(table.clone());
     // Game id to when it was first seen running, and the one shown.
     let mut running: HashMap<Id, u64> = HashMap::new();
     let mut shown: Option<Id> = None;
@@ -162,6 +164,166 @@ pub async fn run(api: super::rest::Api, out: mpsc::UnboundedSender<RpcEvent>) {
         }
         tokio::time::sleep(SCAN).await;
     }
+}
+
+// ---- the game in front, for the overlay ------------------------------------------------
+
+/// The overlay's window, which must not count as "something else in front".
+pub const OVERLAY_TITLE: &str = "CordFast Overlay";
+const FRONT_LOOK: Duration = Duration::from_millis(500);
+
+static TABLE: OnceLock<std::sync::Arc<Table>> = OnceLock::new();
+static FRONT: Mutex<Option<Front>> = Mutex::new(None);
+
+/// The game whose window has the focus.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Front {
+    pub name: String,
+    /// Its window handle.
+    pub window: isize,
+    /// Its client area on screen, in pixels: left, top, right, bottom.
+    pub rect: [i32; 4],
+    /// Windows says a game holds the screen, and windows above it then do not
+    /// show. Tried: Stardew Valley gets this answer and hides the locked overlay;
+    /// Roblox in fullscreen does not, and shows it.
+    pub exclusive: bool,
+}
+
+pub fn front() -> Option<Front> {
+    FRONT.lock().unwrap_or_else(PoisonError::into_inner).clone()
+}
+
+/// Gives the keyboard back to the game when the overlay locks.
+pub fn focus(window: isize) {
+    #[cfg(windows)]
+    // SAFETY: a window handle that at worst is no longer valid, which the call reports.
+    unsafe {
+        windows_sys::Win32::UI::WindowsAndMessaging::SetForegroundWindow(window as _);
+    }
+    #[cfg(not(windows))]
+    let _ = window;
+}
+
+/// Tells the overlay's window, click-through and so layered, that it is fully
+/// opaque (its own pixels still carry their alpha). Whether it was there to tell.
+pub fn show_layered() -> bool {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{FindWindowW, GWL_EXSTYLE, GetWindowLongPtrW, LWA_ALPHA, SetLayeredWindowAttributes, WS_EX_LAYERED};
+        let title: Vec<u16> = OVERLAY_TITLE.encode_utf16().chain(Some(0)).collect();
+        // SAFETY: a nul-terminated title, and calls on the handle found with it.
+        unsafe {
+            let window = FindWindowW(std::ptr::null(), title.as_ptr());
+            if window.is_null() || GetWindowLongPtrW(window, GWL_EXSTYLE) as u32 & WS_EX_LAYERED == 0 {
+                return false;
+            }
+            SetLayeredWindowAttributes(window, 0, 255, LWA_ALPHA) != 0
+        }
+    }
+    #[cfg(not(windows))]
+    false
+}
+
+/// Looks at the window in front twice a second and wakes the app when the game
+/// there comes, goes or moves. `CORDFAST_OVERLAY_ALWAYS` counts any window as a
+/// game, for trying the overlay without one.
+pub fn watch_front(wake: crate::backend::Wake) {
+    #[cfg(windows)]
+    std::thread::Builder::new()
+        .name("cordfast-front".into())
+        .spawn(move || {
+            let always = std::env::var_os("CORDFAST_OVERLAY_ALWAYS").is_some();
+            let own = std::process::id();
+            let mut last: isize = 0;
+            let mut game: Option<String> = None;
+            loop {
+                std::thread::sleep(FRONT_LOOK);
+                let Some((window, pid, title)) = front_window() else { continue };
+                // The overlay itself in front: it was unlocked, the game stays.
+                if pid == own && title == OVERLAY_TITLE {
+                    continue;
+                }
+                if window != last {
+                    last = window;
+                    game = if pid == own {
+                        None
+                    } else if always {
+                        Some("Test".to_owned())
+                    } else {
+                        TABLE.get().and_then(|table| {
+                            let path = foreground()?;
+                            let id = table.find(&path)?;
+                            table.titles.get(&id).cloned()
+                        })
+                    };
+                }
+                let now = game.as_ref().and_then(|name| {
+                    let rect = client_rect(window)?;
+                    Some(Front { name: name.clone(), window, rect, exclusive: exclusive_fullscreen() })
+                });
+                let mut slot = FRONT.lock().unwrap_or_else(PoisonError::into_inner);
+                if *slot != now {
+                    if let Some(front) = &now {
+                        log::info!("detect: in front: {}, {:?}, exclusive {}", front.name, front.rect, front.exclusive);
+                    }
+                    *slot = now;
+                    drop(slot);
+                    wake();
+                }
+            }
+        })
+        .expect("unable to start the front window thread");
+    #[cfg(not(windows))]
+    let _ = wake;
+}
+
+#[cfg(windows)]
+fn front_window() -> Option<(isize, u32, String)> {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId};
+    // SAFETY: plain queries on the window in front, with a correctly sized buffer.
+    unsafe {
+        let window = GetForegroundWindow();
+        if window.is_null() {
+            return None;
+        }
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(window, &mut pid);
+        let mut buffer = [0u16; 32];
+        let len = GetWindowTextW(window, buffer.as_mut_ptr(), buffer.len() as i32);
+        Some((window as isize, pid, String::from_utf16_lossy(&buffer[..len.max(0) as usize])))
+    }
+}
+
+#[cfg(windows)]
+fn client_rect(window: isize) -> Option<[i32; 4]> {
+    use windows_sys::Win32::Foundation::{POINT, RECT};
+    use windows_sys::Win32::Graphics::Gdi::ClientToScreen;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{GetClientRect, IsIconic};
+    // SAFETY: queries on a window handle that at worst has gone, which they report.
+    unsafe {
+        let window = window as windows_sys::Win32::Foundation::HWND;
+        if IsIconic(window) != 0 {
+            return None;
+        }
+        let mut rect = RECT { left: 0, top: 0, right: 0, bottom: 0 };
+        if GetClientRect(window, &mut rect) == 0 {
+            return None;
+        }
+        let mut corner = POINT { x: 0, y: 0 };
+        if ClientToScreen(window, &mut corner) == 0 || rect.right <= 0 || rect.bottom <= 0 {
+            return None;
+        }
+        Some([corner.x, corner.y, corner.x + rect.right, corner.y + rect.bottom])
+    }
+}
+
+/// What Windows itself says of the screen: a Direct3D game holding it.
+#[cfg(windows)]
+fn exclusive_fullscreen() -> bool {
+    use windows_sys::Win32::UI::Shell::{QUNS_RUNNING_D3D_FULL_SCREEN, SHQueryUserNotificationState};
+    let mut state = 0;
+    // SAFETY: fills in one value.
+    unsafe { SHQueryUserNotificationState(&mut state) == 0 && state == QUNS_RUNNING_D3D_FULL_SCREEN }
 }
 
 /// Whether an activity "socket" is one of ours, not the pipe's.

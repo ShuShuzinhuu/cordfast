@@ -119,7 +119,8 @@ fn main() -> eframe::Result {
     }
     updates::spawn(app.updates.clone(), wake.clone());
     app.sync_global_keybinds();
-    keybinds::watch(app.keybinds.clone(), wake);
+    keybinds::watch(app.keybinds.clone(), wake.clone());
+    discord::detect::watch_front(wake);
     // Started at login in the tray, as the autostart entry asks.
     let hidden = launch.arguments.iter().any(|a| a == fastframe_autostart::START_HIDDEN);
     // Discord's own title bar, unless the system's was chosen.

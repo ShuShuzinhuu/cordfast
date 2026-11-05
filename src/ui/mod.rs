@@ -16,6 +16,7 @@ mod profile;
 mod settings;
 pub mod gates;
 mod guild_more;
+pub mod overlay;
 pub mod soundboard;
 mod titlebar;
 
