@@ -2140,6 +2140,11 @@ impl App {
                     "invites" => crate::admin::Tab::Invites,
                     "bans" => crate::admin::Tab::Bans,
                     "audit" => crate::admin::Tab::Audit,
+                    "webhooks" => crate::admin::Tab::Webhooks,
+                    "automod" => crate::admin::Tab::AutoMod,
+                    "access" => crate::admin::Tab::Access,
+                    "prune" => crate::admin::Tab::Prune,
+                    "soundboard" => crate::admin::Tab::Soundboard,
                     _ => crate::admin::Tab::Overview,
                 };
                 self.run(Action::GuildTab(tab));
@@ -2164,6 +2169,19 @@ impl App {
                 }
             }
             // The account card as during a call (no voice is joined).
+            // The member's dialogs and the composer's poll, for screenshots.
+            "events" | "discover" | "onboarding" | "poll" | "password" => {
+                let Some(guild) = self.guilds.first().map(|g| g.id) else { return };
+                self.select_guild(Some(guild));
+                use crate::ui::gates;
+                match what {
+                    "events" => gates::open(self, gates::Gate::Events { guild, draft: None }),
+                    "discover" => gates::open(self, gates::Gate::Discover { query: String::new(), asked: String::new() }),
+                    "onboarding" => gates::open(self, gates::Gate::Onboarding { guild, picked: None, page: 0 }),
+                    "password" => gates::account_dialog(self, gates::AccountEdit::Password),
+                    _ => self.modal = Some(Modal::NewPoll { channel: guild, question: String::new(), answers: vec![String::new(), String::new()], hours: 24, multiple: false }),
+                }
+            }
             "call" | "soundboard" => {
                 self.soundboard.open = what == "soundboard";
                 let Some(guild) = self.guilds.first() else { return };
