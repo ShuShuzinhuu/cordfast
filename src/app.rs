@@ -2285,6 +2285,17 @@ impl App {
         let value = match result {
             Ok(value) => value,
             Err(error) => {
+                // Nothing saved yet: Discord answers 404, not an empty list.
+                if key == "saved-ids" {
+                    self.saved.clear();
+                    return;
+                }
+                if key == "inbox-saved" {
+                    if let Some(inbox) = &mut self.inbox {
+                        inbox.mentions = Some(Vec::new());
+                    }
+                    return;
+                }
                 if key.starts_with("gate:") {
                     if key != "gate:event-made" && key != "gate:changed" {
                         self.gate_data.insert(key.to_owned(), Err(error));
@@ -2359,7 +2370,7 @@ impl App {
             return;
         }
         if key == "saved-ids" {
-            self.saved = value.get("bookmark_ids").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|id| id.as_str()?.parse().ok()).collect();
+            self.saved = value.get("bookmark_ids").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|id| id.as_str()?.rsplit('-').next()?.parse().ok()).collect();
             return;
         }
         if key == "inbox-saved" {

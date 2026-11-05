@@ -257,6 +257,105 @@ fn saved_token() -> Option<String> {
     keyring_entry()?.get_password().ok().filter(|t| !t.is_empty())
 }
 
+/// `CORDFAST_SELFTEST=<file>`: asks Discord, with the saved session and only
+/// by GET, for what the newer pages read, and writes each answer's shape to the
+/// file: its type, size and field names, no values, no window and no gateway.
+/// It tells whether the calls and the parsers agree with the real API.
+pub fn selftest(out: &str) {
+    fn shape(value: &Value) -> String {
+        match value {
+            Value::Array(list) => format!("[{}] {}", list.len(), list.first().map(shape).unwrap_or_default()),
+            Value::Object(map) => {
+                let mut keys: Vec<String> = map.iter().map(|(key, value)| if matches!(value, Value::Array(_) | Value::Object(_)) { format!("{key}: {}", shape(value)) } else { key.clone() }).collect();
+                keys.sort_unstable();
+                format!("{{{}}}", keys.join(", "))
+            }
+            Value::String(_) => "string".into(),
+            Value::Number(_) => "number".into(),
+            Value::Bool(_) => "bool".into(),
+            Value::Null => "null".into(),
+        }
+    }
+    let Some(token) = saved_token() else {
+        let _ = std::fs::write(out, "no saved session\n");
+        return;
+    };
+    let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("unable to start the async runtime");
+    runtime.block_on(async {
+        let api = Api::new(crate::discord::rest::http(), token);
+        let mut lines = Vec::new();
+        let mut parse_note = String::new();
+        let mut saved_note = Vec::new();
+        let mut ask = async |label: &str, path: String| -> Option<Value> {
+            tokio::time::sleep(Duration::from_millis(400)).await;
+            match api.raw("GET", &path, None, None).await {
+                Ok(value) => {
+                    lines.push(format!("OK   {label}: {}", shape(&value)));
+                    Some(value)
+                }
+                Err(error) => {
+                    lines.push(format!("FAIL {label}: {error:#}"));
+                    None
+                }
+            }
+        };
+        let guilds = ask("guilds", "/users/@me/guilds".into()).await.unwrap_or_default();
+        let list = guilds.as_array().cloned().unwrap_or_default();
+        let perms = |g: &Value| g.get("permissions").and_then(Value::as_str).and_then(|p| p.parse::<u64>().ok()).unwrap_or(0);
+        let id = |g: &Value| g.get("id").and_then(Value::as_str).unwrap_or_default().to_owned();
+        let member = list.first().map(id).unwrap_or_default();
+        // A server this account manages, where the settings pages can read.
+        let managed = list.iter().find(|g| perms(g) & (1 << 5 | 1 << 3) != 0).map(id);
+        let community = list.iter().find(|g| g.get("features").and_then(Value::as_array).is_some_and(|f| f.iter().any(|f| f == "GUILD_ONBOARDING"))).map(id).unwrap_or_else(|| member.clone());
+        let gated = list.iter().find(|g| g.get("features").and_then(Value::as_array).is_some_and(|f| f.iter().any(|f| f == "MEMBER_VERIFICATION_GATE_ENABLED"))).map(id);
+        if let Some(sounds) = ask("soundboard defaults", "/soundboard-default-sounds".into()).await {
+            let all = sounds.as_array().map_or(0, Vec::len);
+            let parsed = sounds.as_array().into_iter().flatten().filter_map(crate::discord::model::SoundboardSound::parse).count();
+            parse_note = format!("PARSE soundboard: {parsed}/{all}");
+        }
+        ask("saved ids", "/users/@me/saved-messages?bookmark_ids=true".into()).await;
+        ask("bookmarks", "/users/@me/saved-messages/bookmarks?limit=25".into()).await;
+        ask("guild sounds", format!("/guilds/{member}/soundboard-sounds")).await;
+        ask("top sounds", format!("/guilds/{member}/top-soundboard-sounds")).await;
+        ask("events", format!("/guilds/{community}/scheduled-events?with_user_count=true")).await;
+        ask("onboarding", format!("/guilds/{community}/onboarding")).await;
+        if let Some(gated) = gated {
+            ask("verification", format!("/guilds/{gated}/member-verification?with_guild=false")).await;
+        }
+        ask("discover", "/discoverable-guilds?limit=3&offset=0".into()).await;
+        ask("discover search", "/discoverable-guilds/search?query=rust&limit=3&offset=0&with_counts=true".into()).await;
+        let channels = ask("channels", format!("/guilds/{member}/channels")).await.unwrap_or_default();
+        if let Some(text) = channels.as_array().into_iter().flatten().find(|c| c.get("type").and_then(Value::as_u64) == Some(0)).map(id) {
+            ask("archived threads", format!("/channels/{text}/threads/archived/public?limit=25")).await;
+            // A bookmark only the account sees, taken off at once: does saving work where reading says 404?
+            if let Some(message) = ask("one message", format!("/channels/{text}/messages?limit=1")).await.as_ref().and_then(|list| list.pointer("/0/id")).and_then(Value::as_str) {
+                let path = format!("/users/@me/saved-messages/{text}/{message}");
+                let put = api.raw("PUT", &path, Some(serde_json::json!({ "due_at": null })), None).await;
+                saved_note.push(format!("SAVE put: {}", put.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
+                tokio::time::sleep(Duration::from_millis(400)).await;
+                let list = api.raw("GET", "/users/@me/saved-messages?bookmark_ids=true", None, None).await;
+                saved_note.push(format!("SAVE ids after: {}", list.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
+                let pages = api.raw("GET", "/users/@me/saved-messages/bookmarks?limit=25", None, None).await;
+                saved_note.push(format!("SAVE page after: {}", pages.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
+                tokio::time::sleep(Duration::from_millis(400)).await;
+                let delete = api.raw("DELETE", &path, None, None).await;
+                saved_note.push(format!("SAVE delete: {}", delete.as_ref().map_or_else(|e| format!("{e:#}"), shape)));
+            }
+        }
+        ask("search media", format!("/guilds/{member}/messages/search?content=a&has=image&has=video&offset=0")).await;
+        ask("search oldest", format!("/guilds/{member}/messages/search?content=a&sort_by=timestamp&sort_order=asc&offset=25")).await;
+        ask("connections", "/users/@me/connections".into()).await;
+        if let Some(guild) = managed {
+            for (label, path) in [("stickers", "stickers"), ("sounds admin", "soundboard-sounds"), ("webhooks", "webhooks"), ("integrations", "integrations?include_applications=true"), ("automod", "auto-moderation/rules"), ("vanity", "vanity-url"), ("widget", "widget"), ("templates", "templates"), ("prune", "prune?days=30")] {
+                ask(label, format!("/guilds/{guild}/{path}")).await;
+            }
+        }
+        lines.push(parse_note);
+        lines.extend(saved_note);
+        let _ = std::fs::write(out, lines.join("\n"));
+    });
+}
+
 fn save_token(token: &str) {
     if let Some(entry) = keyring_entry()
         && let Err(error) = entry.set_password(token)

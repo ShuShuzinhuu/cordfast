@@ -80,6 +80,10 @@ fn main() -> eframe::Result {
         println!("cordfast {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
+    if let Ok(out) = std::env::var("CORDFAST_SELFTEST") {
+        backend::selftest(&out);
+        return Ok(());
+    }
     // A log file per run (the previous one is kept), for bug reports.
     let logs = settings::config_dir().join("logs");
     let _ = std::fs::create_dir_all(&logs);
