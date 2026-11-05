@@ -264,6 +264,8 @@ pub enum Modal {
     /// A second factor for a call Discord held: the code, or the password
     /// when that is all the account has.
     Mfa { ticket: String, password: bool, code: String, key: String, method: &'static str, path: String, body: Option<serde_json::Value> },
+    /// The member's dialogs: verification, onboarding, events, discovery, Stage.
+    Gate(crate::ui::gates::Gate),
     /// A forum's "New Post".
     NewPost { forum: Id, title: String, body: String },
     /// The "Threads" button: a channel's active and archived threads.
@@ -557,6 +559,13 @@ pub struct App {
     pub reactors: Option<Vec<crate::discord::model::User>>,
     /// The channel's archived threads, while its dialog is open.
     pub archived_threads: Option<Vec<Channel>>,
+    /// What the member's dialogs asked for, by the call's key.
+    pub gate_data: HashMap<String, Result<serde_json::Value, String>>,
+    pub gate_asked: HashSet<String>,
+    /// Events the account said it is interested in, this session.
+    pub event_rsvp: HashSet<String>,
+    /// In a Stage: (suppressed, hand raised), by user.
+    pub voice_stage: HashMap<Id, (bool, bool)>,
     pub soundboard: crate::ui::soundboard::Board,
     /// The emoji someone in the call just sent, and since when.
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
@@ -752,6 +761,10 @@ impl App {
             saved_asked: false,
             reactors: None,
             archived_threads: None,
+            gate_data: HashMap::new(),
+            gate_asked: HashSet::new(),
+            event_rsvp: HashSet::new(),
+            voice_stage: HashMap::new(),
             soundboard: Default::default(),
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
@@ -1530,7 +1543,7 @@ impl App {
                 for guild in &ready.guilds {
                     self.members.insert(
                         (guild.id, me),
-                        Member { nick: None, roles: guild.my_roles.clone() },
+                        Member { nick: None, roles: guild.my_roles.clone(), pending: false },
                     );
                 }
                 self.read = ready.read_states.into_iter().map(|r| (r.channel, r)).collect();
@@ -1815,6 +1828,7 @@ impl App {
                     }
                 }
                 self.voice_flags.insert(user, (crate::discord::model::voice_muted(&state), crate::discord::model::voice_deaf(&state)));
+                self.voice_stage.insert(user, (state.get("suppress").and_then(serde_json::Value::as_bool).unwrap_or(false), state.get("request_to_speak_timestamp").is_some_and(|at| !at.is_null())));
                 match state.get("guild_id").and_then(sf) {
                     Some(guild_id) => {
                         if let Some(guild) = self.guilds.iter_mut().find(|g| g.id == guild_id) {
@@ -2216,6 +2230,14 @@ impl App {
         let value = match result {
             Ok(value) => value,
             Err(error) => {
+                if key.starts_with("gate:") {
+                    if key != "gate:event-made" {
+                        self.gate_data.insert(key.to_owned(), Err(error));
+                    } else {
+                        self.notify(error);
+                    }
+                    return;
+                }
                 if let Some(id) = key.strip_prefix("app:").and_then(|k| k.parse::<Id>().ok()) {
                     self.app_icons.insert(id, None);
                     return;
@@ -2245,6 +2267,15 @@ impl App {
                 return;
             }
         };
+        if key == "gate:event-made" {
+            // The list asks again, with the change in it.
+            self.gate_asked.retain(|asked| !asked.starts_with("gate:events:"));
+            return;
+        }
+        if key.starts_with("gate:") {
+            self.gate_data.insert(key.to_owned(), Ok(value));
+            return;
+        }
         if key == "soundboard-defaults" {
             let sounds = value.as_array().map_or_else(Vec::new, |list| list.iter().filter_map(crate::discord::model::SoundboardSound::parse).collect());
             self.soundboard.sounds.insert(0, sounds);

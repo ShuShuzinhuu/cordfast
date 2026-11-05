@@ -1653,6 +1653,18 @@ fn forum(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
 
 fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let p = theme::p();
+    // The server's rules come first for someone new.
+    if let Some(guild) = channel.guild_id
+        && app.members.get(&(guild, app.me_id())).is_some_and(|member| member.pending)
+    {
+        Frame::new().fill(p.sidebar).corner_radius(8).inner_margin(Margin::same(14)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            if ui.add(egui::Button::new(RichText::new(t!("Complete")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                super::gates::open(app, super::gates::Gate::Verification { guild, answers: Default::default(), agreed: false });
+            }
+        });
+        return;
+    }
     // Someone who is no friend wrote: nothing goes out until it is accepted.
     if channel.message_request {
         Frame::new().fill(p.sidebar).corner_radius(8).inner_margin(Margin::same(14)).show(ui, |ui| {
@@ -2576,6 +2588,12 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     // Backup codes are eight characters, the app's are six.
                     let mfa_type = if *password { "password" } else if code.trim().chars().filter(char::is_ascii_alphanumeric).count() > 6 { "backup" } else { "totp" };
                     app.commands.send(crate::backend::Command::MfaFinish { ticket: ticket.clone(), mfa_type, code: code.trim().to_owned(), key: key.clone(), method, path: path.clone(), body: body.clone() });
+                    keep = false;
+                }
+            }
+            crate::app::Modal::Gate(gate) => {
+                own_footer = true;
+                if !super::gates::show(app, ui, gate) {
                     keep = false;
                 }
             }

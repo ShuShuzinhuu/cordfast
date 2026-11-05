@@ -14,6 +14,7 @@ pub mod markdown;
 pub mod menu;
 mod profile;
 mod settings;
+pub mod gates;
 pub mod soundboard;
 mod titlebar;
 
@@ -713,6 +714,14 @@ fn server_menu(app: &mut App, response: &egui::Response, id: Id) {
                 }
             }
         }
+        if menu::item(ui, t!("Events"), menu::Tail::Icon(Icon::Calendar)).clicked() {
+            gates::open(app, gates::Gate::Events { guild: id, draft: None });
+            ui.close();
+        }
+        if menu::item(ui, t!("Channels & Roles"), menu::Tail::None).clicked() {
+            gates::open(app, gates::Gate::Onboarding { guild: id, picked: None, page: 0 });
+            ui.close();
+        }
         menu::separator(ui);
         menu::notifications(app, ui, id, None);
         hide_muted_item(app, ui, id);
@@ -820,6 +829,14 @@ fn rail(app: &mut App, ui: &mut egui::Ui) {
             .clicked()
             {
                 app.modal = Some(crate::app::Modal::AddServer { invite: String::new(), name: String::new() });
+            }
+            if rail_item(app, ui, false, false, 0, t!("Discover"), |_, ui, rect, r| {
+                ui.painter().rect_filled(rect, r, p.selected);
+                icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(20.0)), Icon::Compass, p.green);
+            })
+            .clicked()
+            {
+                gates::open(app, gates::Gate::Discover { query: String::new(), asked: String::new() });
             }
         });
 }
@@ -995,6 +1012,12 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                 // With "Manage Channels", channels and categories drag to
                 // new places, as in Discord; the rows seen are where they
                 // can land.
+                let (rect, response) = row(ui, 32.0, false);
+                icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Calendar, p.muted);
+                ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Events"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
+                if response.clicked() {
+                    gates::open(app, gates::Gate::Events { guild, draft: None });
+                }
                 let draggable = app.guild(guild).is_some_and(|g| g.my_permissions(app.me_id()) & MANAGE_CHANNELS != 0);
                 let mut targets: Vec<(Rect, DropTarget)> = Vec::new();
                 for (category, channels) in ordered_channels(app, guild) {
@@ -1384,6 +1407,16 @@ fn channel_menu(app: &mut App, response: &egui::Response, channel: &Channel) {
                 app.actions.push(Action::JoinVoice { guild, channel: id, ring: false });
                 ui.close();
             }
+            if channel.kind == ChannelKind::Stage && perms & MANAGE_CHANNELS != 0 {
+                if menu::item(ui, t!("Start Stage"), menu::Tail::None).clicked() {
+                    gates::open(app, gates::Gate::Stage { channel: id, topic: String::new() });
+                    ui.close();
+                }
+                if menu::item(ui, t!("End Stage"), menu::Tail::None).clicked() {
+                    app.commands.send(crate::backend::Command::Api { key: "pin".into(), method: "DELETE", path: format!("/stage-instances/{id}"), body: None });
+                    ui.close();
+                }
+            }
         } else if menu::item(ui, t!("Mark As Read"), menu::Tail::None).clicked() {
             app.actions.push(Action::MarkRead(vec![id]));
             ui.close();
@@ -1555,6 +1588,21 @@ fn voice_member(app: &mut App, ui: &mut egui::Ui, guild: Option<Id>, user_id: Id
             if perms & (1 << 24) != 0 && menu::danger(ui, t!("Disconnect"), menu::Tail::None).clicked() {
                 app.commands.send(member(serde_json::json!({ "channel_id": null })));
                 ui.close();
+            }
+            // On a Stage, with Mute Members: bring someone up, or back down.
+            if perms & (1 << 22) != 0
+                && let Some((_, channel)) = app.voice.channel.filter(|(_, c)| app.channel(*c).is_some_and(|c| c.kind == ChannelKind::Stage))
+            {
+                let suppressed = app.voice_stage.get(&user_id).is_none_or(|(suppress, _)| *suppress);
+                let (label, body) = if suppressed {
+                    (t!("Invite to Speak"), serde_json::json!({ "channel_id": channel.to_string(), "suppress": false, "request_to_speak_timestamp": jiff::Timestamp::now().to_string() }))
+                } else {
+                    (t!("Move to Audience"), serde_json::json!({ "channel_id": channel.to_string(), "suppress": true }))
+                };
+                if menu::item(ui, label, menu::Tail::None).clicked() {
+                    app.commands.send(crate::backend::Command::Api { key: "pin".into(), method: "PATCH", path: format!("/guilds/{guild}/voice-states/{user_id}"), body: Some(body) });
+                    ui.close();
+                }
             }
             if perms & (1 << 24) != 0 {
                 let here = app.user_voice_channel(user_id).map(|channel| channel.id);
@@ -2036,6 +2084,7 @@ fn voice_panel(app: &mut App, ui: &mut egui::Ui) {
     let response = response.on_hover_text(if on { t!("Noise Suppression On") } else { t!("Noise Suppression Off") });
     noise_popout(app, &response);
     ui.add_space(2.0);
+    gates::stage_row(app, ui);
     soundboard::buttons(app, ui);
     ui.add_space(6.0);
     let line = ui.cursor().top();

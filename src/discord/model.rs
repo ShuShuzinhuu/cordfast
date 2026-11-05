@@ -612,11 +612,14 @@ pub fn voice_deaf(v: &Value) -> bool {
 pub struct Member {
     pub nick: Option<String>,
     pub roles: Vec<Id>,
+    /// Has not finished the server's verification form yet.
+    pub pending: bool,
 }
 
 impl Member {
     pub fn parse(value: &Value) -> Self {
         Self {
+            pending: value.get("pending").and_then(Value::as_bool).unwrap_or(false),
             nick: string(value, "nick").filter(|n| !n.is_empty()),
             roles: value
                 .get("roles")
