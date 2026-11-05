@@ -79,6 +79,8 @@ pub enum Dispatch {
     /// A server's sounds, as answers to op 31.
     Soundboard { guild: Id, sounds: Vec<super::model::SoundboardSound> },
     SoundboardChanged(Id),
+    /// A bookmark or a reminder came or went, here or on another device.
+    SavedChanged,
     /// An application's suggestions for the option being typed.
     Autocomplete { nonce: String, choices: Vec<(String, Value)> },
     /// A command or button got no answer from its application.
@@ -770,6 +772,7 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
             Some(Dispatch::Soundboard { guild: id("guild_id")?, sounds: d.get("soundboard_sounds")?.as_array()?.iter().filter_map(super::model::SoundboardSound::parse).collect() })
         })()),
         "GUILD_SOUNDBOARD_SOUND_CREATE" | "GUILD_SOUNDBOARD_SOUND_UPDATE" | "GUILD_SOUNDBOARD_SOUND_DELETE" | "GUILD_SOUNDBOARD_SOUNDS_UPDATE" => one(id("guild_id").map(Dispatch::SoundboardChanged)),
+        "SAVED_MESSAGE_CREATE" | "SAVED_MESSAGE_DELETE" => vec![Dispatch::SavedChanged],
         "VOICE_SERVER_UPDATE" => vec![Dispatch::VoiceServer(d.clone())],
         "CALL_CREATE" | "CALL_UPDATE" => vec![Dispatch::Call(d.clone())],
         "CALL_DELETE" => one(id("channel_id").map(Dispatch::CallEnded)),

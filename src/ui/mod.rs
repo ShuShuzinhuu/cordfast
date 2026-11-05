@@ -1398,6 +1398,28 @@ fn channel_menu(app: &mut App, response: &egui::Response, channel: &Channel) {
             ui.ctx().copy_text(format!("https://discord.com/channels/{guild}/{id}"));
             ui.close();
         }
+        if channel.kind == ChannelKind::Thread {
+            let path = format!("/channels/{id}");
+            let api = |method: &'static str, path: String, body: Option<serde_json::Value>| crate::backend::Command::Api { key: "pin".into(), method, path, body };
+            let me = app.me_id();
+            let mine = channel.owner == Some(me);
+            // Manage Threads.
+            let manage = perms & (1 << 34) != 0;
+            menu::separator(ui);
+            let (label, method) = if channel.joined { (t!("Leave Thread"), "DELETE") } else { (t!("Join Thread"), "PUT") };
+            if menu::item(ui, label, menu::Tail::None).clicked() {
+                app.commands.send(api(method, format!("{path}/thread-members/@me?location=Context%20Menu"), None));
+                ui.close();
+            }
+            if (mine || manage) && !channel.archived && menu::item(ui, t!("Close Thread"), menu::Tail::None).clicked() {
+                app.commands.send(api("PATCH", path.clone(), Some(serde_json::json!({ "archived": true }))));
+                ui.close();
+            }
+            if manage && menu::item(ui, if channel.locked { t!("Unlock Thread") } else { t!("Lock Thread") }, menu::Tail::None).clicked() {
+                app.commands.send(api("PATCH", path.clone(), Some(serde_json::json!({ "locked": !channel.locked }))));
+                ui.close();
+            }
+        }
         menu::separator(ui);
         menu::mute(app, ui, menu::Muted::Channel, guild, Some(id));
         if let Some(guild) = guild {
@@ -1624,6 +1646,8 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     }
     let id = channel.id;
     let user = (channel.kind == ChannelKind::Dm).then(|| channel.recipients.first().cloned()).flatten();
+    let group = channel.kind == ChannelKind::GroupDm;
+    let group_name = channel.name.clone();
     response.context_menu(|ui| {
         menu::begin(ui);
         if menu::item(ui, t!("Mark As Read"), menu::Tail::None).clicked() {
@@ -1636,7 +1660,25 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             menu::separator(ui);
         }
         menu::mute(app, ui, menu::Muted::Conversation, None, Some(id));
-        if menu::item(ui, t!("Close DM"), menu::Tail::None).clicked() {
+        if group {
+            if menu::item(ui, t!("Edit Group"), menu::Tail::None).clicked() {
+                app.modal = Some(crate::app::Modal::GroupName { channel: id, name: group_name.clone() });
+                ui.close();
+            }
+            if menu::item(ui, t!("Add Friends to DM"), menu::Tail::None).clicked() {
+                app.modal = Some(crate::app::Modal::GroupAdd { channel: id, picked: Vec::new(), filter: String::new() });
+                ui.close();
+            }
+            if menu::danger(ui, t!("Leave Group"), menu::Tail::None).clicked() {
+                app.modal = Some(crate::app::Modal::Confirm {
+                    title: t!("Leave Group").into(),
+                    body: t!("Are you sure you want to leave this group?").into(),
+                    button: t!("Leave Group").into(),
+                    then: crate::app::Confirmed::LeaveGroup { channel: id },
+                });
+                ui.close();
+            }
+        } else if menu::item(ui, t!("Close DM"), menu::Tail::None).clicked() {
             app.actions.push(Action::CloseDm(id));
             ui.close();
         }

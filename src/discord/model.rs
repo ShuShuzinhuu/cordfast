@@ -252,6 +252,11 @@ pub struct Channel {
     pub slowmode: u32,
     /// A voice channel's status, the line under its name ("Ranked games").
     pub status: Option<String>,
+    /// A group's owner, or who started a thread.
+    pub owner: Option<Id>,
+    pub locked: bool,
+    /// Someone who is no friend wrote: waits for Accept or Ignore.
+    pub message_request: bool,
 }
 
 impl Channel {
@@ -312,6 +317,9 @@ impl Channel {
             slowmode: value.get("rate_limit_per_user").and_then(Value::as_u64).unwrap_or(0) as u32,
             status: string(value, "status").filter(|s| !s.trim().is_empty()),
             joined: value.get("member").is_some_and(|m| !m.is_null()),
+            owner: field_sf(value, "owner_id"),
+            locked: value.pointer("/thread_metadata/locked").and_then(Value::as_bool).unwrap_or(false),
+            message_request: value.get("is_message_request").and_then(Value::as_bool).unwrap_or(false),
             archived: value
                 .pointer("/thread_metadata/archived")
                 .and_then(Value::as_bool)
@@ -744,6 +752,8 @@ pub struct Message {
     /// MessageLogger: earlier texts, oldest first.
     pub edits: Vec<String>,
     pub pinned: bool,
+    /// 1 crossposted, 4 embeds suppressed, 4096 silent, 8192 a voice message.
+    pub flags: u64,
     pub poll: Option<Poll>,
     pub forwarded: bool,
     /// Buttons, menus, and the whole layout of a Components V2 message.
@@ -981,6 +991,7 @@ impl Message {
             deleted: false,
             edits: Vec::new(),
             pinned: value.get("pinned").and_then(Value::as_bool).unwrap_or(false),
+            flags: value.get("flags").and_then(Value::as_u64).unwrap_or(0),
             poll: value.get("poll").and_then(Poll::parse),
             forwarded: false,
             components: super::components::Component::parse_all(value),

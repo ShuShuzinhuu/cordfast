@@ -144,9 +144,11 @@ impl Api {
         nonce: &str,
         reply_to: Option<Id>,
         ping_reply: bool,
+        silent: bool,
         files: Vec<crate::backend::Upload>,
     ) -> Result<()> {
-        let mut body = json!({ "content": content, "nonce": nonce, "tts": false, "flags": 0 });
+        // SUPPRESS_NOTIFICATIONS, what "@silent" asks for.
+        let mut body = json!({ "content": content, "nonce": nonce, "tts": false, "flags": if silent { 4096 } else { 0 } });
         if let Some(reply) = reply_to {
             body["message_reference"] =
                 json!({ "channel_id": channel.to_string(), "message_id": reply.to_string() });
@@ -389,7 +391,7 @@ impl Api {
     }
 }
 
-fn percent_encode(text: &str) -> String {
+pub fn percent_encode(text: &str) -> String {
     let mut out = String::new();
     for byte in text.bytes() {
         if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~' | b':') {

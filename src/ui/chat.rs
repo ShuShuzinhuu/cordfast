@@ -779,11 +779,18 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
     }
 }
 
+/// A call whose answer only matters when it fails.
+fn call(method: &'static str, path: String, body: Option<serde_json::Value>) -> crate::backend::Command {
+    crate::backend::Command::Api { key: "pin".into(), method, path, body }
+}
+
 /// What you may do with a message here.
 struct MessageActions {
     edit: bool,
     delete: bool,
     pin: bool,
+    /// Manage Messages: other people's reactions and embeds.
+    manage: bool,
 }
 
 impl MessageActions {
@@ -801,6 +808,7 @@ impl MessageActions {
             edit: mine && matches!(message.kind, 0 | 19) && !message.deleted,
             delete: (mine || manage) && !message.deleted,
             pin: guild.is_none() || perms.is_some_and(|perms| perms & PIN_MESSAGES != 0),
+            manage,
         }
     }
 }
@@ -858,6 +866,12 @@ fn message_menu(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
         app.modal = Some(forward_modal(message, guild));
         ui.close();
     }
+    if !message.reactions.is_empty() && item(ui, t!("View Reactions"), Tail::Icon(Icon::Reaction)).clicked() {
+        let emojis: Vec<_> = message.reactions.iter().map(|r| r.emoji.clone()).collect();
+        ask_reactors(app, message.channel_id, message.id, &emojis[0]);
+        app.modal = Some(crate::app::Modal::Reactions { channel: message.channel_id, message: message.id, emojis, picked: 0, manage: actions.manage });
+        ui.close();
+    }
     if guild.is_some() && item(ui, t!("Create Thread"), Tail::Icon(Icon::Thread)).clicked() {
         let name: String = message.content.chars().take(40).collect();
         app.modal = Some(crate::app::Modal::NewThread {
@@ -867,6 +881,28 @@ fn message_menu(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
         });
         ui.close();
     }
+    let saved_path = format!("/users/@me/saved-messages/{}/{}", message.channel_id, message.id);
+    let bookmarked = app.saved.contains(&message.id);
+    if item(ui, if bookmarked { t!("Remove Bookmark") } else { t!("Bookmark Message") }, Tail::None).clicked() {
+        if bookmarked {
+            app.saved.remove(&message.id);
+            app.commands.send(call("DELETE", saved_path.clone(), None));
+        } else {
+            app.saved.insert(message.id);
+            app.commands.send(call("PUT", saved_path.clone(), Some(serde_json::json!({ "due_at": null }))));
+        }
+        ui.close();
+    }
+    super::menu::submenu(ui, t!("Remind Me"), |ui| {
+        for (label, hours) in [(t!("In 1 hour"), 1), (t!("In 3 hours"), 3), (t!("Tomorrow"), 24)] {
+            if super::menu::item(ui, label, Tail::None).clicked() {
+                let due = jiff::Timestamp::now().checked_add(jiff::SignedDuration::from_hours(hours)).map(|at| at.to_string()).unwrap_or_default();
+                app.commands.send(call("PUT", saved_path.clone(), Some(serde_json::json!({ "due_at": due }))));
+                app.notify(t!("Reminder added."));
+                ui.close();
+            }
+        }
+    });
     if !message.content.is_empty() && item(ui, t!("Copy Text"), Tail::None).clicked() {
         ui.ctx().copy_text(message.content.clone());
         ui.close();
@@ -883,6 +919,25 @@ fn message_menu(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
             });
             ui.close();
         }
+    }
+    // Announcements go out to the channels that follow them.
+    let announcing = app.channel(message.channel_id).is_some_and(|c| c.kind == crate::discord::model::ChannelKind::Announcement);
+    if announcing && message.flags & 1 == 0 && (mine || actions.manage) && item(ui, t!("Publish"), Tail::None).clicked() {
+        app.commands.send(call("POST", format!("/channels/{}/messages/{}/crosspost", message.channel_id, message.id), None));
+        ui.close();
+    }
+    if !message.embeds.is_empty() && message.flags & 4 == 0 && (mine || actions.manage) && item(ui, t!("Remove Embeds"), Tail::None).clicked() {
+        app.commands.send(call("PATCH", format!("/channels/{}/messages/{}", message.channel_id, message.id), Some(serde_json::json!({ "flags": message.flags | 4 }))));
+        ui.close();
+    }
+    if !message.reactions.is_empty() && actions.manage && item(ui, t!("Remove All Reactions"), Tail::None).clicked() {
+        app.modal = Some(crate::app::Modal::Confirm {
+            title: t!("Remove All Reactions").into(),
+            body: t!("Are you sure you want to remove all the reactions from this message?").into(),
+            button: t!("Remove All Reactions").into(),
+            then: crate::app::Confirmed::RemoveAllReactions { channel: message.channel_id, message: message.id },
+        });
+        ui.close();
     }
     super::menu::separator(ui);
     if !mine && item(ui, t!("Mark Unread"), Tail::None).clicked() {
@@ -920,6 +975,13 @@ fn message_menu(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
     }
     super::menu::separator(ui);
     super::menu::copy_id(ui, t!("Copy Message ID"), message.id);
+}
+
+/// Asks who reacted with `emoji`, for the open dialog.
+fn ask_reactors(app: &mut App, channel: Id, message: Id, emoji: &crate::discord::model::Emoji) {
+    app.reactors = None;
+    let name = crate::discord::rest::percent_encode(&emoji.api_name());
+    app.commands.send(crate::admin::get("reactors", format!("/channels/{channel}/messages/{message}/reactions/{name}?limit=100&type=0")));
 }
 
 /// Discord's "Delete Message" question (Shift skips it).
@@ -1674,9 +1736,20 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             let (rect, response) = ui.allocate_exact_size(vec2(40.0, BOX), Sense::click());
             ui.painter().circle_filled(rect.center(), 11.0, if response.hovered() { p.strong } else { p.muted });
             crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(14.0)), crate::icons::Icon::Plus, p.composer);
-            if response.on_hover_text(t!("Upload a File (or drag it onto the window)")).clicked() {
-                app.actions.push(Action::AttachFiles);
-            }
+            let response = response.on_hover_text(t!("Upload a File (or drag it onto the window)"));
+            let polls = channel.guild_id.and_then(|g| app.guild(g)).is_none_or(|g| g.channel_permissions(app.me_id(), channel) & (1 << 49) != 0);
+            let thread_of = channel.id;
+            egui::Popup::menu(&response).show(|ui| {
+                super::menu::begin(ui);
+                if super::menu::item(ui, t!("Upload a File"), super::menu::Tail::None).clicked() {
+                    app.actions.push(Action::AttachFiles);
+                    ui.close();
+                }
+                if polls && super::menu::item(ui, t!("Create Poll"), super::menu::Tail::None).clicked() {
+                    app.modal = Some(crate::app::Modal::NewPoll { channel: thread_of, question: String::new(), answers: vec![String::new(), String::new()], hours: 24, multiple: false });
+                    ui.close();
+                }
+            });
             ui.add_space(4.0);
             // Settings → Appearance → Chat Box hides any of the three.
             let buttons = [app.settings.sticker_button, app.settings.gif_button, app.settings.emoji_button].iter().filter(|b| **b).count();
@@ -2196,6 +2269,7 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                                 nonce: crate::discord::model::now_snowflake().to_string(),
                                 reply_to: None,
                                 ping_reply: false,
+                                silent: false,
                                 files: Vec::new(),
                             });
                         }
@@ -2402,6 +2476,144 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     // Backup codes are eight characters, the app's are six.
                     let mfa_type = if *password { "password" } else if code.trim().chars().filter(char::is_ascii_alphanumeric).count() > 6 { "backup" } else { "totp" };
                     app.commands.send(crate::backend::Command::MfaFinish { ticket: ticket.clone(), mfa_type, code: code.trim().to_owned(), key: key.clone(), method, path: path.clone(), body: body.clone() });
+                    keep = false;
+                }
+            }
+            crate::app::Modal::Reactions { channel, message, emojis, picked, manage } => {
+                ui.label(RichText::new(t!("Reactions")).font(theme::strong(20.0)).color(p.strong));
+                ui.add_space(8.0);
+                ui.horizontal_wrapped(|ui| {
+                    let mut choose = None;
+                    for (i, emoji) in emojis.iter().enumerate() {
+                        let (rect, response) = ui.allocate_exact_size(vec2(44.0, 32.0), Sense::click());
+                        ui.painter().rect_filled(rect, 6.0, if i == *picked { p.selected } else if response.hovered() { p.hover } else { p.sidebar });
+                        let shown = Rect::from_center_size(rect.center(), Vec2::splat(20.0));
+                        match emoji.url() {
+                            Some(url) => {
+                                if let Some((texture, _)) = app.images.get(&url, 40) {
+                                    egui::Image::from_texture((texture, shown.size())).paint_at(ui, shown);
+                                }
+                            }
+                            None => super::markdown::paint_twemoji(app, ui, &emoji.name, shown),
+                        }
+                        if response.clicked() && i != *picked {
+                            choose = Some(i);
+                        }
+                    }
+                    if let Some(i) = choose {
+                        *picked = i;
+                        ask_reactors(app, *channel, *message, &emojis[i]);
+                    }
+                });
+                ui.add_space(8.0);
+                ScrollArea::vertical().max_height(320.0).show(ui, |ui| {
+                    let Some(users) = app.reactors.clone() else {
+                        ui.spinner();
+                        return;
+                    };
+                    let me = app.me_id();
+                    for user in users {
+                        ui.horizontal(|ui| {
+                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(28.0), Sense::hover());
+                            app.images.circle(ui, rect, Some(&user.avatar_url()), &initials(user.display_name()), 14.0);
+                            ui.label(RichText::new(user.display_name()).color(p.strong));
+                            ui.label(RichText::new(&user.username).size(12.0).color(p.muted));
+                            if (*manage || user.id == me) && ui.small_button("×").on_hover_text(t!("Remove")).clicked() {
+                                let name = crate::discord::rest::percent_encode(&emojis[*picked].api_name());
+                                app.commands.send(call("DELETE", format!("/channels/{channel}/messages/{message}/reactions/{name}/0/{}", user.id), None));
+                                if let Some(list) = &mut app.reactors {
+                                    list.retain(|u| u.id != user.id);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+            crate::app::Modal::NewPoll { channel, question, answers, hours, multiple } => {
+                own_footer = true;
+                ui.label(RichText::new(t!("Create Poll")).font(theme::strong(20.0)).color(p.strong));
+                ui.add_space(10.0);
+                ui.label(RichText::new(t!("Question").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                ui.add(egui::TextEdit::singleline(question).char_limit(300).desired_width(f32::INFINITY));
+                ui.add_space(10.0);
+                ui.label(RichText::new(t!("Answers").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                let mut remove = None;
+                for (i, answer) in answers.iter_mut().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.add(egui::TextEdit::singleline(answer).char_limit(55).desired_width(370.0));
+                        if ui.small_button("×").clicked() {
+                            remove = Some(i);
+                        }
+                    });
+                }
+                if let Some(i) = remove.filter(|_| answers.len() > 1) {
+                    answers.remove(i);
+                }
+                if answers.len() < 10 && super::form::button(ui, t!("Add another answer"), super::form::Kind::Secondary).clicked() {
+                    answers.push(String::new());
+                }
+                ui.add_space(10.0);
+                // The durations of the bundle's picker, in hours.
+                const HOURS: [u64; 7] = [1, 4, 8, 24, 72, 168, 336];
+                ui.label(RichText::new(t!("Duration").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                let label = |hours: u64| if hours < 24 { tn!(hours, "{count} hour", "{count} hours") } else { tn!(hours / 24, "{count} day", "{count} days") };
+                let options: Vec<String> = HOURS.iter().map(|h| label(*h)).collect();
+                if let Some(i) = super::form::select(ui, "poll-duration", &label(*hours), &options, 200.0) {
+                    *hours = HOURS[i];
+                }
+                ui.add_space(10.0);
+                super::form::switch_row(ui, multiple, t!("Allow Multiple Answers"), "");
+                ui.add_space(12.0);
+                let filled: Vec<&String> = answers.iter().filter(|a| !a.trim().is_empty()).collect();
+                let ready = !question.trim().is_empty() && !filled.is_empty();
+                ui.horizontal(|ui| {
+                    if super::form::button(ui, t!("Cancel"), super::form::Kind::Secondary).clicked() {
+                        keep = false;
+                    }
+                    if ui.add_enabled(ready, egui::Button::new(RichText::new(t!("Post")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                        let list: Vec<serde_json::Value> = filled.iter().map(|text| serde_json::json!({ "poll_media": { "text": text.trim() } })).collect();
+                        app.commands.send(call("POST", format!("/channels/{channel}/messages"), Some(serde_json::json!({ "content": "", "poll": { "question": { "text": question.trim() }, "answers": list, "duration": *hours, "allow_multiselect": *multiple, "layout_type": 1 } }))));
+                        keep = false;
+                    }
+                });
+            }
+            crate::app::Modal::GroupName { channel, name } => {
+                ui.label(RichText::new(t!("Edit Group")).font(theme::strong(18.0)).color(p.strong));
+                ui.label(RichText::new(t!("Group Name").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
+                ui.add(egui::TextEdit::singleline(name).desired_width(f32::INFINITY));
+                if ui.add(egui::Button::new(RichText::new(t!("Save")).color(Color32::WHITE)).fill(p.accent)).clicked() || enter {
+                    app.commands.send(call("PATCH", format!("/channels/{channel}"), Some(serde_json::json!({ "name": name.trim() }))));
+                    keep = false;
+                }
+            }
+            crate::app::Modal::GroupAdd { channel, picked, filter } => {
+                ui.label(RichText::new(t!("Add Friends to DM")).font(theme::strong(18.0)).color(p.strong));
+                ui.add(egui::TextEdit::singleline(filter).hint_text(t!("Search")).desired_width(f32::INFINITY));
+                ui.add_space(6.0);
+                let already: Vec<Id> = app.channel(*channel).map(|c| c.recipients.iter().map(|u| u.id).collect()).unwrap_or_default();
+                let needle = filter.to_lowercase();
+                let mut friends: Vec<crate::discord::model::User> = app.relationships.values().filter(|r| r.kind == 1).map(|r| r.user.clone()).filter(|u| !already.contains(&u.id) && u.display_name().to_lowercase().contains(&needle)).collect();
+                friends.sort_by_key(|u| u.display_name().to_lowercase());
+                ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                    for user in friends {
+                        let mut on = picked.contains(&user.id);
+                        ui.horizontal(|ui| {
+                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(28.0), Sense::hover());
+                            app.images.circle(ui, rect, Some(&user.avatar_url()), &initials(user.display_name()), 14.0);
+                            if ui.checkbox(&mut on, user.display_name()).changed() {
+                                if on {
+                                    picked.push(user.id);
+                                } else {
+                                    picked.retain(|u| *u != user.id);
+                                }
+                            }
+                        });
+                    }
+                });
+                if ui.add_enabled(!picked.is_empty(), egui::Button::new(RichText::new(t!("Add")).color(Color32::WHITE)).fill(p.accent)).clicked() {
+                    for user in picked.iter() {
+                        app.commands.send(call("PUT", format!("/channels/{channel}/recipients/{user}"), None));
+                    }
                     keep = false;
                 }
             }

@@ -195,8 +195,12 @@ pub fn inbox(app: &mut App, ctx: &egui::Context) {
     let left = (button.right() + 12.0 - INBOX_WIDTH).clamp(screen.left() + 8.0, (screen.right() - INBOX_WIDTH - 8.0).max(screen.left() + 8.0));
     let height = (screen.height() * 0.8).min(640.0);
     let mut close = ctx.input(|i| i.key_pressed(egui::Key::Escape));
-    if inbox.tab == InboxTab::Mentions && inbox.mentions.is_none() && !ctx.data(|d| d.get_temp::<bool>(egui::Id::new("inbox-asked"))).unwrap_or(false) {
-        app.commands.send(crate::admin::get("inbox", "/users/@me/mentions?limit=25&roles=true&everyone=true".into()));
+    if inbox.tab != InboxTab::Unread && inbox.mentions.is_none() && !ctx.data(|d| d.get_temp::<bool>(egui::Id::new("inbox-asked"))).unwrap_or(false) {
+        app.commands.send(match inbox.tab {
+            InboxTab::Bookmarks => crate::admin::get("inbox-saved", "/users/@me/saved-messages/bookmarks?limit=25".into()),
+            InboxTab::Reminders => crate::admin::get("inbox-saved", "/users/@me/saved-messages".into()),
+            _ => crate::admin::get("inbox", "/users/@me/mentions?limit=25&roles=true&everyone=true".into()),
+        });
         ctx.data_mut(|d| d.insert_temp(egui::Id::new("inbox-asked"), true));
     }
     let area = egui::Area::new(egui::Id::new("inbox"))
@@ -221,10 +225,10 @@ pub fn inbox(app: &mut App, ctx: &egui::Context) {
                         ui.add_space(10.0);
                         ui.horizontal(|ui| {
                             ui.spacing_mut().item_spacing.x = 6.0;
-                            for (tab, label) in [(InboxTab::Unread, t!("Unreads")), (InboxTab::Mentions, t!("Mentions"))] {
+                            for (tab, label) in [(InboxTab::Mentions, t!("Mentions")), (InboxTab::Unread, t!("Unreads")), (InboxTab::Bookmarks, t!("Bookmarks")), (InboxTab::Reminders, t!("Reminders"))] {
                                 if tab_pill(ui, label, inbox.tab == tab).clicked() && inbox.tab != tab {
                                     inbox.tab = tab;
-                                    if tab == InboxTab::Mentions {
+                                    if tab != InboxTab::Unread {
                                         inbox.mentions = None;
                                         ui.data_mut(|d| d.insert_temp(egui::Id::new("inbox-asked"), false));
                                     }
@@ -244,7 +248,17 @@ pub fn inbox(app: &mut App, ctx: &egui::Context) {
                                     }
                                 }
                                 InboxTab::Mentions => {
-                                    if mentions(app, ui, inbox.mentions.as_deref()) {
+                                    if mentions(app, ui, inbox.mentions.as_deref(), (t!("No recent mentions"), t!("When someone mentions you, it shows up here."))) {
+                                        close = true;
+                                    }
+                                }
+                                InboxTab::Bookmarks => {
+                                    if mentions(app, ui, inbox.mentions.as_deref(), (t!("You have no Bookmarks!"), "")) {
+                                        close = true;
+                                    }
+                                }
+                                InboxTab::Reminders => {
+                                    if mentions(app, ui, inbox.mentions.as_deref(), (t!("You have no Reminders!"), "")) {
                                         close = true;
                                     }
                                 }
@@ -359,7 +373,7 @@ fn unread(app: &mut App, ui: &mut egui::Ui) -> bool {
 
 /// Recent mentions: where each was (channel and server), who and when, and
 /// the message; a click goes to it. True when one was opened.
-fn mentions(app: &mut App, ui: &mut egui::Ui, list: Option<&[crate::discord::model::Message]>) -> bool {
+fn mentions(app: &mut App, ui: &mut egui::Ui, list: Option<&[crate::discord::model::Message]>, empty: (&str, &str)) -> bool {
     let p = theme::p();
     let Some(list) = list else {
         ui.add_space(30.0);
@@ -369,8 +383,8 @@ fn mentions(app: &mut App, ui: &mut egui::Ui, list: Option<&[crate::discord::mod
     if list.is_empty() {
         ui.add_space(40.0);
         ui.vertical_centered(|ui| {
-            ui.label(RichText::new(t!("No recent mentions")).font(theme::strong(16.0)).color(p.strong));
-            ui.label(RichText::new(t!("When someone mentions you, it shows up here.")).size(13.5).color(p.muted));
+            ui.label(RichText::new(empty.0).font(theme::strong(16.0)).color(p.strong));
+            ui.label(RichText::new(empty.1).size(13.5).color(p.muted));
         });
         return false;
     }

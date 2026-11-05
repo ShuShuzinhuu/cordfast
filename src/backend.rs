@@ -44,6 +44,8 @@ pub enum Command {
         nonce: String,
         reply_to: Option<Id>,
         ping_reply: bool,
+        /// "@silent": nobody gets notified.
+        silent: bool,
         files: Vec<Upload>,
     },
     Edit { channel: Id, message: Id, content: String },
@@ -834,9 +836,9 @@ async fn api_call(api: Api, events: Events, command: Command) {
                 error: format!("{error:#}"),
             }),
         },
-        Command::Send { channel, content, nonce, reply_to, ping_reply, files } => {
+        Command::Send { channel, content, nonce, reply_to, ping_reply, silent, files } => {
             if let Err(error) = api
-                .send_message(channel, &content, &nonce, reply_to, ping_reply, files)
+                .send_message(channel, &content, &nonce, reply_to, ping_reply, silent, files)
                 .await
             {
                 events.send(Event::SendFailed {

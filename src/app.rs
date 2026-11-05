@@ -220,6 +220,7 @@ pub struct Place {
 /// unread messages, and recent mentions everywhere.
 pub struct Inbox {
     pub tab: InboxTab,
+    /// The list of the tab showing, when it is not Unreads.
     pub mentions: Option<Vec<Message>>,
 }
 
@@ -235,6 +236,8 @@ pub enum Anchor {
 pub enum InboxTab {
     Unread,
     Mentions,
+    Bookmarks,
+    Reminders,
 }
 
 /// A small dialog over everything.
@@ -260,6 +263,14 @@ pub enum Modal {
     /// A second factor for a call Discord held: the code, or the password
     /// when that is all the account has.
     Mfa { ticket: String, password: bool, code: String, key: String, method: &'static str, path: String, body: Option<serde_json::Value> },
+    /// "View Reactions": who reacted with each emoji.
+    Reactions { channel: Id, message: Id, emojis: Vec<crate::discord::model::Emoji>, picked: usize, manage: bool },
+    /// "Create Poll".
+    NewPoll { channel: Id, question: String, answers: Vec<String>, hours: u64, multiple: bool },
+    /// "Edit Group": a group's name.
+    GroupName { channel: Id, name: String },
+    /// "Add Friends to DM".
+    GroupAdd { channel: Id, picked: Vec<Id>, filter: String },
     /// An upload card's pencil: the file's name, description and spoiler.
     Attachment { index: usize, upload: crate::backend::Upload },
 }
@@ -277,6 +288,8 @@ pub enum Confirmed {
     SwitchVoice { guild: Option<Id>, channel: Id },
     /// Settings → Log Out.
     Logout,
+    RemoveAllReactions { channel: Id, message: Id },
+    LeaveGroup { channel: Id },
     /// Server Boost: a free slot given to a server.
     ApplyBoost { guild: Id, slot: Id },
     /// Server Boost: a slot taken from one server for another; Discord
@@ -309,6 +322,11 @@ impl Confirmed {
             Self::RemoveFriend { user } => app.actions.push(Action::Relationship { user, kind: None }),
             Self::SwitchVoice { guild, channel } => app.commands.send(Command::Call { guild, channel, ring: false }),
             Self::Logout => app.actions.push(Action::Logout),
+            Self::RemoveAllReactions { channel, message } => app.commands.send(api("pin", "DELETE", format!("/channels/{channel}/messages/{message}/reactions"), None)),
+            Self::LeaveGroup { channel } => {
+                app.commands.send(api("pin", "DELETE", format!("/channels/{channel}?silent=false"), None));
+                app.actions.push(Action::CloseDm(channel));
+            }
             Self::ApplyBoost { guild, slot } => app.commands.send(apply_boost(guild, slot)),
             Self::TransferBoost { from, boost, to, slot } => app.commands.send(api(&format!("boost-transfer:{slot}:{to}"), "DELETE", format!("/guilds/{from}/premium/subscriptions/{boost}"), None)),
             Self::DeleteRole { guild, role } => {
@@ -527,6 +545,11 @@ pub struct App {
     pub show_dm_profile: bool,
     /// A voice channel showing its text chat instead of the people.
     pub voice_chat: bool,
+    /// Messages bookmarked, to name the menu's item; asked once connected.
+    pub saved: HashSet<Id>,
+    pub saved_asked: bool,
+    /// Who reacted with the emoji the open dialog shows.
+    pub reactors: Option<Vec<crate::discord::model::User>>,
     pub soundboard: crate::ui::soundboard::Board,
     /// The emoji someone in the call just sent, and since when.
     pub voice_effects: HashMap<Id, (Option<Id>, Option<String>, Instant)>,
@@ -718,6 +741,9 @@ impl App {
             guild_profiles: HashMap::new(),
             show_dm_profile: true,
             voice_chat: false,
+            saved: HashSet::new(),
+            saved_asked: false,
+            reactors: None,
             soundboard: Default::default(),
             voice_effects: HashMap::new(),
             load: (Instant::now(), 0, 0),
@@ -1115,6 +1141,10 @@ impl App {
             list.retain(|(_, at)| now.duration_since(*at) < Duration::from_secs(10));
             !list.is_empty()
         });
+        if !self.saved_asked && self.connection == Connection::Connected {
+            self.saved_asked = true;
+            self.commands.send(crate::admin::get("saved-ids", "/users/@me/saved-messages?bookmark_ids=true".into()));
+        }
         if !self.voice_effects.is_empty() {
             self.voice_effects.retain(|_, (.., at)| at.elapsed() < Duration::from_secs(3));
             if let Some(ctx) = ctx {
@@ -1631,6 +1661,7 @@ impl App {
                 self.soundboard.sounds.insert(guild, sounds);
             }
             Dispatch::SoundboardChanged(guild) => self.soundboard.changed(guild),
+            Dispatch::SavedChanged => self.saved_asked = false,
             Dispatch::VoiceChannelStatus { channel, status } => {
                 if let Some(c) = self.guilds.iter_mut().flat_map(|g| g.channels.iter_mut()).find(|c| c.id == channel) {
                     c.status = status;
@@ -2212,6 +2243,21 @@ impl App {
             return;
         }
         if key == "soundboard-sent" {
+            return;
+        }
+        if key == "saved-ids" {
+            self.saved = value.get("bookmark_ids").and_then(serde_json::Value::as_array).into_iter().flatten().filter_map(|id| id.as_str()?.parse().ok()).collect();
+            return;
+        }
+        if key == "inbox-saved" {
+            if let Some(inbox) = &mut self.inbox {
+                let list = value.get("results").or_else(|| value.get("reminders")).and_then(serde_json::Value::as_array);
+                inbox.mentions = Some(list.into_iter().flatten().filter_map(|saved| Message::parse(saved.get("message")?)).collect());
+            }
+            return;
+        }
+        if key == "reactors" {
+            self.reactors = Some(value.as_array().into_iter().flatten().filter_map(crate::discord::model::User::parse).collect());
             return;
         }
         if let Some((key, _)) = self.settings_data.get_key_value(key) {
@@ -3399,6 +3445,11 @@ impl App {
     fn send(&mut self) {
         let Some(channel) = self.selected_channel else { return };
         let mut content = self.composer.trim().to_owned();
+        // "@silent" goes as a flag, not as text.
+        let silent = content.starts_with("@silent ");
+        if silent {
+            content = content["@silent ".len()..].trim_start().to_owned();
+        }
         let files = std::mem::take(&mut self.files);
         if content.is_empty() && files.is_empty() {
             return;
@@ -3450,6 +3501,7 @@ impl App {
                 pinned: false,
                 poll: None,
                 forwarded: false,
+                flags: 0,
                 components: Vec::new(),
                 origin: None,
                 interaction: None,
@@ -3457,7 +3509,7 @@ impl App {
         }
         self.last_typing = None;
         let ping_reply = !self.plugin(Plugin::NoReplyMention);
-        self.commands.send(Command::Send { channel, content, nonce, reply_to, ping_reply, files });
+        self.commands.send(Command::Send { channel, content, nonce, reply_to, ping_reply, silent, files });
     }
 
     /// Tells the channel we are typing, at most every eight seconds.
