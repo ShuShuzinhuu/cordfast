@@ -436,9 +436,9 @@ fn spans_view(
                     }
                     continue;
                 }
-                Kind::Emoji { id, animated: _ } => {
+                Kind::Emoji { id, animated } => {
                     let px = if jumbo { 48.0 } else { size * 1.45 };
-                    let url = format!("https://cdn.discordapp.com/emojis/{id}.png?size={}", if jumbo { 96 } else { 48 });
+                    let url = crate::discord::model::emoji_url(*id, *animated, if jumbo { 96 } else { 48 });
                     let (rect, response) = ui.allocate_exact_size(vec2(px, px), Sense::hover());
                     let ppp = ui.ctx().pixels_per_point();
                     match app.images.get(&url, (px * ppp) as u32) {

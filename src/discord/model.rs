@@ -44,6 +44,31 @@ fn bits(value: &Value, key: &str) -> u64 {
 
 /// A sticker's picture by its format: Lottie's JSON (Discord's own packs,
 /// drawn here), the GIF, or the PNG (an APNG's first frame).
+#[cfg(test)]
+#[test]
+fn tenor_videos_map_to_their_gif() {
+    assert_eq!(tenor_gif("https://media.tenor.com/x8v1oNUOmg4AAAPo/rickroll-roll.mp4").as_deref(), Some("https://media.tenor.com/x8v1oNUOmg4AAAAd/rickroll-roll.gif"));
+    assert_eq!(tenor_gif("https://example.com/a.mp4"), None);
+}
+
+/// "Play animated emoji", the account's setting, for the code without the app.
+pub static ANIMATE_EMOJI: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
+/// A custom emoji's picture, moving if it is animated and the setting allows.
+pub fn emoji_url(id: Id, animated: bool, size: u32) -> String {
+    let moving = animated && ANIMATE_EMOJI.load(std::sync::atomic::Ordering::Relaxed);
+    format!("https://cdn.discordapp.com/emojis/{id}.{}?size={size}", if moving { "gif" } else { "png" })
+}
+
+/// The GIF of a Tenor video: the same id with the format's suffix. Link
+/// embeds (`gifv`) bring an mp4, which this client does not play yet.
+pub fn tenor_gif(video: &str) -> Option<String> {
+    let rest = video.strip_prefix("https://media.tenor.com/")?;
+    let (id, name) = rest.split_once('/')?;
+    let id = id.strip_suffix("AAAPo")?;
+    Some(format!("https://media.tenor.com/{id}AAAAd/{}.gif", name.strip_suffix(".mp4")?))
+}
+
 pub fn sticker_url(id: Id, format: u64) -> String {
     match format {
         3 => format!("https://cdn.discordapp.com/stickers/{id}.json"),
@@ -127,6 +152,15 @@ impl User {
 
     pub fn display_name(&self) -> &str {
         self.global_name.as_deref().unwrap_or(&self.username)
+    }
+
+    /// The avatar at `size`, moving when the account has an animated one: for
+    /// the profile, and a row under the pointer, where Discord plays it.
+    pub fn avatar_moving(&self, size: u32) -> String {
+        match &self.avatar {
+            Some(hash) if hash.starts_with("a_") => format!("https://cdn.discordapp.com/avatars/{}/{hash}.gif?size={size}", self.id),
+            _ => self.avatar_url().replace("size=64", &format!("size={size}")),
+        }
     }
 
     /// A 64-pixel avatar, or Discord's default one for the account.
@@ -746,8 +780,7 @@ impl Emoji {
     }
 
     pub fn url(&self) -> Option<String> {
-        self.id
-            .map(|id| format!("https://cdn.discordapp.com/emojis/{id}.png?size=48"))
+        self.id.map(|id| emoji_url(id, self.animated, 48))
     }
 }
 
@@ -818,6 +851,13 @@ impl Message {
                         let rich = e.get("type").and_then(Value::as_str) == Some("rich");
                         let image = e.get("image").and_then(media);
                         let thumbnail = e.get("thumbnail").and_then(media);
+                        // A Tenor link moves in the message, as its GIF.
+                        let moving = e.pointer("/video/url").and_then(Value::as_str).filter(|_| e.get("type").and_then(Value::as_str) == Some("gifv")).and_then(tenor_gif).map(|url| {
+                            let side = |key: &str| e.pointer(&format!("/video/{key}")).and_then(Value::as_u64).unwrap_or(0) as u32;
+                            (url, side("width"), side("height"))
+                        });
+                        let thumbnail = if moving.is_some() { None } else { thumbnail };
+                        let image = moving.or(image);
                         let (image, thumbnail) = match (image, thumbnail) {
                             (None, Some(t)) if !rich => (Some(t), None),
                             other => other,

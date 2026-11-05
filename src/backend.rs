@@ -150,7 +150,7 @@ pub enum Event {
     MessagesFailed { channel: Id, error: String },
     SendFailed { channel: Id, nonce: String, error: String },
     Error(String),
-    Image { url: String, image: Option<egui::ColorImage> },
+    Image { url: String, image: Option<Picture> },
     Profile { user: Id, profile: Result<Box<Profile>, String> },
     DmOpened(Channel),
     ForumPosts { forum: Id, posts: Vec<(Channel, Option<Message>)> },
@@ -954,8 +954,10 @@ async fn fetch_image(
     http: &reqwest::Client,
     url: &str,
     max: u32,
-) -> anyhow::Result<egui::ColorImage> {
+) -> anyhow::Result<Picture> {
     // A file waiting to be sent: its picture for the upload card.
+    // A picture only ever drawn still (a grid of stickers) skips its other frames.
+    let (url, still) = url.strip_suffix(STILL).map_or((url, false), |url| (url, true));
     let bytes = match url.strip_prefix("file://") {
         Some(path) => tokio::fs::read(path).await?.into(),
         None => http.get(url).send().await?.error_for_status()?.bytes().await?,
@@ -963,19 +965,122 @@ async fn fetch_image(
     let lottie = url.ends_with(".json");
     tokio::task::spawn_blocking(move || {
         if lottie {
-            return lottie_frame(&bytes, max);
+            return lottie_frames(&bytes, max, still);
         }
-        let mut image = image::load_from_memory(&bytes)?;
-        if image.width() > max || image.height() > max {
-            image = image.resize(max, max, image::imageops::FilterType::Triangle);
-        }
-        let rgba = image.to_rgba8();
-        Ok(egui::ColorImage::from_rgba_unmultiplied(
-            [rgba.width() as usize, rgba.height() as usize],
-            rgba.as_raw(),
-        ))
+        decode_picture(&bytes, max, still)
     })
     .await?
+}
+
+/// Ending a picture's URL: only its first frame is wanted.
+pub const STILL: &str = "#still";
+
+/// A decoded picture: one frame, or an animation's with how long each shows
+/// in milliseconds.
+pub struct Picture {
+    pub frames: Vec<egui::ColorImage>,
+    pub delays: Vec<u32>,
+}
+
+/// Most an animation may hold in memory: past it, frames are dropped evenly
+/// and the ones left show longer, so a long GIF plays coarser, not shorter.
+const ANIMATION_BYTES: usize = 12 << 20;
+/// Most frames, for tiny animations the bytes would not stop.
+const ANIMATION_FRAMES: usize = 300;
+
+/// Frames as they decode, never holding more than the limits.
+struct Reel {
+    max: u32,
+    frames: Vec<egui::ColorImage>,
+    delays: Vec<u32>,
+    stride: usize,
+    seen: usize,
+}
+
+impl Reel {
+    fn new(max: u32) -> Self {
+        Self { max, frames: Vec::new(), delays: Vec::new(), stride: 1, seen: 0 }
+    }
+
+    fn push(&mut self, mut image: image::RgbaImage, delay: u32) {
+        // As browsers read them: a delay too short to mean anything is 100 ms.
+        let delay = if delay < 20 { 100 } else { delay };
+        self.seen += 1;
+        if (self.seen - 1) % self.stride != 0 {
+            if let Some(last) = self.delays.last_mut() {
+                *last += delay;
+            }
+            return;
+        }
+        if image.width() > self.max || image.height() > self.max {
+            let scale = self.max as f32 / image.width().max(image.height()) as f32;
+            let (w, h) = (((image.width() as f32 * scale) as u32).max(1), ((image.height() as f32 * scale) as u32).max(1));
+            image = image::imageops::resize(&image, w, h, image::imageops::FilterType::Triangle);
+        }
+        self.frames.push(egui::ColorImage::from_rgba_unmultiplied([image.width() as usize, image.height() as usize], image.as_raw()));
+        self.delays.push(delay);
+        let bytes: usize = self.frames.iter().map(|f| f.pixels.len() * 4).sum();
+        if bytes > ANIMATION_BYTES || self.frames.len() >= ANIMATION_FRAMES {
+            self.halve();
+        }
+    }
+
+    /// Every other frame goes, its time to the one before.
+    fn halve(&mut self) {
+        let frames = std::mem::take(&mut self.frames);
+        let delays = std::mem::take(&mut self.delays);
+        for (i, frame) in frames.into_iter().enumerate() {
+            if i % 2 == 0 {
+                self.frames.push(frame);
+            }
+        }
+        for pair in delays.chunks(2) {
+            self.delays.push(pair.iter().sum());
+        }
+        self.stride *= 2;
+    }
+
+    fn take(mut self) -> Picture {
+        if self.frames.len() < 2 {
+            self.delays.clear();
+        }
+        Picture { frames: self.frames, delays: self.delays }
+    }
+}
+
+/// Decodes a picture no larger than `max` a side, every frame of an animated
+/// GIF, WebP or APNG.
+fn decode_picture(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
+    use image::AnimationDecoder;
+    use std::io::Cursor;
+    let frames: Option<image::Frames<'_>> = match image::guess_format(bytes) {
+        Ok(image::ImageFormat::Gif) => Some(image::codecs::gif::GifDecoder::new(Cursor::new(bytes))?.into_frames()),
+        Ok(image::ImageFormat::WebP) => {
+            let decoder = image::codecs::webp::WebPDecoder::new(Cursor::new(bytes))?;
+            decoder.has_animation().then(|| decoder.into_frames())
+        }
+        Ok(image::ImageFormat::Png) => {
+            let decoder = image::codecs::png::PngDecoder::new(Cursor::new(bytes))?;
+            if decoder.is_apng()? { Some(decoder.apng()?.into_frames()) } else { None }
+        }
+        _ => None,
+    };
+    let mut reel = Reel::new(max);
+    if let Some(frames) = frames {
+        for frame in frames {
+            // A broken frame ends it; what came before still plays.
+            let Ok(frame) = frame else { break };
+            let (numerator, denominator) = frame.delay().numer_denom_ms();
+            reel.push(frame.into_buffer(), numerator / denominator.max(1));
+            if still {
+                break;
+            }
+        }
+    }
+    if reel.frames.is_empty() {
+        reel.push(image::load_from_memory(bytes)?.to_rgba8(), 0);
+    }
+    Ok(reel.take())
 }
 
 /// Downloads a picture into the downloads folder under its own name, with
@@ -1011,7 +1116,7 @@ async fn copy_image(http: &reqwest::Client, url: &str) -> anyhow::Result<()> {
 /// A Lottie sticker (Discord's own packs) as a picture `max` pixels a
 /// side: its first frame, or its middle one when it starts empty. Features
 /// the renderer lacks are left out rather than losing the whole sticker.
-pub fn lottie_frame(bytes: &[u8], max: u32) -> anyhow::Result<egui::ColorImage> {
+pub fn lottie_frames(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
     let animation = rasterlottie::Animation::from_json_str(std::str::from_utf8(bytes)?)?;
     let mut profile = rasterlottie::SupportProfile::target_corpus();
     profile.allow_unknown_shape_items = true;
@@ -1020,12 +1125,29 @@ pub fn lottie_frame(bytes: &[u8], max: u32) -> anyhow::Result<egui::ColorImage> 
     let prepared = rasterlottie::Renderer::new(profile).prepare(&animation)?;
     let scale = max as f32 / animation.width.max(animation.height).max(1) as f32;
     let config = rasterlottie::RenderConfig::new(rasterlottie::Rgba8::TRANSPARENT, scale);
-    let mut frame = prepared.render_frame(animation.in_point, config)?;
-    if frame.pixels.chunks_exact(4).all(|pixel| pixel[3] == 0) {
-        frame = prepared.render_frame((animation.in_point + animation.out_point) / 2.0, config)?;
+    if still {
+        let mut frame = prepared.render_frame(animation.in_point, config)?;
+        if frame.pixels.chunks_exact(4).all(|pixel| pixel[3] == 0) {
+            frame = prepared.render_frame((animation.in_point + animation.out_point) / 2.0, config)?;
+        }
+        return Ok(Picture { frames: vec![egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels)], delays: Vec::new() });
     }
-    // tiny-skia's pixels come premultiplied.
-    Ok(egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels))
+    // At most 30 frames a second, and 90 in all: stickers run a few seconds.
+    let span = (animation.out_point - animation.in_point).max(1.0);
+    let rate = animation.frame_rate.max(1.0);
+    let step = (rate / 30.0).max(span / 90.0).max(1.0);
+    let delay = (step / rate * 1000.0) as u32;
+    let mut reel = Reel::new(max);
+    let mut at = animation.in_point;
+    while at < animation.out_point {
+        let frame = prepared.render_frame(at, config)?;
+        // tiny-skia's pixels come premultiplied.
+        reel.frames.push(egui::ColorImage::from_rgba_premultiplied([frame.width as usize, frame.height as usize], &frame.pixels));
+        reel.delays.push(delay);
+        at += step;
+    }
+    anyhow::ensure!(!reel.frames.is_empty(), "an empty animation");
+    Ok(reel.take())
 }
 
 /// Audio settings for the voice task, from the app's preferences.
@@ -1053,7 +1175,7 @@ pub fn audio_settings(settings: &crate::settings::Settings) -> AudioSettings {
 
 #[cfg(test)]
 mod tests {
-    use super::lottie_frame;
+    use super::lottie_frames;
 
     /// A Lottie sticker's frame: a blue circle in the middle of a clear
     /// square, drawn at the size asked.
@@ -1066,10 +1188,68 @@ mod tests {
                 {"ty":"el","p":{"a":0,"k":[0,0]},"s":{"a":0,"k":[60,60]}},
                 {"ty":"fl","c":{"a":0,"k":[0.35,0.4,0.95,1]},"o":{"a":0,"k":100}},
                 {"ty":"tr","p":{"a":0,"k":[0,0]},"a":{"a":0,"k":[0,0]},"s":{"a":0,"k":[100,100]},"r":{"a":0,"k":0},"o":{"a":0,"k":100}}]}]}]}"#;
-        let image = lottie_frame(circle.as_bytes(), 160).unwrap();
+        let picture = lottie_frames(circle.as_bytes(), 160, false).unwrap();
+        assert_eq!(picture.frames.len(), 30);
+        assert_eq!(picture.delays[0], 33);
+        assert_eq!(lottie_frames(circle.as_bytes(), 160, true).unwrap().frames.len(), 1);
+        let image = &picture.frames[0];
         assert_eq!(image.size, [160, 160]);
         let middle = image.pixels[80 * 160 + 80];
         assert!(middle.a() == 255 && middle.b() > 200 && middle.r() < 120, "{middle:?}");
         assert_eq!(image.pixels[0].a(), 0);
+    }
+}
+
+#[cfg(test)]
+mod picture_tests {
+    use super::*;
+
+    fn gif(frames: usize, side: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        {
+            let mut encoder = image::codecs::gif::GifEncoder::new(&mut bytes);
+            for i in 0..frames {
+                let buffer = image::RgbaImage::from_pixel(side, side, image::Rgba([(i * 40 % 255) as u8, 0, 0, 255]));
+                let delay = image::Delay::from_numer_denom_ms(50, 1);
+                encoder.encode_frame(image::Frame::from_parts(buffer, 0, 0, delay)).unwrap();
+            }
+        }
+        bytes
+    }
+
+    #[test]
+    fn a_gif_keeps_its_frames_and_times() {
+        assert_eq!(decode_picture(&gif(4, 16), 64, true).unwrap().frames.len(), 1);
+        let picture = decode_picture(&gif(4, 16), 64, false).unwrap();
+        assert_eq!(picture.frames.len(), 4);
+        assert_eq!(picture.delays, [50, 50, 50, 50]);
+    }
+
+    #[test]
+    fn a_still_picture_has_one_frame_and_no_clock() {
+        let mut bytes = Vec::new();
+        image::RgbaImage::new(8, 8).write_to(&mut std::io::Cursor::new(&mut bytes), image::ImageFormat::Png).unwrap();
+        let picture = decode_picture(&bytes, 64, false).unwrap();
+        assert_eq!(picture.frames.len(), 1);
+        assert!(picture.delays.is_empty());
+    }
+
+    #[test]
+    fn a_long_animation_stays_in_its_budget_and_its_length() {
+        let mut reel = Reel::new(512);
+        for _ in 0..200 {
+            reel.push(image::RgbaImage::new(512, 512), 50);
+        }
+        let picture = reel.take();
+        let bytes: usize = picture.frames.iter().map(|f| f.pixels.len() * 4).sum();
+        assert!(bytes <= ANIMATION_BYTES, "{bytes} bytes");
+        assert_eq!(picture.frames.len(), picture.delays.len());
+        assert_eq!(picture.delays.iter().sum::<u32>(), 200 * 50, "it lasts as long");
+    }
+
+    #[test]
+    fn large_frames_shrink_to_what_is_drawn() {
+        let picture = decode_picture(&gif(2, 100), 25, false).unwrap();
+        assert_eq!(picture.frames[0].size, [25, 25]);
     }
 }

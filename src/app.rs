@@ -3472,9 +3472,10 @@ impl App {
         if let Some(text) = self.clipboard.take() {
             ctx.copy_text(text);
         }
+        self.images.begin_frame(&ctx);
         crate::ui::show(self, ui);
         self.run_actions();
-        self.images.end_frame();
+        self.images.end_frame(&ctx);
     }
 }
 

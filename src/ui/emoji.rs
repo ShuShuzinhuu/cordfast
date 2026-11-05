@@ -172,7 +172,7 @@ pub fn suggestion_list(app: &mut App, ui: &mut egui::Ui, list: &[Suggestion]) ->
                         (name.clone(), String::new())
                     }
                     Suggestion::Custom(e) => {
-                        if let Some(url) = e.url()
+                        if let Some(url) = e.id.map(|id| crate::discord::model::emoji_url(id, false, 48))
                             && let Some((texture, _)) = app.images.get(&url, 44)
                         {
                             egui::Image::from_texture((texture, icon.size())).paint_at(ui, icon);

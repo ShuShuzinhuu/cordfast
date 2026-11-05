@@ -41,6 +41,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         use std::sync::atomic::Ordering;
         menu::DEVELOPER_MODE.store(app.preloaded.flag(pre::DEVELOPER_MODE), Ordering::Relaxed);
         crate::text::HOUR_CYCLE.store(app.preloaded.number(pre::HOUR_CYCLE).min(2) as u8, Ordering::Relaxed);
+        crate::discord::model::ANIMATE_EMOJI.store(app.preloaded.flag(pre::ANIMATE_EMOJI), Ordering::Relaxed);
     }
     titlebar::show(app, ui);
     voice_notice(app, ui);

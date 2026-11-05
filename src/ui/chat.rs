@@ -678,7 +678,8 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
     } else if !system {
         let offset = if message.reply.is_some() { 20.0 } else { 2.0 };
         let avatar = Rect::from_min_size(pos2(left + 16.0, top + offset), Vec2::splat(AVATAR));
-        let url = message.author.avatar_url();
+        // An animated avatar moves under the pointer, as Discord's.
+        let url = if ui.rect_contains_pointer(avatar) { message.author.avatar_moving(64) } else { message.author.avatar_url() };
         app.images.circle(ui, avatar, Some(&url), &initials(&name), AVATAR / 2.0);
         if let Some(decoration) = message.author.decoration_url() {
             crate::icons::decoration(ui, &mut app.images, avatar, &decoration);
@@ -1112,11 +1113,21 @@ fn upload_cards(app: &mut App, ui: &mut egui::Ui) {
 /// A sticker in a message, as Discord's: 160 points with no frame behind
 /// it (Lottie ones drawn here), its name on hover.
 fn sticker(app: &mut App, ui: &mut egui::Ui, id: Id, name: &str, format: u64) {
-    let url = crate::discord::model::sticker_url(id, format);
+    let mut url = crate::discord::model::sticker_url(id, format);
+    // "Never animate": the other frames are not even decoded.
+    if app.preloaded.number(crate::discord::preloaded::ANIMATE_STICKERS) == 2 {
+        url.push_str(crate::backend::STILL);
+    }
     let px = (160.0 * ui.ctx().pixels_per_point()).round() as u32;
     ui.add_space(4.0);
     let (rect, response) = ui.allocate_exact_size(Vec2::splat(160.0), Sense::hover());
-    if let Some((texture, size)) = app.images.get(&url, px) {
+    // Settings → Accessibility: always, under the pointer, or never.
+    let play = match app.preloaded.number(crate::discord::preloaded::ANIMATE_STICKERS) {
+        0 => true,
+        1 => response.hovered(),
+        _ => false,
+    };
+    if let Some((texture, size)) = app.images.get_playing(&url, px, play) {
         let scale = (rect.width() / size.x).min(rect.height() / size.y);
         egui::Image::from_texture((texture, size * scale)).paint_at(ui, Rect::from_min_size(rect.min, size * scale));
     }
@@ -1131,14 +1142,20 @@ fn picture(app: &mut App, ui: &mut egui::Ui, proxy: &str, original: &str, w: u32
     let ppp = ui.ctx().pixels_per_point();
     let (pw, ph) = ((size.x * ppp).round() as u32, (size.y * ppp).round() as u32);
     let separator = if proxy.contains('?') { '&' } else { '?' };
-    let url = if proxy.contains("media.discordapp.net") || proxy.contains("images-ext") {
+    // A GIF from the file itself: the proxy's resized copies may not move.
+    let gif = original.split('?').next().is_some_and(|path| path.to_ascii_lowercase().ends_with(".gif"));
+    let url = if gif {
+        original.to_owned()
+    } else if proxy.contains("media.discordapp.net") || proxy.contains("images-ext") {
         format!("{proxy}{separator}width={pw}&height={ph}")
     } else {
         proxy.to_owned()
     };
     ui.add_space(4.0);
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
-    match app.images.get(&url, pw.max(ph)) {
+    // "Play GIFs when Discord is focused": off, they move under the pointer.
+    let play = response.hovered() || app.preloaded.flag(crate::discord::preloaded::GIF_AUTO_PLAY);
+    match app.images.get_playing(&url, pw.max(ph), play) {
         Some((texture, _)) => {
             egui::Image::from_texture((texture, size)).corner_radius(6.0).paint_at(ui, rect);
         }
@@ -1148,7 +1165,9 @@ fn picture(app: &mut App, ui: &mut egui::Ui, proxy: &str, original: &str, w: u32
     }
     if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
         // The viewer asks for a larger copy than the message shows.
-        let big = if proxy.contains("media.discordapp.net") {
+        let big = if gif {
+            original.to_owned()
+        } else if proxy.contains("media.discordapp.net") {
             let s = (1600.0 / w.max(h)).min(1.0);
             format!("{proxy}{separator}width={}&height={}", (w * s) as u32, (h * s) as u32)
         } else {
@@ -1890,7 +1909,8 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                     }
                     let offline = presence.as_ref().is_none_or(|p| p.status == "offline");
                     let avatar = Rect::from_min_size(inner.left_center() + vec2(8.0, -16.0), Vec2::splat(32.0));
-                    app.images.circle(ui, avatar, Some(&user.avatar_url()), &initials(user.display_name()), 16.0);
+                    let face = if response.hovered() { user.avatar_moving(64) } else { user.avatar_url() };
+                    app.images.circle(ui, avatar, Some(&face), &initials(user.display_name()), 16.0);
                     if let Some(decoration) = user.decoration_url() {
                         crate::icons::decoration(ui, &mut app.images, avatar, &decoration);
                     }
@@ -2511,7 +2531,7 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
     }
     let avatar = Rect::from_min_size(banner.left_bottom() + vec2(16.0, -44.0), Vec2::splat(80.0));
     ui.painter().circle_filled(avatar.center(), 46.0, p.sidebar);
-    app.images.circle(ui, avatar, Some(&user.avatar_url().replace("size=64", "size=128")), &initials(user.display_name()), 40.0);
+    app.images.circle(ui, avatar, Some(&user.avatar_moving(128)), &initials(user.display_name()), 40.0);
     if let Some(presence) = app.presences.get(&user.id).filter(|pr| pr.status != "offline") {
         super::friends::dot(ui, avatar, &presence.status, p.sidebar);
     }
