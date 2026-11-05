@@ -51,8 +51,15 @@ colours and sounds, in about 100 MB of RAM and next to no CPU while idle.
 | **Desktop** | Tray, notifications, start at login, signed automatic updates and every Discord keyboard shortcut, each rebindable. |
 | **Themes** | Discord dark and light, AMOLED, Dracula, Gruvbox, Catppuccin, Nord, Rosé Pine, Tokyo Night, or your own colours. |
 | **Plugins** | In the spirit of Vencord: NoTrack, MessageLogger, SilentTyping, ClearURLs, ShowHiddenChannels and more. |
+| **Game overlay** | Discord's new overlay: voice, quick actions, notifications, text chat and friends over the game, in a window of its own (nothing is injected into the game). |
 
-Camera and screen sharing (Go Live) are not here yet.
+### Camera and Go Live
+
+Camera and screen sharing (Go Live) are not here. Discord has them turned off
+in the country where CordFast is developed, so they cannot be built and tried
+against the real service here, and testing them through a VPN would not be a
+fair test. **Contributions are very welcome**: if you can use them where you
+live, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 > [!WARNING]
 > CordFast is an unofficial client and is not affiliated with Discord.
@@ -109,6 +116,11 @@ The interface is available in English, Brazilian Portuguese, Spanish,
 French, German, Italian, Russian and Japanese, using Discord's own
 translations wherever the text is Discord's. It follows the system's
 language until you pick one in Settings → Language & Time.
+
+## Contributing
+
+Pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: it
+explains how CordFast stays faithful to Discord and light.
 
 ## Acknowledgements
 

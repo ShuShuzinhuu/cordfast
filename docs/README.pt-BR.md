@@ -52,8 +52,15 @@ repouso.
 | **Desktop** | Bandeja, notificações, iniciar com o sistema, atualizações automáticas assinadas e todos os atalhos do Discord, cada um reconfigurável. |
 | **Temas** | Discord escuro e claro, AMOLED, Dracula, Gruvbox, Catppuccin, Nord, Rosé Pine, Tokyo Night ou as suas próprias cores. |
 | **Plugins** | No espírito do Vencord: NoTrack, MessageLogger, SilentTyping, ClearURLs, ShowHiddenChannels e outros. |
+| **Sobreposição de jogo** | A nova sobreposição do Discord: voz, ações rápidas, notificações, chat de texto e amigos por cima do jogo, numa janela própria (nada é injetado no jogo). |
 
-Câmera e compartilhamento de tela (Go Live) ainda não estão aqui.
+### Câmera e Go Live
+
+Câmera e compartilhamento de tela (Go Live) não estão aqui. O Discord deixa
+esses recursos desativados no país onde o CordFast é desenvolvido, então não
+dá para construí-los e testá-los no serviço de verdade, e testar por VPN não
+seria um teste confiável. **Contribuições são muito bem-vindas**: se você
+consegue usá-los onde mora, veja o [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 > [!WARNING]
 > O CordFast é um cliente não oficial, sem ligação com o Discord. Clientes
@@ -110,6 +117,12 @@ A interface está em inglês, português do Brasil, espanhol, francês, alemão,
 italiano, russo e japonês, com as traduções do próprio Discord onde o texto é
 do Discord. Ela segue o idioma do sistema até você escolher um em
 Configurações → Idioma e Horário.
+
+## Contribuir
+
+Pull requests são bem-vindos. Leia antes o
+[CONTRIBUTING.md](../CONTRIBUTING.md) (em inglês): ele explica como o CordFast
+se mantém fiel ao Discord e leve.
 
 ## Agradecimentos
 
