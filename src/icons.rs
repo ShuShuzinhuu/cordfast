@@ -278,6 +278,17 @@ pub fn paint_turned(ui: &egui::Ui, rect: Rect, icon: Icon, color: Color32, turn:
     }
 }
 
+/// `icon` turned by `angle` radians about its centre.
+pub fn paint_rotated(ui: &egui::Ui, rect: Rect, icon: Icon, color: Color32, angle: f32) {
+    let px = (rect.width() * ui.ctx().pixels_per_point()).round().max(1.0) as u32;
+    if let Some(texture) = texture(ui, icon, px) {
+        egui::Image::from_texture((texture.id(), rect.size()))
+            .tint(color)
+            .rotate(angle, egui::Vec2::splat(0.5))
+            .paint_at(ui, rect);
+    }
+}
+
 /// Discord's chevron pointing up (an open section): its down chevron, turned.
 pub fn paint_chevron_up(ui: &egui::Ui, rect: Rect, color: Color32) {
     let px = (rect.width() * ui.ctx().pixels_per_point()).round().max(1.0) as u32;

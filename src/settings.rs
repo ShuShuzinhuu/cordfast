@@ -96,6 +96,9 @@ pub struct Settings {
     /// Accounts signed in on this computer (their tokens are in the
     /// credential store), for switching as Discord does.
     pub accounts: Vec<Account>,
+    /// The setup program's first start turned "Open CordFast" at login on, as
+    /// Discord's installer does; once, so turning it off sticks.
+    pub autostart_offered: bool,
     /// The game overlay (Settings → Game Overlay), with Discord's defaults.
     pub overlay_enabled: bool,
     pub overlay_avatar_large: bool,
@@ -188,6 +191,7 @@ impl Default for Settings {
             skin_tone: 0,
             collapsed_expressions: Vec::new(),
             accounts: Vec::new(),
+            autostart_offered: false,
             overlay_enabled: true,
             overlay_avatar_large: true,
             overlay_names: 0,

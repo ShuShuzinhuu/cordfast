@@ -653,6 +653,14 @@ pub struct App {
     /// What Windows starts at login, read and written off this thread.
     pub autostart: std::sync::Arc<std::sync::Mutex<Option<fastframe_autostart::State>>>,
     pub updates: crate::updates::Shared,
+    /// Discord's updater window, shown in place of the app while starting.
+    pub splash: Option<crate::ui::splash::Splash>,
+    /// Starting in the tray: an update found at start is installed before the
+    /// window is ever opened, as the splash does it in sight.
+    pub update_at_start: bool,
+    /// What an update installed at start relaunches this copy with (in the
+    /// tray again, say).
+    pub relaunch: Vec<String>,
     pub keybinds: std::sync::Arc<crate::keybinds::Global>,
     /// The shortcut whose new keys Settings is waiting for.
     pub recording: Option<&'static str>,
@@ -840,6 +848,9 @@ impl App {
             tray: None,
             autostart: std::sync::Arc::default(),
             updates: crate::updates::Shared::default(),
+            splash: None,
+            update_at_start: false,
+            relaunch: Vec::new(),
             keybinds: std::sync::Arc::default(),
             recording: None,
             command_index: HashMap::new(),
@@ -1180,6 +1191,23 @@ impl App {
         while let Ok(event) = self.backend.events.try_recv() {
             self.load.2 += 1;
             self.apply(ctx, event);
+        }
+        if self.update_at_start {
+            match crate::updates::at_start(&self.updates) {
+                crate::updates::AtStart::Wait => {}
+                crate::updates::AtStart::Launch => self.update_at_start = false,
+                crate::updates::AtStart::Install => {
+                    self.update_at_start = false;
+                    // Nobody has seen the window yet; a call would have to have
+                    // been joined from another device's ring in these seconds.
+                    if self.voice.channel.is_none() {
+                        match crate::updates::restart(&self.updates, self.relaunch.clone()) {
+                            Ok(()) => self.quit = true,
+                            Err(error) => log::warn!("update: {error:#}"),
+                        }
+                    }
+                }
+            }
         }
         // How busy the window is, to compare with what a call costs.
         self.load.1 += 1;
@@ -3501,7 +3529,7 @@ impl App {
                     self.commands.send(Command::RemoveAccount(id));
                 }
             }
-            Action::InstallUpdate => match crate::updates::restart(&self.updates) {
+            Action::InstallUpdate => match crate::updates::restart(&self.updates, Vec::new()) {
                 Ok(()) => self.quit = true,
                 Err(error) => self.notify(t!("Couldn't update: {error}", error = format!("{error:#}"))),
             },
@@ -3754,6 +3782,12 @@ impl App {
             ctx.copy_text(text);
         }
         self.images.begin_frame(&ctx);
+        if self.splash.is_some() {
+            crate::ui::splash::show(self, ui);
+            self.run_actions();
+            self.images.end_frame(&ctx);
+            return;
+        }
         // The overlay's window keeps these frames coming for a minimized or
         // hidden window, which has nothing of its own to draw.
         if !self.unseen {

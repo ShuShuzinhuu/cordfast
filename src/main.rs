@@ -123,17 +123,44 @@ fn main() -> eframe::Result {
     discord::detect::watch_front(wake);
     // Started at login in the tray, as the autostart entry asks.
     let hidden = launch.arguments.iter().any(|a| a == fastframe_autostart::START_HIDDEN);
+    // The setup program's first start (`--installed`): Discord's installer
+    // turns its start at login on, and so does this one, once.
+    if launch.arguments.iter().any(|a| a == "--installed") && !app.settings.autostart_offered {
+        app.settings.autostart_offered = true;
+        app.settings.save();
+        app.set_autostart(Some(fastframe_autostart::Start::Window));
+    }
+    // Discord's updater window before the app, where this copy can update
+    // (an installed or portable one), and not for previews and screenshots
+    // unless `CORDFAST_SPLASH` asks for it.
+    let staged = ["CORDFAST_PREVIEW", "CORDFAST_SHOT", "CORDFAST_DEMO"].iter().any(|name| std::env::var_os(name).is_some());
+    let installable = updates::installable();
+    if !hidden && ((installable && !staged) || std::env::var_os("CORDFAST_SPLASH").is_some()) {
+        app.splash = Some(ui::splash::Splash::new());
+    }
+    // In the tray, the same happens out of sight: an update found at start is
+    // installed before the window ever opens.
+    if hidden && installable {
+        app.update_at_start = true;
+        app.relaunch = vec![fastframe_autostart::START_HIDDEN.to_owned()];
+    }
+    let mut splash = app.splash.is_some();
     // Discord's own title bar, unless the system's was chosen.
     fastframe_titlebar::set_enabled(!app.settings.native_titlebar);
-    fastframe_shell::Shell::new(app, &waker).start_hidden(hidden).run(|lease| {
+    fastframe_shell::Shell::new(app, &waker).start_hidden(hidden).run(move |lease| {
+        // The first window opens as the splash, which grows into the app.
+        let first = std::mem::take(&mut splash);
+        // eframe puts it back where it was (maximized, say), so it opens hidden
+        // and the splash's first frame shrinks it before it shows.
         let viewport = egui::ViewportBuilder::default()
             .with_title("CordFast")
             .with_app_id("cordfast")
             .with_icon(icon::window_icon())
-            .with_inner_size([1240.0, 800.0])
-            .with_min_inner_size([760.0, 480.0])
+            .with_inner_size(ui::splash::APP_SIZE)
+            .with_min_inner_size(ui::splash::APP_MIN_SIZE)
             .with_drag_and_drop(true)
-            .with_decorations(!fastframe_titlebar::enabled());
+            .with_decorations(!fastframe_titlebar::enabled())
+            .with_visible(!first);
         let options = eframe::NativeOptions {
             viewport,
             renderer: eframe::Renderer::Glow,

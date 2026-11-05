@@ -18,6 +18,7 @@ pub mod gates;
 mod guild_more;
 pub mod overlay;
 pub mod soundboard;
+pub mod splash;
 mod titlebar;
 
 use egui::{
