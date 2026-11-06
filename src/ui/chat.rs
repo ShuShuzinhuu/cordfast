@@ -22,7 +22,10 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
     let Some(channel_id) = app.selected_channel else {
         if app.selected_guild.is_none() {
-            super::friends::show(app, ui);
+            match app.home {
+                crate::app::Home::Friends => super::friends::show(app, ui),
+                crate::app::Home::MessageRequests => super::requests::show(app, ui),
+            }
         } else {
             ui.centered_and_justified(|ui| {
                 ui.label(RichText::new(t!("Pick a channel  ·  Ctrl+K to search")).color(p.muted));

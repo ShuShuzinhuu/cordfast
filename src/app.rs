@@ -37,6 +37,14 @@ pub struct LoginForm {
     pub sms_phone: Option<String>,
 }
 
+/// The pages Discord's DM sidebar opens above the conversations.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Home {
+    #[default]
+    Friends,
+    MessageRequests,
+}
+
 pub enum AuthView {
     Checking,
     Generating,
@@ -464,6 +472,12 @@ pub enum Action {
     SetStatus(&'static str, Option<u64>),
     SetCustomStatus { text: Option<String>, minutes: Option<u64> },
     OpenFriends,
+    /// Discord's Message Requests page.
+    OpenMessageRequests,
+    /// Accepts a message request: the conversation joins the DMs.
+    AcceptRequest(Id),
+    /// Ignores message requests: Discord closes them.
+    IgnoreRequests(Vec<Id>),
     AddFriend,
     /// `Some(1)` accepts, `Some(2)` blocks, `None` removes.
     Relationship { user: Id, kind: Option<u64> },
@@ -492,6 +506,14 @@ pub struct App {
     pub latest: HashMap<Id, Id>,
     pub selected_guild: Option<Id>,
     pub selected_channel: Option<Id>,
+    /// The page beside the DMs with no conversation open.
+    pub home: Home,
+    /// Message Requests' Spam tab, rather than its Requests.
+    pub requests_spam: bool,
+    /// Each request's last message, from Discord's supplemental data
+    /// (none: it has no message, or it could not be read).
+    pub request_previews: HashMap<Id, Option<Message>>,
+    requests_asked: HashSet<Id>,
     remembered: HashMap<Option<Id>, Id>,
     pub histories: HashMap<Id, History>,
     pub users: HashMap<Id, User>,
@@ -738,6 +760,10 @@ impl App {
             latest: HashMap::new(),
             selected_guild: None,
             selected_channel: None,
+            home: Home::Friends,
+            requests_spam: false,
+            request_previews: HashMap::new(),
+            requests_asked: HashSet::new(),
             remembered: HashMap::new(),
             histories: HashMap::new(),
             users: HashMap::new(),
@@ -981,6 +1007,25 @@ impl App {
         // Zoom keys are rebindable shortcuts here, not egui's own.
         ctx.options_mut(|o| o.zoom_with_keyboard = false);
         ctx.set_zoom_factor(self.settings.zoom.clamp(0.6, 2.0));
+    }
+
+    /// Message requests, or the ones taken for spam, newest first as
+    /// Discord sorts them (by their last message).
+    pub fn message_requests(&self, spam: bool) -> Vec<Channel> {
+        let mut list: Vec<Channel> = self.dms.iter().filter(|c| c.message_request && c.spam == spam).cloned().collect();
+        list.sort_by_key(|c| std::cmp::Reverse(self.latest.get(&c.id).copied().or(c.last_message_id).unwrap_or(c.id)));
+        list
+    }
+
+    /// Asks Discord for the last message of requests not asked about yet,
+    /// 25 at a time, as its message request store does.
+    pub fn ask_request_previews(&mut self, channels: &[Id]) {
+        let new: Vec<Id> = channels.iter().copied().filter(|id| self.requests_asked.insert(*id)).collect();
+        for chunk in new.chunks(25) {
+            let query: Vec<String> = chunk.iter().map(|id| format!("channel_ids={id}")).collect();
+            let ids: Vec<String> = chunk.iter().map(Id::to_string).collect();
+            self.commands.send(Command::Api { key: format!("requests-preview:{}", ids.join(",")), method: "GET", path: format!("/users/@me/message-requests/supplemental-data?{}", query.join("&")), body: None });
+        }
     }
 
     pub fn me_id(&self) -> Id {
@@ -2127,6 +2172,11 @@ impl App {
         match what {
             // The loading screen, held as a session starting shows it.
             "loading" => self.auth = AuthView::Checking,
+            // Message Requests, on its Spam tab with "requests:spam".
+            "requests" => {
+                self.run(Action::OpenMessageRequests);
+                self.requests_spam = n == "spam";
+            }
             // The first server with these files waiting in its box.
             "uploads" => {
                 if let Some(id) = self.guilds.first().map(|g| g.id) {
@@ -2321,6 +2371,21 @@ impl App {
 
     /// Answers to the API calls the chat makes (pins, search, joining).
     fn api_answer(&mut self, key: &str, result: Result<serde_json::Value, String>) {
+        // [{channel_id, message_preview}] for the requests asked about; one
+        // left out has no message, and a failure leaves them all without.
+        if let Some(ids) = key.strip_prefix("requests-preview:") {
+            let asked: Vec<Id> = ids.split(',').filter_map(|id| id.parse().ok()).collect();
+            let mut found: HashMap<Id, Message> = HashMap::new();
+            for item in result.iter().filter_map(serde_json::Value::as_array).flatten() {
+                if let (Some(id), Some(message)) = (item.get("channel_id").and_then(serde_json::Value::as_str).and_then(|s| s.parse::<Id>().ok()), item.get("message_preview").and_then(Message::parse)) {
+                    found.insert(id, message);
+                }
+            }
+            for id in asked {
+                self.request_previews.insert(id, found.remove(&id));
+            }
+            return;
+        }
         // The Server Boost page shows what the slots are now, whatever
         // happened; a transfer goes on to its new server once removed.
         if let Some(rest) = key.strip_prefix("boost-transfer:")
@@ -2346,6 +2411,10 @@ impl App {
                     if let Some(inbox) = &mut self.inbox {
                         inbox.mentions = Some(Vec::new());
                     }
+                    return;
+                }
+                if key == "request-changed" {
+                    self.notify(t!("Uh-oh! Something went wrong while updating this message request. Please wait a moment and try again."));
                     return;
                 }
                 if key.starts_with("gate:") {
@@ -3460,7 +3529,38 @@ impl App {
             Action::OpenFriends => {
                 self.selected_guild = None;
                 self.selected_channel = None;
+                self.home = Home::Friends;
                 self.remembered.remove(&None);
+            }
+            Action::OpenMessageRequests => {
+                self.selected_guild = None;
+                self.selected_channel = None;
+                self.home = Home::MessageRequests;
+                self.remembered.remove(&None);
+            }
+            // As Discord's message request hook: PUT consent 2 accepts, DELETE
+            // of our recipient ignores one, and batch-reject takes 50 at a time.
+            Action::AcceptRequest(channel) => {
+                self.commands.send(Command::Api { key: "request-changed".into(), method: "PUT", path: format!("/channels/{channel}/recipients/@me"), body: Some(serde_json::json!({ "consent_status": 2 })) });
+                // Discord's MESSAGE_REQUEST_ACCEPT_OPTIMISTIC: it is a DM at once.
+                if let Some(dm) = self.dms.iter_mut().find(|c| c.id == channel) {
+                    dm.message_request = false;
+                    dm.spam = false;
+                }
+            }
+            Action::IgnoreRequests(channels) => {
+                if let [channel] = channels.as_slice() {
+                    self.commands.send(Command::Api { key: "request-changed".into(), method: "DELETE", path: format!("/channels/{channel}/recipients/@me"), body: None });
+                } else {
+                    for chunk in channels.chunks(50) {
+                        let ids: Vec<String> = chunk.iter().map(Id::to_string).collect();
+                        self.commands.send(Command::Api { key: "request-changed".into(), method: "PUT", path: "/channels/recipients/@me/batch-reject".into(), body: Some(serde_json::json!({ "channel_ids": ids })) });
+                    }
+                }
+                self.dms.retain(|c| !channels.contains(&c.id));
+                if self.selected_channel.is_some_and(|id| channels.contains(&id)) {
+                    self.selected_channel = None;
+                }
             }
             Action::AddFriend => {
                 let name = std::mem::take(&mut self.friend_input);

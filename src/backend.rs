@@ -1146,6 +1146,17 @@ impl Reel {
 fn decode_picture(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
     use image::AnimationDecoder;
     use std::io::Cursor;
+    // Discord's own illustrations (empty states) are SVG.
+    let head = bytes.trim_ascii_start();
+    if head.starts_with(b"<svg") || head.starts_with(b"<?xml") {
+        let tree = resvg::usvg::Tree::from_data(bytes, &resvg::usvg::Options::default())?;
+        let size = tree.size();
+        let scale = max as f32 / size.width().max(size.height()).max(1.0);
+        let (width, height) = ((size.width() * scale).ceil().max(1.0) as u32, (size.height() * scale).ceil().max(1.0) as u32);
+        let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height).context("empty picture")?;
+        resvg::render(&tree, resvg::tiny_skia::Transform::from_scale(scale, scale), &mut pixmap.as_mut());
+        return Ok(Picture { frames: vec![egui::ColorImage::from_rgba_premultiplied([width as usize, height as usize], pixmap.data())], delays: Vec::new() });
+    }
     let frames: Option<image::Frames<'_>> = match image::guess_format(bytes) {
         Ok(image::ImageFormat::Gif) => Some(image::codecs::gif::GifDecoder::new(Cursor::new(bytes))?.into_frames()),
         Ok(image::ImageFormat::WebP) => {

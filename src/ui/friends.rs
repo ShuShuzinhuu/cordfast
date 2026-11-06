@@ -161,7 +161,7 @@ fn header(app: &mut App, ui: &mut egui::Ui) {
 
 /// A header tab: a pill while chosen or hovered, with Pendentes' count in
 /// Discord's red badge.
-fn tab_button(ui: &mut egui::Ui, label: &str, chosen: bool, count: usize) -> egui::Response {
+pub(super) fn tab_button(ui: &mut egui::Ui, label: &str, chosen: bool, count: usize) -> egui::Response {
     let p = theme::p();
     let galley = ui.painter().layout_no_wrap(label.to_owned(), FontId::proportional(15.0), p.text);
     let badge = (count > 0).then(|| ui.painter().layout_no_wrap(count.to_string(), theme::strong(12.0), Color32::WHITE));
@@ -202,7 +202,7 @@ fn search(ui: &mut egui::Ui, filter: &mut String) {
 }
 
 /// "Online — 3" over the rows, as Discord now writes it.
-fn count_line(ui: &mut egui::Ui, text: &str) {
+pub(super) fn count_line(ui: &mut egui::Ui, text: &str) {
     ui.add_space(8.0);
     ui.label(RichText::new(text).font(theme::strong(14.0)).color(theme::p().muted));
     ui.add_space(8.0);

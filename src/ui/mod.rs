@@ -19,6 +19,7 @@ mod guild_more;
 pub mod overlay;
 pub mod soundboard;
 pub mod splash;
+mod requests;
 mod titlebar;
 
 use egui::{
@@ -987,9 +988,32 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
         Some(id) => app.guild(id).map(|g| g.name.clone()).unwrap_or_default(),
         None => t!("Direct Messages").into(),
     };
-    let header = Frame::new().inner_margin(Margin::symmetric(16, 0)).show(ui, |ui| {
+    // Discord's DM sidebar opens with "Find or start a conversation", a
+    // secondary button that opens the quick switcher, where a server shows
+    // its name.
+    let margin = if app.selected_guild.is_none() { Margin::symmetric(10, 0) } else { Margin::symmetric(16, 0) };
+    let header = Frame::new().inner_margin(margin).show(ui, |ui| {
         ui.set_height(48.0);
         ui.set_width(ui.available_width());
+        if app.selected_guild.is_none() {
+            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                let (rect, response) = ui.allocate_exact_size(vec2(ui.available_width(), 30.0), Sense::click());
+                ui.painter().rect_filled(rect, 8.0, if response.hovered() { p.selected } else { p.hover });
+                // A small secondary button: 14-point medium text, centred.
+                let text = t!("Find or start a conversation");
+                let galley = ui.painter().layout_no_wrap(text.to_owned(), FontId::proportional(14.0), p.text);
+                let inner = rect.shrink2(vec2(8.0, 0.0));
+                if galley.size().x <= inner.width() {
+                    ui.painter().galley(rect.center() - galley.size() / 2.0, galley, if response.hovered() { p.strong } else { p.text });
+                } else {
+                    paint_truncated(ui, inner, text, FontId::proportional(14.0), if response.hovered() { p.strong } else { p.text });
+                }
+                if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                    app.switcher = Some(String::new());
+                }
+            });
+            return;
+        }
         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
             // A long name stops short of the arrow.
             let room = ui.available_width() - if app.selected_guild.is_some() { 26.0 } else { 0.0 };
@@ -1088,16 +1112,27 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                 drag_channels(app, ui, guild, &targets);
             }
             None => {
+                // Discord's rows above the conversations, in its order:
+                // Friends, Message Requests (while there are any), Nitro
+                // Home, Shop and Quests, then a divider.
+                let home = app.selected_channel.is_none().then_some(app.home);
                 let pending = app.relationships.values().filter(|r| r.kind == 3).count() as u32;
-                let (rect, response) = row(ui, 42.0, app.selected_channel.is_none());
-                icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 24.0, rect.center().y), Vec2::splat(24.0)), Icon::Friends, if app.selected_channel.is_none() { p.strong } else { p.muted });
-                ui.painter().text(pos2(rect.left() + 52.0, rect.center().y), Align2::LEFT_CENTER, t!("Friends"), theme::strong(15.0), if app.selected_channel.is_none() { p.strong } else { p.muted });
-                if pending > 0 {
-                    badge(ui, pos2(rect.right() - 16.0, rect.center().y), pending, Color32::TRANSPARENT);
-                }
-                if response.clicked() {
+                if nav_row(ui, Icon::Friends, t!("Friends"), home == Some(crate::app::Home::Friends), pending).clicked() {
                     app.actions.push(Action::OpenFriends);
                 }
+                let requests = app.dms.iter().filter(|c| c.message_request && !c.spam).count() as u32;
+                if app.dms.iter().any(|c| c.message_request) && nav_row(ui, Icon::Envelope, t!("Message Requests"), home == Some(crate::app::Home::MessageRequests), requests).clicked() {
+                    app.actions.push(Action::OpenMessageRequests);
+                }
+                // Discord's store pages; here they open on discord.com.
+                for (icon, label, path) in [(Icon::Nitro, t!("Nitro Home"), "store"), (Icon::Shop, t!("Shop"), "shop"), (Icon::Quests, t!("Quests"), "quest-home")] {
+                    if nav_row(ui, icon, label, false, 0).clicked() {
+                        let _ = open::that_detached(format!("https://discord.com/{path}"));
+                    }
+                }
+                ui.add_space(8.0);
+                let y = ui.cursor().top();
+                ui.painter().hline(ui.max_rect().x_range().shrink(16.0), y, Stroke::new(1.0, p.border));
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.add_space(16.0);
@@ -1111,7 +1146,8 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                         }
                     });
                 });
-                let mut dms: Vec<Channel> = app.dms.clone();
+                // Requests wait on their own page until accepted.
+                let mut dms: Vec<Channel> = app.dms.iter().filter(|c| !c.message_request).cloned().collect();
                 dms.sort_by_key(|c| std::cmp::Reverse(app.latest.get(&c.id).copied().or(c.last_message_id).unwrap_or(c.id)));
                 for channel in dms {
                     dm_row(app, ui, &channel);
@@ -1199,6 +1235,22 @@ fn drag_channels(app: &mut App, ui: &mut egui::Ui, guild: Id, targets: &[(Rect, 
             app.actions.push(action);
         }
     }
+}
+
+/// One of the DM sidebar's page rows: Discord's 42-point link with a
+/// 24-point icon, its name and a count.
+fn nav_row(ui: &mut egui::Ui, icon: Icon, label: &str, selected: bool, count: u32) -> egui::Response {
+    let p = theme::p();
+    let (rect, response) = row(ui, 42.0, selected);
+    let color = if selected || response.hovered() { p.strong } else { p.muted };
+    icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 24.0, rect.center().y), Vec2::splat(24.0)), icon, color);
+    // A long name ("Solicitações de mensagens") stops short of the count.
+    let right = if count > 0 { rect.right() - 34.0 } else { rect.right() - 8.0 };
+    paint_truncated(ui, Rect::from_min_max(pos2(rect.left() + 52.0, rect.top()), pos2(right, rect.bottom())), label, theme::strong(15.0), color);
+    if count > 0 {
+        badge(ui, pos2(rect.right() - 16.0, rect.center().y), count, Color32::TRANSPARENT);
+    }
+    response.on_hover_cursor(egui::CursorIcon::PointingHand)
 }
 
 fn row(ui: &mut egui::Ui, height: f32, selected: bool) -> (Rect, egui::Response) {

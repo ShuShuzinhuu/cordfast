@@ -257,6 +257,9 @@ pub struct Channel {
     pub locked: bool,
     /// Someone who is no friend wrote: waits for Accept or Ignore.
     pub message_request: bool,
+    /// A message request Discord's filter took for spam: under Message
+    /// Requests' Spam tab instead.
+    pub spam: bool,
 }
 
 impl Channel {
@@ -320,6 +323,7 @@ impl Channel {
             owner: field_sf(value, "owner_id"),
             locked: value.pointer("/thread_metadata/locked").and_then(Value::as_bool).unwrap_or(false),
             message_request: value.get("is_message_request").and_then(Value::as_bool).unwrap_or(false),
+            spam: value.get("is_spam").and_then(Value::as_bool).unwrap_or(false),
             archived: value
                 .pointer("/thread_metadata/archived")
                 .and_then(Value::as_bool)
