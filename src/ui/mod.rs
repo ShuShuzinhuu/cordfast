@@ -1746,6 +1746,7 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     let url = (channel.kind == ChannelKind::Dm)
         .then(|| channel.recipients.first().map(|u| u.avatar_url()))
         .flatten();
+    let slot = ui.painter().add(egui::Shape::Noop);
     app.images.circle(ui, avatar, url.as_deref(), &initials(&title), 16.0);
     if channel.kind == ChannelKind::Dm
         && let Some(user) = channel.recipients.first()
@@ -1772,7 +1773,12 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     };
     let name_rect = if has_line { top } else { Rect::from_min_max(pos2(x, rect.top()), pos2(right, rect.bottom())) };
     match &person {
-        Some(user) => name_with_tag(app, ui, name_rect, user, &title, font, color),
+        Some(user) => {
+            let width = name_with_tag(app, ui, name_rect, user, &title, font, color);
+            if let Some(plate) = &user.nameplate {
+                nameplate(app, ui, slot, rect, plate, x - rect.left() + width, response.hovered(), selected, Plate::Channel);
+            }
+        }
         None => paint_truncated(ui, name_rect, &title, font, color),
     }
     match &person {
@@ -1851,16 +1857,103 @@ pub fn rich_template(job: &mut egui::text::LayoutJob, template: &str, plain: &eg
 
 /// A name in `rect` with the server tag it wears after it, the name cut
 /// short so the tag keeps its room, as Discord's lists show them.
-pub(super) fn name_with_tag(app: &mut App, ui: &mut egui::Ui, rect: Rect, user: &crate::discord::model::User, name: &str, font: FontId, color: Color32) {
+/// The name and the server tag after it; gives the width they took.
+pub(super) fn name_with_tag(app: &mut App, ui: &mut egui::Ui, rect: Rect, user: &crate::discord::model::User, name: &str, font: FontId, color: Color32) -> f32 {
     let tag = user.tag.as_ref().map(|(_, tag, _)| tag.as_str());
     let chip = tag.map(|tag| profile::tag_size(ui, user, tag, 16.0));
     let room = (rect.width() - chip.map_or(0.0, |c| c.x + 6.0)).max(0.0);
     paint_truncated(ui, Rect::from_min_size(rect.min, vec2(room, rect.height())), name, font.clone(), color);
+    let width = ui.painter().layout_no_wrap(name.to_owned(), font, color).size().x.min(room);
     if let (Some(tag), Some(chip)) = (tag, chip) {
-        let width = ui.painter().layout_no_wrap(name.to_owned(), font, color).size().x.min(room);
         let at = Rect::from_min_size(pos2(rect.left() + width + 6.0, rect.center().y - chip.y / 2.0), chip);
         profile::paint_tag(app, ui, at, user, tag);
+        return width + 6.0 + chip.x;
     }
+    width
+}
+
+/// Where a nameplate is drawn: each list fades and lights it its own way.
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum Plate {
+    Members,
+    Channel,
+    Friends,
+}
+
+/// Discord's nameplate behind a row (`NameplateBackground`): the palette's
+/// gradient, `transparent 0%, c/14 20%, c/14 50%, c/33 100%` (4D under the
+/// pointer in the member list, 80 selected), then the still picture at the
+/// right end, the row's height tall, at 60% (90% selected, 40% hovered in the
+/// DM list), masked to 30% behind the row's content up to `content` + 10
+/// points (-5 outside the member list) and fully shown 50 points later.
+/// It fills `slot`, a shape reserved before the row's content, since the
+/// content's width is known only once it is drawn.
+pub(super) fn nameplate(app: &mut App, ui: &egui::Ui, slot: egui::layers::ShapeIdx, row: Rect, plate: &crate::discord::model::Nameplate, content: f32, hovered: bool, selected: bool, place: Plate) {
+    use egui::epaint::{Mesh, Vertex, WHITE_UV};
+    let p = theme::p();
+    let mut shapes = Vec::new();
+    if let Some((dark, light)) = plate.colors() {
+        let [r, g, b] = if p.dark { dark } else { light };
+        let end = if selected { 0x80 } else if hovered && place == Plate::Members { 0x4D } else { 0x33 };
+        let mut mesh = Mesh::default();
+        for (i, (at, alpha)) in [(0.0, 0u8), (0.2, 0x14), (0.5, 0x14), (1.0, end)].into_iter().enumerate() {
+            let x = row.left() + row.width() * at;
+            let color = Color32::from_rgba_unmultiplied(r, g, b, alpha);
+            mesh.vertices.push(Vertex { pos: pos2(x, row.top()), uv: WHITE_UV, color });
+            mesh.vertices.push(Vertex { pos: pos2(x, row.bottom()), uv: WHITE_UV, color });
+            if i > 0 {
+                let k = (i as u32) * 2;
+                mesh.add_triangle(k - 2, k - 1, k);
+                mesh.add_triangle(k - 1, k, k + 1);
+            }
+        }
+        shapes.push(egui::Shape::mesh(mesh));
+    }
+    let picture = app.images.get(&plate.url(), 512).filter(|(_, size)| size.y > 0.0);
+    let Some((texture, size)) = picture else {
+        ui.painter().set(slot, egui::Shape::Vec(shapes));
+        return;
+    };
+    let width = (size.x * row.height() / size.y).min(row.width());
+    let image = Rect::from_min_max(pos2(row.right() - width, row.top()), row.right_bottom());
+    let opacity = match () {
+        _ if selected => 0.9,
+        _ if hovered && place == Plate::Channel => 0.4,
+        _ => 0.6,
+    };
+    let fade = row.left() + content + if place == Plate::Members { 10.0 } else { -5.0 };
+    let mask = |x: f32| 0.3 + 0.7 * ((x - fade) / 50.0).clamp(0.0, 1.0);
+    // The mask's stops inside the picture, each a column of the mesh.
+    let mut stops = vec![image.left()];
+    stops.extend([fade, fade + 50.0].into_iter().filter(|x| *x > image.left() && *x < image.right()));
+    stops.push(image.right());
+    // The visible part of a picture wider than the row is its right end.
+    let u0 = 1.0 - image.width() * size.y / row.height() / size.x;
+    let u = |x: f32| u0 + (1.0 - u0) * (x - image.left()) / image.width().max(1.0);
+    // The last stretch, past the mask, is one colour: a rectangle with the
+    // row's rounded right corners (the container's `border-radius: inherit`).
+    if stops.len() > 2 && image.right() >= row.right() - 0.5 && fade + 50.0 < image.right() {
+        let from = stops[stops.len() - 2];
+        let corners = egui::CornerRadius { nw: 0, sw: 0, ne: 4, se: 4 };
+        let rect = Rect::from_min_max(pos2(from, row.top()), row.right_bottom());
+        let uv = Rect::from_min_max(pos2(u(from), 0.0), pos2(1.0, 1.0));
+        shapes.push(egui::epaint::RectShape::filled(rect, corners, Color32::WHITE.gamma_multiply(opacity)).with_texture(texture, uv).into());
+        stops.pop();
+    }
+    let mut mesh = Mesh::with_texture(texture);
+    for (i, x) in stops.iter().enumerate() {
+        let u = u(*x);
+        let color = Color32::WHITE.gamma_multiply(opacity * mask(*x));
+        mesh.vertices.push(Vertex { pos: pos2(*x, row.top()), uv: pos2(u, 0.0), color });
+        mesh.vertices.push(Vertex { pos: pos2(*x, row.bottom()), uv: pos2(u, 1.0), color });
+        if i > 0 {
+            let k = (i as u32) * 2;
+            mesh.add_triangle(k - 2, k - 1, k);
+            mesh.add_triangle(k - 1, k, k + 1);
+        }
+    }
+    shapes.push(egui::Shape::mesh(mesh));
+    ui.painter().set(slot, egui::Shape::Vec(shapes));
 }
 
 pub fn paint_truncated(ui: &egui::Ui, rect: Rect, text: &str, font: FontId, color: Color32) {

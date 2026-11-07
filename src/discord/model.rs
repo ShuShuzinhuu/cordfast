@@ -107,6 +107,55 @@ pub struct User {
     pub decoration: Option<String>,
     /// Nitro: 0 none, 1 Classic, 2 Nitro, 3 Basic.
     pub premium: u64,
+    /// The nameplate (a shop collectible) behind the name in lists.
+    pub nameplate: Option<Nameplate>,
+}
+
+/// A nameplate from Discord's shop: its picture is served by SKU, and the
+/// palette names the colour of the gradient drawn under it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Nameplate {
+    pub sku: String,
+    /// The asset's folder, such as "nameplates/nameplates/twilight/".
+    pub asset: String,
+    pub palette: String,
+}
+
+impl Nameplate {
+    /// `collectibles.nameplate` of a user or a server member.
+    pub fn parse(value: &Value) -> Option<Self> {
+        let plate = value.pointer("/collectibles/nameplate")?;
+        Some(Self { sku: string(plate, "sku_id")?, asset: string(plate, "asset").unwrap_or_default(), palette: string(plate, "palette").unwrap_or_default() })
+    }
+
+    /// The still picture: the asset's `static.png` on the CDN, or by SKU, as
+    /// the bundle's `getCollectiblesItemAssetUrl`, when there is no asset.
+    pub fn url(&self) -> String {
+        match self.asset.as_str() {
+            "" => format!("https://cdn.discordapp.com/media/v1/collectibles-shop/{}/static", self.sku),
+            asset => format!("https://cdn.discordapp.com/assets/collectibles/{asset}static.png"),
+        }
+    }
+
+    /// The palette's colours (dark theme, light theme), from the bundle's
+    /// table; an unknown palette draws no gradient.
+    pub fn colors(&self) -> Option<([u8; 3], [u8; 3])> {
+        Some(match self.palette.as_str() {
+            "crimson" => ([0x90, 0x00, 0x07], [0xE7, 0x04, 0x0F]),
+            "berry" => ([0x89, 0x3A, 0x99], [0xB1, 0x1F, 0xCF]),
+            "sky" => ([0x00, 0x80, 0xB7], [0x56, 0xCC, 0xFF]),
+            "teal" => ([0x08, 0x64, 0x60], [0x7D, 0xEE, 0xD7]),
+            "forest" => ([0x2D, 0x54, 0x01], [0x6A, 0xA6, 0x24]),
+            "bubble_gum" => ([0xDC, 0x3E, 0x97], [0xF9, 0x57, 0xB3]),
+            "violet" => ([0x73, 0x0B, 0xC8], [0x97, 0x2F, 0xED]),
+            "cobalt" => ([0x01, 0x31, 0xC2], [0x42, 0x78, 0xFF]),
+            "clover" => ([0x04, 0x7B, 0x20], [0x63, 0xCD, 0x5A]),
+            "lemon" => ([0xF6, 0xCD, 0x12], [0xFE, 0xD4, 0x00]),
+            "white" => ([0xFF; 3], [0xFF; 3]),
+            "black" => ([0x00; 3], [0x00; 3]),
+            _ => return None,
+        })
+    }
 }
 
 impl User {
@@ -132,6 +181,7 @@ impl User {
                 }),
             decoration: value.pointer("/avatar_decoration_data/asset").and_then(Value::as_str).map(str::to_owned),
             premium: value.get("premium_type").and_then(Value::as_u64).unwrap_or(0),
+            nameplate: Nameplate::parse(value),
         })
     }
 
@@ -628,6 +678,8 @@ pub fn voice_deaf(v: &Value) -> bool {
 #[derive(Clone, Debug, Default)]
 pub struct Member {
     pub nick: Option<String>,
+    /// This server's own nameplate, over the account's.
+    pub nameplate: Option<Nameplate>,
     pub roles: Vec<Id>,
     /// Has not finished the server's verification form yet.
     pub pending: bool,
@@ -637,6 +689,7 @@ impl Member {
     pub fn parse(value: &Value) -> Self {
         Self {
             pending: value.get("pending").and_then(Value::as_bool).unwrap_or(false),
+            nameplate: Nameplate::parse(value),
             nick: string(value, "nick").filter(|n| !n.is_empty()),
             roles: value
                 .get("roles")

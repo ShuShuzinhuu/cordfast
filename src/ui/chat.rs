@@ -2123,10 +2123,14 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                     ui.painter().text(rect.left_bottom() + vec2(16.0, -8.0), Align2::LEFT_BOTTOM, format!("{name} — {count}"), theme::strong(14.0), p.muted);
                 }
                 Some(ListItem::Member { user, member, presence }) => {
-                    let inner = rect.shrink2(vec2(8.0, 2.0));
+                    // Discord's row: 42 points inside a 1-point padding.
+                    let inner = rect.shrink2(vec2(8.0, 1.0));
                     if response.hovered() {
                         ui.painter().rect_filled(inner, 4.0, p.hover);
                     }
+                    let plate = member.nameplate.as_ref().or(user.nameplate.as_ref());
+                    let slot = ui.painter().add(egui::Shape::Noop);
+                    let mut content = 0.0f32;
                     let offline = presence.as_ref().is_none_or(|p| p.status == "offline");
                     let avatar = Rect::from_min_size(inner.left_center() + vec2(8.0, -16.0), Vec2::splat(32.0));
                     let face = if response.hovered() { user.avatar_moving(64) } else { user.avatar_url() };
@@ -2158,7 +2162,7 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                         egui::Image::from_texture((texture, at.size())).corner_radius(4.0).paint_at(ui, at);
                     }
                     let name_y = if activity.is_some() { inner.center().y - 8.0 } else { inner.center().y };
-                    super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right, name_y + 9.0)), user, &name, FontId::proportional(15.0), color);
+                    content = content.max(super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right, name_y + 9.0)), user, &name, FontId::proportional(15.0), color));
                     if let Some((template, bold, _)) = activity {
                         // "Playing " and the game in bold, as Discord writes it.
                         let mut job = egui::text::LayoutJob::default();
@@ -2171,7 +2175,11 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                         };
                         job.wrap = egui::text::TextWrapping::truncate_at_width(right - text_x);
                         let galley = ui.fonts_mut(|f| f.layout_job(job));
+                        content = content.max(text_x - x + galley.size().x);
                         ui.painter().galley(egui::pos2(text_x, inner.center().y + 10.0 - galley.size().y / 2.0), galley, p.muted);
+                    }
+                    if let Some(plate) = plate {
+                        super::nameplate(app, ui, slot, inner, plate, x - inner.left() + content, response.hovered(), false, super::Plate::Members);
                     }
                     if response.clicked() {
                         app.actions.push(Action::OpenProfile { user: user.clone(), guild: Some(guild_id), at: rect.left_top() - vec2(350.0, 0.0) });

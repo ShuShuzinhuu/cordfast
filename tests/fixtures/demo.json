@@ -11,6 +11,7 @@
    {
     "id": "100000000000000200",
     "username": "emma",
+    "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
     "global_name": "Emma",
     "avatar": null,
@@ -28,6 +29,7 @@
    {
     "id": "100000000000000202",
     "username": "liam",
+    "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
     "global_name": "Liam",
     "avatar": null,
@@ -211,6 +213,7 @@
      {
       "id": "100000000000000200",
       "username": "emma",
+      "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
       "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
       "global_name": "Emma",
       "avatar": null,
@@ -227,6 +230,7 @@
     "user": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -239,6 +243,7 @@
     "user": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -449,6 +454,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -475,6 +481,7 @@
      "author": {
       "id": "100000000000000200",
       "username": "emma",
+      "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
       "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
       "global_name": "Emma",
       "avatar": null,
@@ -498,6 +505,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -541,6 +549,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -587,6 +596,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -609,6 +619,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -652,6 +663,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -682,6 +694,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -725,6 +738,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -747,6 +761,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -790,6 +805,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -812,6 +828,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -855,6 +872,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -877,6 +895,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -943,6 +962,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -965,6 +985,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1008,6 +1029,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1030,6 +1052,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1073,6 +1096,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1095,6 +1119,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1117,6 +1142,7 @@
     "author": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1162,6 +1188,7 @@
     "author": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1205,6 +1232,7 @@
    "user": {
     "id": "100000000000000200",
     "username": "emma",
+    "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
     "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
     "global_name": "Emma",
     "avatar": null,
@@ -1226,6 +1254,7 @@
     {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1328,6 +1357,7 @@
    "user": {
     "id": "100000000000000202",
     "username": "liam",
+    "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
     "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
     "global_name": "Liam",
     "avatar": null,
@@ -1349,6 +1379,7 @@
     {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1485,6 +1516,7 @@
        "user": {
         "id": "100000000000000200",
         "username": "emma",
+        "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
         "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
         "global_name": "Emma",
         "avatar": null,
@@ -1537,6 +1569,7 @@
        "user": {
         "id": "100000000000000202",
         "username": "liam",
+        "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
         "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
         "global_name": "Liam",
         "avatar": null,
@@ -1670,6 +1703,7 @@
       "user": {
        "id": "100000000000000200",
        "username": "emma",
+       "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
        "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
        "global_name": "Emma",
        "avatar": null,
@@ -1688,6 +1722,7 @@
       "user": {
        "id": "100000000000000202",
        "username": "liam",
+       "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
        "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
        "global_name": "Liam",
        "avatar": null,
@@ -1779,6 +1814,7 @@
     "inviter": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1822,6 +1858,7 @@
     "user": {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1835,6 +1872,7 @@
     "user": {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,
@@ -1882,6 +1920,7 @@
     {
      "id": "100000000000000200",
      "username": "emma",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829990", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "violet" } },
      "primary_guild": { "identity_guild_id": "1200000000000000000", "identity_enabled": true, "tag": "ART", "badge": "b1" },
      "global_name": "Emma",
      "avatar": null,
@@ -1890,6 +1929,7 @@
     {
      "id": "100000000000000202",
      "username": "liam",
+     "collectibles": { "nameplate": { "sku_id": "1349849614353829991", "asset": "nameplates/nameplates/twilight/", "label": "Twilight", "palette": "cobalt" } },
      "primary_guild": { "identity_guild_id": "100000000000000300", "identity_enabled": true, "tag": "GAME", "badge": "" },
      "global_name": "Liam",
      "avatar": null,

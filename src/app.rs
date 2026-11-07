@@ -1674,7 +1674,7 @@ impl App {
                 for guild in &ready.guilds {
                     self.members.insert(
                         (guild.id, me),
-                        Member { nick: None, roles: guild.my_roles.clone(), pending: false },
+                        Member { nick: None, roles: guild.my_roles.clone(), pending: false, nameplate: None },
                     );
                 }
                 self.read = ready.read_states.into_iter().map(|r| (r.channel, r)).collect();

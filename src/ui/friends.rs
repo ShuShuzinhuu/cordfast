@@ -338,6 +338,7 @@ fn friend_row(app: &mut App, ui: &mut egui::Ui, r: &Relationship) {
     } else {
         ui.painter().hline(rect.x_range().shrink(10.0), rect.top(), Stroke::new(1.0, p.selected));
     }
+    let slot = ui.painter().add(egui::Shape::Noop);
     let avatar = egui::Rect::from_min_size(rect.left_center() + vec2(10.0, -16.0), Vec2::splat(32.0));
     app.images.circle(ui, avatar, Some(&user.avatar_url()), &super::initials(user.display_name()), 16.0);
     if r.kind == 1 {
@@ -347,7 +348,10 @@ fn friend_row(app: &mut App, ui: &mut egui::Ui, r: &Relationship) {
     // The name with the server tag it wears; the username beside them while
     // hovered, as Discord's.
     let name_room = Rect::from_min_max(pos2(x, rect.center().y - 19.0), pos2(rect.right() - 110.0, rect.center().y + 1.0));
-    super::name_with_tag(app, ui, name_room, user, user.display_name(), theme::strong(16.0), p.strong);
+    let width = super::name_with_tag(app, ui, name_room, user, user.display_name(), theme::strong(16.0), p.strong);
+    if let Some(plate) = &user.nameplate {
+        super::nameplate(app, ui, slot, rect, plate, x - rect.left() + width, hovered, false, super::Plate::Friends);
+    }
     if hovered {
         let name = ui.painter().layout_no_wrap(user.display_name().to_owned(), theme::strong(16.0), p.strong).size().x;
         let tag = user.tag.as_ref().map_or(0.0, |(_, tag, _)| super::profile::tag_size(ui, user, tag, 16.0).x + 6.0);
