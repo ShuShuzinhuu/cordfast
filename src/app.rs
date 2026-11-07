@@ -37,6 +37,14 @@ pub struct LoginForm {
     pub sms_phone: Option<String>,
 }
 
+/// The pages Discord's DM sidebar opens above the conversations.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Home {
+    #[default]
+    Friends,
+    MessageRequests,
+}
+
 pub enum AuthView {
     Checking,
     Generating,
@@ -244,6 +252,8 @@ pub enum InboxTab {
 
 /// A small dialog over everything.
 pub enum Modal {
+    /// Follow an announcement channel into a channel of ours.
+    Follow { channel: Id, guild: Option<Id>, target: Option<Id> },
     /// Join with an invite, or create a server.
     AddServer { invite: String, name: String },
     NewThread { channel: Id, message: Id, name: String },
@@ -436,6 +446,8 @@ pub enum Action {
     DeclineCall(Id),
     SetRegion(String),
     OpenSettings(SettingsTab),
+    /// Pins a DM to the top of the list, or unpins it.
+    PinDm(Id, bool),
     CloseSettings,
     SettingsChanged,
     AttachFiles,
@@ -464,6 +476,12 @@ pub enum Action {
     SetStatus(&'static str, Option<u64>),
     SetCustomStatus { text: Option<String>, minutes: Option<u64> },
     OpenFriends,
+    /// Discord's Message Requests page.
+    OpenMessageRequests,
+    /// Accepts a message request: the conversation joins the DMs.
+    AcceptRequest(Id),
+    /// Ignores message requests: Discord closes them.
+    IgnoreRequests(Vec<Id>),
     AddFriend,
     /// `Some(1)` accepts, `Some(2)` blocks, `None` removes.
     Relationship { user: Id, kind: Option<u64> },
@@ -492,6 +510,16 @@ pub struct App {
     pub latest: HashMap<Id, Id>,
     pub selected_guild: Option<Id>,
     pub selected_channel: Option<Id>,
+    /// The page beside the DMs with no conversation open.
+    pub home: Home,
+    /// A form an app opened (INTERACTION_MODAL_CREATE).
+    pub form: Option<crate::ui::form_modal::Form>,
+    /// Message Requests' Spam tab, rather than its Requests.
+    pub requests_spam: bool,
+    /// Each request's last message, from Discord's supplemental data
+    /// (none: it has no message, or it could not be read).
+    pub request_previews: HashMap<Id, Option<Message>>,
+    requests_asked: HashSet<Id>,
     remembered: HashMap<Option<Id>, Id>,
     pub histories: HashMap<Id, History>,
     pub users: HashMap<Id, User>,
@@ -517,6 +545,26 @@ pub struct App {
     /// Discord's bar over the app after the call went on without us, with
     /// "Reconnect" to the channel it was in.
     pub voice_notice: Option<VoiceNotice>,
+    /// The bars over the app closed this session (`ui::notices::Kind`).
+    pub dismissed_notices: Vec<crate::ui::notices::Kind>,
+    /// READY said the email is not verified.
+    pub unverified: bool,
+    pub email: Option<String>,
+    /// A notice bar is on screen this frame (the content's corner gives way).
+    pub notice_bar: bool,
+    /// Discord's invite window, while open.
+    pub invite: Option<crate::ui::invite::Invite>,
+    /// Discord's activity feed, the member list's "Activity" section, and
+    /// when it was asked for.
+    pub feed: Vec<crate::discord::model::FeedEntry>,
+    pub feed_asked: Option<Instant>,
+    /// The section shows all its entries rather than three.
+    pub feed_expanded: bool,
+    /// Discord's full profile, while open, and the notes we have read.
+    pub full_profile: Option<crate::ui::profile_modal::FullProfile>,
+    pub notes: HashMap<Id, String>,
+    /// The voice channel of the last session, offered back once.
+    pub last_session_voice: Option<(Option<Id>, Id)>,
     pub actions: Vec<Action>,
     pub focus_composer: bool,
     pub page: Option<SettingsTab>,
@@ -738,6 +786,11 @@ impl App {
             latest: HashMap::new(),
             selected_guild: None,
             selected_channel: None,
+            home: Home::Friends,
+            form: None,
+            requests_spam: false,
+            request_previews: HashMap::new(),
+            requests_asked: HashSet::new(),
             remembered: HashMap::new(),
             histories: HashMap::new(),
             users: HashMap::new(),
@@ -761,6 +814,17 @@ impl App {
             login_form: LoginForm::default(),
             notice: None,
             voice_notice: None,
+            dismissed_notices: Vec::new(),
+            unverified: false,
+            email: None,
+            notice_bar: false,
+            invite: None,
+            feed: Vec::new(),
+            feed_asked: None,
+            feed_expanded: false,
+            full_profile: None,
+            notes: HashMap::new(),
+            last_session_voice: None,
             actions: Vec::new(),
             focus_composer: false,
             page: None,
@@ -983,6 +1047,25 @@ impl App {
         ctx.set_zoom_factor(self.settings.zoom.clamp(0.6, 2.0));
     }
 
+    /// Message requests, or the ones taken for spam, newest first as
+    /// Discord sorts them (by their last message).
+    pub fn message_requests(&self, spam: bool) -> Vec<Channel> {
+        let mut list: Vec<Channel> = self.dms.iter().filter(|c| c.message_request && c.spam == spam).cloned().collect();
+        list.sort_by_key(|c| std::cmp::Reverse(self.latest.get(&c.id).copied().or(c.last_message_id).unwrap_or(c.id)));
+        list
+    }
+
+    /// Asks Discord for the last message of requests not asked about yet,
+    /// 25 at a time, as its message request store does.
+    pub fn ask_request_previews(&mut self, channels: &[Id]) {
+        let new: Vec<Id> = channels.iter().copied().filter(|id| self.requests_asked.insert(*id)).collect();
+        for chunk in new.chunks(25) {
+            let query: Vec<String> = chunk.iter().map(|id| format!("channel_ids={id}")).collect();
+            let ids: Vec<String> = chunk.iter().map(Id::to_string).collect();
+            self.commands.send(Command::Api { key: format!("requests-preview:{}", ids.join(",")), method: "GET", path: format!("/users/@me/message-requests/supplemental-data?{}", query.join("&")), body: None });
+        }
+    }
+
     pub fn me_id(&self) -> Id {
         self.me.as_ref().map_or(0, |u| u.id)
     }
@@ -1012,6 +1095,16 @@ impl App {
             .unwrap_or_else(|| channel.guild_id.and_then(|g| self.guild(g)).map_or(1, |g| g.default_notifications))
     }
 
+    /// Whether the list leaves this channel out: a server showing only the
+    /// channels picked in "Channels & Roles", and neither it nor its
+    /// category picked (`isChannelRecordOrParentOptedIn`).
+    pub fn opted_out(&self, channel: &Channel) -> bool {
+        channel.guild_id.is_some_and(|g| self.mutes.opt_in.contains(&g))
+            && channel.kind != ChannelKind::Thread
+            && !self.mutes.opted.contains(&channel.id)
+            && !channel.parent_id.is_some_and(|p| self.mutes.opted.contains(&p))
+    }
+
     pub fn is_muted(&self, channel: &Channel) -> bool {
         self.mutes.channels.contains(&channel.id)
             || channel.parent_id.is_some_and(|p| self.mutes.channels.contains(&p))
@@ -1023,6 +1116,44 @@ impl App {
             (Some(latest), Some(read)) => *latest > read.last_message_id,
             _ => false,
         }
+    }
+
+    /// A forum's counts beside its name, as the bundle's channel list:
+    /// "N New", its active posts we have not joined, made after the forum
+    /// was last read (or after we joined the server) and never opened
+    /// (`getNewThreadCount`); and the posts with messages after that read
+    /// (`useUnreadThreadsCountForParent`), shown in grey when none is new.
+    pub fn forum_counts(&self, forum: &Channel) -> (u32, u32) {
+        let Some(guild) = forum.guild_id.and_then(|g| self.guild(g)) else { return (0, 0) };
+        let ack = self.read.get(&forum.id).map(|r| r.last_message_id);
+        let Some(since) = ack.or(guild.joined) else { return (0, 0) };
+        let (mut new, mut unread) = (0, 0);
+        for post in guild.channels.iter().filter(|c| c.kind == ChannelKind::Thread && c.parent_id == Some(forum.id) && !c.archived) {
+            if !post.joined && post.id > since && !self.read.contains_key(&post.id) {
+                new += 1;
+            }
+            let last = self.latest.get(&post.id).copied().or(post.last_message_id);
+            if let Some(ack) = ack
+                && self.is_unread(post.id)
+                && last.is_some_and(|l| l > ack)
+            {
+                unread += 1;
+            }
+        }
+        (new, unread)
+    }
+
+    /// Discord's "NEW" pill beside a channel (`NewChannelsStore`): in a
+    /// community server, a channel made in the last week, after we joined,
+    /// that has never been read.
+    pub fn is_new_channel(&self, channel: &Channel) -> bool {
+        let Some(guild) = channel.guild_id.and_then(|g| self.guild(g)) else { return false };
+        let week = crate::discord::model::now_snowflake().saturating_sub((7 * 24 * 3600 * 1000) << 22);
+        guild.has("COMMUNITY")
+            && channel.kind != ChannelKind::Thread
+            && channel.id > week
+            && guild.joined.is_some_and(|joined| channel.id > joined)
+            && !self.read.contains_key(&channel.id)
     }
 
     pub fn mentions(&self, channel: Id) -> u32 {
@@ -1037,7 +1168,8 @@ impl App {
         let mut mentions = 0;
         for channel in &guild.channels {
             if channel.kind.is_text() && guild.can_view(me, channel) {
-                if !muted_guild && !self.is_muted(channel) {
+                // A channel not picked counts only with mentions.
+                if !muted_guild && !self.is_muted(channel) && !self.opted_out(channel) {
                     unread |= self.is_unread(channel.id);
                 }
                 mentions += self.mentions(channel.id);
@@ -1498,6 +1630,16 @@ impl App {
         match event {
             VoiceEvent::Channel(channel) => {
                 self.voice.channel = channel;
+                // Remembered while in it: a close without leaving keeps it
+                // for the next start's bar.
+                let last = channel.map(|(g, c)| format!("{}:{c}", g.unwrap_or(0)));
+                if self.settings.last_voice != last {
+                    self.settings.last_voice = last;
+                    self.actions.push(Action::SettingsChanged);
+                }
+                if channel.is_some() {
+                    self.last_session_voice = None;
+                }
                 self.voice.connected = false;
                 self.voice.error = None;
                 self.voice.since = channel.map(|_| Instant::now());
@@ -1603,6 +1745,20 @@ impl App {
             Dispatch::Ready(ready) => {
                 let ready = *ready;
                 self.preloaded = crate::discord::preloaded::Preloaded::new(ready.settings_proto.clone());
+                self.unverified = !ready.verified;
+                self.email = ready.email.clone();
+                // Nitro's payment bars read the subscription and its
+                // payment source, as Discord's notices do.
+                if ready.me.premium > 0 {
+                    for (key, path) in [("settings:subscriptions", "/users/@me/billing/subscriptions"), ("settings:payment-sources", "/users/@me/billing/payment-sources")] {
+                        self.settings_data.insert(key, None);
+                        self.commands.send(crate::admin::get(key, path.to_owned()));
+                    }
+                }
+                self.last_session_voice = self.settings.last_voice.as_deref().and_then(|v| v.split_once(':')).and_then(|(g, c)| {
+                    let guild = g.parse::<Id>().ok().filter(|g| *g != 0);
+                    Some((guild, c.parse::<Id>().ok()?))
+                });
                 self.learn(&ready.me);
                 self.me = Some(ready.me);
                 for channel in &ready.private_channels {
@@ -1624,7 +1780,7 @@ impl App {
                 for guild in &ready.guilds {
                     self.members.insert(
                         (guild.id, me),
-                        Member { nick: None, roles: guild.my_roles.clone(), pending: false },
+                        Member { nick: None, roles: guild.my_roles.clone(), pending: false, nameplate: None, boosting: None },
                     );
                 }
                 self.read = ready.read_states.into_iter().map(|r| (r.channel, r)).collect();
@@ -1740,8 +1896,22 @@ impl App {
                 }
             }
             Dispatch::InteractionFailed { nonce } => {
-                if self.sent_commands.contains(&nonce) {
+                if let Some(form) = self.form.as_mut().filter(|f| f.nonce.as_deref() == Some(nonce.as_str())) {
+                    form.nonce = None;
+                    form.error = Some(t!("Something went wrong. Try again.").to_owned());
+                } else if self.sent_commands.contains(&nonce) {
                     self.notify(t!("The application did not respond."));
+                }
+            }
+            // A submitted form closes once the app took it.
+            Dispatch::InteractionSucceeded { nonce } => {
+                if self.form.as_ref().is_some_and(|f| f.nonce.as_deref() == Some(nonce.as_str())) {
+                    self.form = None;
+                }
+            }
+            Dispatch::InteractionModal(d) => {
+                if let Some(form) = crate::ui::form_modal::Form::parse(&d) {
+                    self.form = Some(form);
                 }
             }
             Dispatch::VoiceEffect { channel, user, sound, volume, emoji_id, emoji_name } => {
@@ -1993,6 +2163,10 @@ impl App {
                     g.emojis = emojis;
                 }
             }
+            Dispatch::OwnPresence(mut presence) => {
+                presence.user = self.me_id();
+                self.presences.insert(presence.user, presence);
+            }
             Dispatch::Presences(list) => {
                 let me = self.me_id();
                 for presence in list {
@@ -2030,6 +2204,18 @@ impl App {
                     }
                     if let Some(owner) = update.get("owner_id").and_then(sf) {
                         g.owner_id = Some(owner);
+                    }
+                    if let Some(banner) = update.get("banner") {
+                        g.banner = banner.as_str().map(str::to_owned);
+                    }
+                    if let Some(count) = update.get("premium_subscription_count").and_then(serde_json::Value::as_u64) {
+                        g.boosts = count;
+                    }
+                    if let Some(on) = update.get("premium_progress_bar_enabled").and_then(serde_json::Value::as_bool) {
+                        g.boost_bar = on;
+                    }
+                    if let Some(list) = update.get("features").and_then(serde_json::Value::as_array) {
+                        g.features = list.iter().filter_map(serde_json::Value::as_str).map(str::to_owned).collect();
                     }
                 }
             }
@@ -2127,6 +2313,27 @@ impl App {
         match what {
             // The loading screen, held as a session starting shows it.
             "loading" => self.auth = AuthView::Checking,
+            // Message Requests, on its Spam tab with "requests:spam".
+            "requests" => {
+                self.run(Action::OpenMessageRequests);
+                self.requests_spam = n == "spam";
+            }
+            // The full profile of the Nth DM's person.
+            "fullprofile" => {
+                let user = self.dms.iter().filter(|c| c.kind == ChannelKind::Dm && !c.message_request).nth(n.parse::<usize>().unwrap_or(0)).and_then(|c| c.recipients.first().cloned());
+                if let Some(user) = user {
+                    crate::ui::profile_modal::open(self, user);
+                }
+            }
+            // The invite window for the first server's first text channel.
+            "invite" => {
+                let channel = self.guilds.first().and_then(|g| g.channels.iter().find(|c| c.kind == ChannelKind::Text).map(|c| (g.id, c.id)));
+                if let Some((guild, channel)) = channel {
+                    self.select_guild(Some(guild));
+                    self.invite = Some(crate::ui::invite::Invite::new(guild, channel));
+                    crate::ui::invite::request(self, channel, 604800, 0);
+                }
+            }
             // The first server with these files waiting in its box.
             "uploads" => {
                 if let Some(id) = self.guilds.first().map(|g| g.id) {
@@ -2153,6 +2360,8 @@ impl App {
                         log::info!("dump me member {:?}", self.members.get(&(id, me)).map(|m| m.nick.clone()));
                     }
                     self.select_guild(Some(id));
+                    // For opening the same place in Discord to compare.
+                    log::info!("preview: discord://-/channels/{id}/{}", self.selected_channel.map_or_else(String::new, |c| c.to_string()));
                 }
             }
             "dm" => {
@@ -2163,8 +2372,10 @@ impl App {
                     .map(|c| (self.latest.get(&c.id).copied().unwrap_or(0), c.id))
                     .collect();
                 dms.sort_unstable_by(|a, b| b.cmp(a));
-                if let Some((_, id)) = dms.get(index) {
-                    self.open_channel(*id);
+                // "dm:name=Loritta" opens the conversation with that title.
+                let named = n.strip_prefix("name=").and_then(|name| self.dms.iter().find(|c| c.title() == name).map(|c| c.id));
+                if let Some(id) = named.or_else(|| dms.get(index).map(|(_, id)| *id)) {
+                    self.open_channel(id);
                 }
             }
             "profile" | "member" => {
@@ -2321,6 +2532,27 @@ impl App {
 
     /// Answers to the API calls the chat makes (pins, search, joining).
     fn api_answer(&mut self, key: &str, result: Result<serde_json::Value, String>) {
+        // A note: none is a 404, an empty one.
+        if let Some(id) = key.strip_prefix("note:").and_then(|id| id.parse::<Id>().ok()) {
+            let note = result.ok().and_then(|v| v.get("note").and_then(serde_json::Value::as_str).map(str::to_owned)).unwrap_or_default();
+            self.notes.insert(id, note);
+            return;
+        }
+        // [{channel_id, message_preview}] for the requests asked about; one
+        // left out has no message, and a failure leaves them all without.
+        if let Some(ids) = key.strip_prefix("requests-preview:") {
+            let asked: Vec<Id> = ids.split(',').filter_map(|id| id.parse().ok()).collect();
+            let mut found: HashMap<Id, Message> = HashMap::new();
+            for item in result.iter().filter_map(serde_json::Value::as_array).flatten() {
+                if let (Some(id), Some(message)) = (item.get("channel_id").and_then(serde_json::Value::as_str).and_then(|s| s.parse::<Id>().ok()), item.get("message_preview").and_then(Message::parse)) {
+                    found.insert(id, message);
+                }
+            }
+            for id in asked {
+                self.request_previews.insert(id, found.remove(&id));
+            }
+            return;
+        }
         // The Server Boost page shows what the slots are now, whatever
         // happened; a transfer goes on to its new server once removed.
         if let Some(rest) = key.strip_prefix("boost-transfer:")
@@ -2346,6 +2578,17 @@ impl App {
                     if let Some(inbox) = &mut self.inbox {
                         inbox.mentions = Some(Vec::new());
                     }
+                    return;
+                }
+                if key == "modal-failed" {
+                    if let Some(form) = &mut self.form {
+                        form.nonce = None;
+                        form.error = Some(t!("Something went wrong. Try again.").to_owned());
+                    }
+                    return;
+                }
+                if key == "request-changed" {
+                    self.notify(t!("Uh-oh! Something went wrong while updating this message request. Please wait a moment and try again."));
                     return;
                 }
                 if key.starts_with("gate:") {
@@ -2561,10 +2804,21 @@ impl App {
                     inbox.mentions = Some(messages(&value));
                 }
             }
-            "invite" => {
-                if let Some(code) = value.get("code").and_then(serde_json::Value::as_str) {
-                    self.notify(t!("Invite copied: discord.gg/{code}", code = code));
-                    self.clipboard = Some(format!("https://discord.gg/{code}"));
+            // The feed's entries, then its games not ranked, in the kinds the
+            // member list shows (the bundle's `uP`).
+            "content-inventory" => {
+                let list = |key: &str| value.get(key).and_then(serde_json::Value::as_array).cloned().unwrap_or_default();
+                let mut feed: Vec<crate::discord::model::FeedEntry> = Vec::new();
+                for entry in list("entries").iter().chain(list("unranked_game_entries").iter()).filter_map(crate::discord::model::FeedEntry::parse) {
+                    if [1, 2, 3, 5, 6, 8].contains(&entry.kind) && !feed.iter().any(|e| e.id == entry.id) {
+                        feed.push(entry);
+                    }
+                }
+                self.feed = feed;
+            }
+            "invite-modal" => {
+                if let (Some(code), Some(invite)) = (value.get("code").and_then(serde_json::Value::as_str), self.invite.as_mut()) {
+                    invite.code = Some(code.to_owned());
                 }
             }
             "profile-saved" => self.notify(t!("Profile saved.")),
@@ -3263,6 +3517,20 @@ impl App {
                 self.commands.send(Command::Call { guild, channel, ring });
             }
             Action::LeaveVoice => self.commands.send(Command::Voice(VoiceCommand::Leave)),
+            Action::PinDm(channel, pin) => {
+                // The FAVORITED bit of the DM's override, the others kept;
+                // shown at once, the settings update confirms it.
+                let flags = self.mutes.dm_flags.get(&channel).copied().unwrap_or(0);
+                let flags = if pin { flags | crate::discord::model::FAVORITED } else { flags & !crate::discord::model::FAVORITED };
+                self.mutes.dm_flags.insert(channel, flags);
+                if pin {
+                    self.mutes.favorites.insert(channel);
+                } else {
+                    self.mutes.favorites.remove(&channel);
+                }
+                let body = serde_json::json!({ "channel_overrides": { channel.to_string(): { "flags": flags } } });
+                self.commands.send(Command::Api { key: "pin-dm".into(), method: "PATCH", path: "/users/@me/guilds/@me/settings".into(), body: Some(body) });
+            }
             Action::ToggleMute => {
                 self.voice.mute = !self.voice.mute;
                 self.sound(if self.voice.mute { crate::sounds::Sound::Mute } else { crate::sounds::Sound::Unmute });
@@ -3460,7 +3728,38 @@ impl App {
             Action::OpenFriends => {
                 self.selected_guild = None;
                 self.selected_channel = None;
+                self.home = Home::Friends;
                 self.remembered.remove(&None);
+            }
+            Action::OpenMessageRequests => {
+                self.selected_guild = None;
+                self.selected_channel = None;
+                self.home = Home::MessageRequests;
+                self.remembered.remove(&None);
+            }
+            // As Discord's message request hook: PUT consent 2 accepts, DELETE
+            // of our recipient ignores one, and batch-reject takes 50 at a time.
+            Action::AcceptRequest(channel) => {
+                self.commands.send(Command::Api { key: "request-changed".into(), method: "PUT", path: format!("/channels/{channel}/recipients/@me"), body: Some(serde_json::json!({ "consent_status": 2 })) });
+                // Discord's MESSAGE_REQUEST_ACCEPT_OPTIMISTIC: it is a DM at once.
+                if let Some(dm) = self.dms.iter_mut().find(|c| c.id == channel) {
+                    dm.message_request = false;
+                    dm.spam = false;
+                }
+            }
+            Action::IgnoreRequests(channels) => {
+                if let [channel] = channels.as_slice() {
+                    self.commands.send(Command::Api { key: "request-changed".into(), method: "DELETE", path: format!("/channels/{channel}/recipients/@me"), body: None });
+                } else {
+                    for chunk in channels.chunks(50) {
+                        let ids: Vec<String> = chunk.iter().map(Id::to_string).collect();
+                        self.commands.send(Command::Api { key: "request-changed".into(), method: "PUT", path: "/channels/recipients/@me/batch-reject".into(), body: Some(serde_json::json!({ "channel_ids": ids })) });
+                    }
+                }
+                self.dms.retain(|c| !channels.contains(&c.id));
+                if self.selected_channel.is_some_and(|id| channels.contains(&id)) {
+                    self.selected_channel = None;
+                }
             }
             Action::AddFriend => {
                 let name = std::mem::take(&mut self.friend_input);

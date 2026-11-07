@@ -325,14 +325,21 @@ pub fn only_emoji(blocks: &[Block]) -> bool {
 
 /// Draws parsed blocks. `key` names the message, for revealed spoilers.
 pub fn show(app: &mut App, ui: &mut egui::Ui, blocks: &[Block], color: Color32, key: Id) {
+    show_sized(app, ui, blocks, color, key, 15.0);
+}
+
+/// [`show`] at Discord's size for the place: 16 points in a message (its
+/// `markup`, 22-point lines), 14 in an embed or a bio.
+pub fn show_sized(app: &mut App, ui: &mut egui::Ui, blocks: &[Block], color: Color32, key: Id, base: f32) {
     let p = theme::p();
     let jumbo = only_emoji(blocks);
     let mut spoiler_index = 0usize;
     for block in blocks {
         match block {
-            Block::Paragraph(spans) => spans_view(app, ui, spans, color, 15.0, jumbo, key, &mut spoiler_index),
+            Block::Paragraph(spans) => spans_view(app, ui, spans, color, base, jumbo, key, &mut spoiler_index),
             Block::Heading(level, spans) => {
-                let size = match level { 1 => 24.0, 2 => 20.0, _ => 17.0 };
+                // Discord's 1.5, 1.25 and 1 rem.
+                let size = match level { 1 => base * 1.5, 2 => base * 1.25, _ => base };
                 ui.add_space(4.0);
                 let bold: Vec<Span> = spans
                     .iter()
@@ -348,13 +355,13 @@ pub fn show(app: &mut App, ui: &mut egui::Ui, blocks: &[Block], color: Color32, 
             Block::Item(spans) => {
                 ui.horizontal_top(|ui| {
                     ui.label(RichText::new("•").color(color));
-                    ui.vertical(|ui| spans_view(app, ui, spans, color, 15.0, false, key, &mut spoiler_index));
+                    ui.vertical(|ui| spans_view(app, ui, spans, color, base, false, key, &mut spoiler_index));
                 });
             }
             Block::Quote(spans) => {
                 let response = Frame::new()
                     .inner_margin(Margin { left: 12, right: 0, top: 0, bottom: 0 })
-                    .show(ui, |ui| spans_view(app, ui, spans, color, 15.0, false, key, &mut spoiler_index));
+                    .show(ui, |ui| spans_view(app, ui, spans, color, base, false, key, &mut spoiler_index));
                 let r = response.response.rect;
                 ui.painter().rect_filled(
                     egui::Rect::from_min_size(r.min, vec2(4.0, r.height())),

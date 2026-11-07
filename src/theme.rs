@@ -357,6 +357,11 @@ pub fn install(ctx: &egui::Context) {
 }
 
 /// Bold-ish text: the platform face's semibold weight.
+/// Discord's 500 weight: names in messages, timestamps, labels.
+pub fn medium(size: f32) -> egui::FontId {
+    fastframe_fonts::Weight::Medium.font_id(size)
+}
+
 pub fn strong(size: f32) -> egui::FontId {
     fastframe_fonts::Weight::SemiBold.font_id(size)
 }

@@ -69,6 +69,9 @@ pub enum Dispatch {
     GuildUpdate(Value),
     /// Online status and what people are doing: (user, status, activity).
     Presences(Vec<Presence>),
+    /// Our own presence over every session of the account (its "all"
+    /// entry): what the account panel's activity line reads.
+    OwnPresence(Presence),
     GuildEmojis { guild: Id, emojis: Vec<Emoji> },
     MemberList(MemberListUpdate),
     PollVote { channel: Id, message: Id, user: Id, answer: u64, add: bool },
@@ -85,6 +88,10 @@ pub enum Dispatch {
     Autocomplete { nonce: String, choices: Vec<(String, Value)> },
     /// A command or button got no answer from its application.
     InteractionFailed { nonce: String },
+    InteractionSucceeded { nonce: String },
+    /// INTERACTION_MODAL_CREATE as it came: the form's id, channel, app,
+    /// title, custom id and components.
+    InteractionModal(Box<Value>),
 }
 
 /// One row of a channel's member list.
@@ -210,6 +217,9 @@ pub struct Activity {
     pub buttons: Vec<String>,
     /// Spotify's track id, for "Play on Spotify".
     pub sync_id: Option<String>,
+    /// Which field lists show (`status_display_type`): 0 the name, 1 the
+    /// state, 2 the details.
+    pub display: Option<u64>,
 }
 
 impl Activity {
@@ -239,7 +249,29 @@ impl Activity {
                 .map(|l| l.iter().filter_map(|b| b.as_str().or_else(|| b.get("label")?.as_str()).map(str::to_owned)).collect())
                 .unwrap_or_default(),
             sync_id: text("sync_id"),
+            display: a.get("status_display_type").and_then(Value::as_u64),
         })
+    }
+
+    /// The few words of Discord's activity status in lists (its
+    /// `getActivityText` for lists): the name, a stream's details, the field
+    /// the activity asks for, and for Spotify the artists.
+    pub fn short(&self) -> String {
+        let mut text = if self.kind == 1 { self.details.clone().unwrap_or_else(|| self.name.clone()) } else { self.name.clone() };
+        let chosen = match self.display {
+            Some(1) => self.state.as_ref(),
+            Some(2) => self.details.as_ref(),
+            _ => None,
+        };
+        if let Some(chosen) = chosen {
+            text = chosen.clone();
+        }
+        if self.kind == 2 && self.name == "Spotify" && self.application.is_none()
+            && let Some(state) = &self.state
+        {
+            return state.split("; ").collect::<Vec<_>>().join(", ");
+        }
+        text
     }
 
     /// "Listening to Spotify", "Playing", as the card's header says.
@@ -281,6 +313,16 @@ fn asset_url(asset: &str, application: Option<Id>) -> Option<String> {
     Some(format!("https://cdn.discordapp.com/app-assets/{}/{asset}.png", application?))
 }
 
+/// Our own presence from a list of the account's sessions (READY's
+/// `sessions`, SESSIONS_REPLACE): its "all" entry, else the first.
+fn own_presence(list: &Value) -> Option<Dispatch> {
+    let list = list.as_array()?;
+    let all = list.iter().find(|s| s.get("session_id").and_then(Value::as_str) == Some("all")).or_else(|| list.first())?;
+    let mut value = all.clone();
+    value.as_object_mut()?.insert("user_id".into(), Value::String("0".into()));
+    Presence::parse(&value).map(Dispatch::OwnPresence)
+}
+
 impl Presence {
     pub fn parse(value: &Value) -> Option<Self> {
         let user = value
@@ -303,12 +345,6 @@ impl Presence {
                 .map(|l| l.iter().filter(|a| a.get("type").and_then(Value::as_u64) != Some(4)).filter_map(Activity::parse).collect())
                 .unwrap_or_default(),
         })
-    }
-
-    /// "Playing X", "Listening to Y" or the custom status, in the
-    /// interface's language when shown.
-    pub fn activity(&self) -> Option<String> {
-        self.activities.first().map(Activity::line).or_else(|| self.custom.clone())
     }
 
     /// Every presence in READY or READY_SUPPLEMENTAL, in either shape.
@@ -579,6 +615,9 @@ async fn connect(
                                 if !presences.is_empty() {
                                     out(Dispatch::Presences(presences));
                                 }
+                                if let Some(own) = d.get("sessions").and_then(own_presence) {
+                                    out(own);
+                                }
                                 out(Dispatch::Connected);
                             }
                             "RESUMED" => {
@@ -785,7 +824,7 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
         "GUILD_UPDATE" => vec![Dispatch::GuildUpdate(d.clone())],
         "PRESENCE_UPDATE" => one(Presence::parse(d).map(|p| Dispatch::Presences(vec![p]))),
         "READY_SUPPLEMENTAL" => vec![Dispatch::Presences(Presence::all_in(d))],
-        "SESSIONS_REPLACE" => Vec::new(),
+        "SESSIONS_REPLACE" => one(own_presence(d)),
         "MESSAGE_POLL_VOTE_ADD" | "MESSAGE_POLL_VOTE_REMOVE" => one((|| {
             Some(Dispatch::PollVote {
                 channel: id("channel_id")?,
@@ -809,6 +848,9 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
             })
         })()),
         "INTERACTION_FAILURE" => one(d.get("nonce").and_then(Value::as_str).map(|nonce| Dispatch::InteractionFailed { nonce: nonce.to_owned() })),
+        "INTERACTION_SUCCESS" => one(d.get("nonce").and_then(Value::as_str).map(|nonce| Dispatch::InteractionSucceeded { nonce: nonce.to_owned() })),
+        // A form an app opens in answer to a button or command.
+        "INTERACTION_MODAL_CREATE" => one(Some(Dispatch::InteractionModal(Box::new(d.clone())))),
         "GUILD_EMOJIS_UPDATE" => one((|| {
             Some(Dispatch::GuildEmojis {
                 guild: id("guild_id")?,

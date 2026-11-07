@@ -62,6 +62,10 @@ pub struct Settings {
     pub hide_muted: Vec<String>,
     /// The folder the last file was picked from, where the next dialog opens.
     pub last_folder: Option<String>,
+    /// The voice channel ("guild:channel", guild 0 for a call) we were in
+    /// when the app last closed: Discord's "You were in a voice channel last
+    /// time you left Discord." offers to reconnect.
+    pub last_voice: Option<String>,
     /// The channel list's width, dragged at its edge as in Discord.
     pub sidebar_width: f32,
     /// Shortcuts changed from their defaults: id → "Ctrl+Shift+M" ("" for none).
@@ -173,6 +177,7 @@ impl Default for Settings {
             user_volumes: BTreeMap::new(),
             hide_muted: Vec::new(),
             last_folder: None,
+            last_voice: None,
             sidebar_width: 240.0,
             keybinds: BTreeMap::new(),
             sounds_off: Vec::new(),

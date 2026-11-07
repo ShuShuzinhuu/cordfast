@@ -107,6 +107,55 @@ pub struct User {
     pub decoration: Option<String>,
     /// Nitro: 0 none, 1 Classic, 2 Nitro, 3 Basic.
     pub premium: u64,
+    /// The nameplate (a shop collectible) behind the name in lists.
+    pub nameplate: Option<Nameplate>,
+}
+
+/// A nameplate from Discord's shop: its picture is served by SKU, and the
+/// palette names the colour of the gradient drawn under it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Nameplate {
+    pub sku: String,
+    /// The asset's folder, such as "nameplates/nameplates/twilight/".
+    pub asset: String,
+    pub palette: String,
+}
+
+impl Nameplate {
+    /// `collectibles.nameplate` of a user or a server member.
+    pub fn parse(value: &Value) -> Option<Self> {
+        let plate = value.pointer("/collectibles/nameplate")?;
+        Some(Self { sku: string(plate, "sku_id")?, asset: string(plate, "asset").unwrap_or_default(), palette: string(plate, "palette").unwrap_or_default() })
+    }
+
+    /// The still picture: the asset's `static.png` on the CDN, or by SKU, as
+    /// the bundle's `getCollectiblesItemAssetUrl`, when there is no asset.
+    pub fn url(&self) -> String {
+        match self.asset.as_str() {
+            "" => format!("https://cdn.discordapp.com/media/v1/collectibles-shop/{}/static", self.sku),
+            asset => format!("https://cdn.discordapp.com/assets/collectibles/{asset}static.png"),
+        }
+    }
+
+    /// The palette's colours (dark theme, light theme), from the bundle's
+    /// table; an unknown palette draws no gradient.
+    pub fn colors(&self) -> Option<([u8; 3], [u8; 3])> {
+        Some(match self.palette.as_str() {
+            "crimson" => ([0x90, 0x00, 0x07], [0xE7, 0x04, 0x0F]),
+            "berry" => ([0x89, 0x3A, 0x99], [0xB1, 0x1F, 0xCF]),
+            "sky" => ([0x00, 0x80, 0xB7], [0x56, 0xCC, 0xFF]),
+            "teal" => ([0x08, 0x64, 0x60], [0x7D, 0xEE, 0xD7]),
+            "forest" => ([0x2D, 0x54, 0x01], [0x6A, 0xA6, 0x24]),
+            "bubble_gum" => ([0xDC, 0x3E, 0x97], [0xF9, 0x57, 0xB3]),
+            "violet" => ([0x73, 0x0B, 0xC8], [0x97, 0x2F, 0xED]),
+            "cobalt" => ([0x01, 0x31, 0xC2], [0x42, 0x78, 0xFF]),
+            "clover" => ([0x04, 0x7B, 0x20], [0x63, 0xCD, 0x5A]),
+            "lemon" => ([0xF6, 0xCD, 0x12], [0xFE, 0xD4, 0x00]),
+            "white" => ([0xFF; 3], [0xFF; 3]),
+            "black" => ([0x00; 3], [0x00; 3]),
+            _ => return None,
+        })
+    }
 }
 
 impl User {
@@ -132,6 +181,7 @@ impl User {
                 }),
             decoration: value.pointer("/avatar_decoration_data/asset").and_then(Value::as_str).map(str::to_owned),
             premium: value.get("premium_type").and_then(Value::as_u64).unwrap_or(0),
+            nameplate: Nameplate::parse(value),
         })
     }
 
@@ -257,6 +307,9 @@ pub struct Channel {
     pub locked: bool,
     /// Someone who is no friend wrote: waits for Accept or Ignore.
     pub message_request: bool,
+    /// A message request Discord's filter took for spam: under Message
+    /// Requests' Spam tab instead.
+    pub spam: bool,
 }
 
 impl Channel {
@@ -320,6 +373,7 @@ impl Channel {
             owner: field_sf(value, "owner_id"),
             locked: value.pointer("/thread_metadata/locked").and_then(Value::as_bool).unwrap_or(false),
             message_request: value.get("is_message_request").and_then(Value::as_bool).unwrap_or(false),
+            spam: value.get("is_spam").and_then(Value::as_bool).unwrap_or(false),
             archived: value
                 .pointer("/thread_metadata/archived")
                 .and_then(Value::as_bool)
@@ -377,6 +431,38 @@ pub struct Guild {
     pub stickers: Vec<(Id, String, u64)>,
     /// What members hear about by default: 0 every message, 1 @mentions.
     pub default_notifications: u8,
+    /// Discord's feature flags ("COMMUNITY", "NEWS"…).
+    pub features: Vec<String>,
+    /// Scheduled events READY listed: the sidebar's "Events" row shows
+    /// while there are any.
+    pub events: usize,
+    /// When we joined, as a snowflake: a forum never read counts its posts
+    /// as new from then on.
+    pub joined: Option<Id>,
+    /// The banner over the channel list.
+    pub banner: Option<String>,
+    /// Boosts applied, and whether the server shows its boost goal bar.
+    pub boosts: u64,
+    pub boost_bar: bool,
+}
+
+impl Guild {
+    pub fn has(&self, feature: &str) -> bool {
+        self.features.iter().any(|f| f == feature)
+    }
+
+    /// The banner as the channel list shows it.
+    pub fn banner_url(&self) -> Option<String> {
+        self.banner.as_ref().map(|hash| format!("https://cdn.discordapp.com/banners/{}/{hash}.png?size=480", self.id))
+    }
+
+    /// The boost goal's end (the bundle's `tg`): Level 3's 14 boosts, none
+    /// with PREMIUM_TIER_3_OVERRIDE, plus the price of every perk bought
+    /// apart (server tags 3, enhanced role colours 3, the badge packs 3, 5,
+    /// 3 and 2).
+    pub fn boost_goal(&self) -> u64 {
+        (if self.has("PREMIUM_TIER_3_OVERRIDE") { 0 } else { 14 }) + 3 + 3 + 3 + 5 + 3 + 2
+    }
 }
 
 impl Role {
@@ -468,6 +554,15 @@ impl Guild {
             icon: string(props, "icon"),
             owner_id: field_sf(props, "owner_id"),
             default_notifications: props.get("default_message_notifications").and_then(Value::as_u64).unwrap_or(1).min(1) as u8,
+            features: props.get("features").and_then(Value::as_array).map(|l| l.iter().filter_map(Value::as_str).map(str::to_owned).collect()).unwrap_or_default(),
+            events: value.get("guild_scheduled_events").and_then(Value::as_array).map_or(0, Vec::len),
+            banner: string(props, "banner"),
+            // READY keeps the count beside `properties`, not in it.
+            boosts: value.get("premium_subscription_count").or_else(|| props.get("premium_subscription_count")).and_then(Value::as_u64).unwrap_or(0),
+            boost_bar: props.get("premium_progress_bar_enabled").or_else(|| value.get("premium_progress_bar_enabled")).and_then(Value::as_bool).unwrap_or(false),
+            joined: string(value, "joined_at")
+                .and_then(|t| t.parse::<jiff::Timestamp>().ok())
+                .map(|t| (t.as_millisecond().max(0) as u64).saturating_sub(DISCORD_EPOCH_MS) << 22),
             channels,
             roles,
             my_roles: my_roles.unwrap_or_default(),
@@ -611,6 +706,10 @@ pub fn voice_deaf(v: &Value) -> bool {
 #[derive(Clone, Debug, Default)]
 pub struct Member {
     pub nick: Option<String>,
+    /// This server's own nameplate, over the account's.
+    pub nameplate: Option<Nameplate>,
+    /// Boosting the server since then (Unix ms).
+    pub boosting: Option<u64>,
     pub roles: Vec<Id>,
     /// Has not finished the server's verification form yet.
     pub pending: bool,
@@ -620,6 +719,8 @@ impl Member {
     pub fn parse(value: &Value) -> Self {
         Self {
             pending: value.get("pending").and_then(Value::as_bool).unwrap_or(false),
+            nameplate: Nameplate::parse(value),
+            boosting: string(value, "premium_since").and_then(|t| t.parse::<jiff::Timestamp>().ok()).map(|t| t.as_millisecond().max(0) as u64),
             nick: string(value, "nick").filter(|n| !n.is_empty()),
             roles: value
                 .get("roles")
@@ -1040,6 +1141,9 @@ pub struct Ready {
     pub session_id: String,
     /// The account's PreloadedUserSettings, whole.
     pub settings_proto: Vec<u8>,
+    /// The email is verified (Discord's "Please check your email" bar).
+    pub verified: bool,
+    pub email: Option<String>,
 }
 
 /// `PreloadedUserSettings.status.custom_status.text` (11 → 2 → 1), when
@@ -1180,7 +1284,20 @@ pub struct Mutes {
     /// 0 every message, 1 only @mentions, 2 nothing. A channel that follows
     /// its category or server is absent.
     pub levels: HashMap<Id, u8>,
+    /// DMs pinned to the top of the list: the `FAVORITED` flag (2048) of
+    /// their override in the settings without a server.
+    pub favorites: std::collections::HashSet<Id>,
+    /// Those overrides' flags, kept so a change sets one bit only.
+    pub dm_flags: HashMap<Id, u64>,
+    /// Servers whose list shows only the channels picked in "Channels &
+    /// Roles" (`OPT_IN_CHANNELS_ON`, 16384, in the server's flags).
+    pub opt_in: std::collections::HashSet<Id>,
+    /// The channels and categories picked there (`OPT_IN_ENABLED`, 4096).
+    pub opted: std::collections::HashSet<Id>,
 }
+
+/// `ChannelNotificationSettingsFlags.FAVORITED`.
+pub const FAVORITED: u64 = 2048;
 
 /// A mute's end, when it has one, in Unix ms.
 fn mute_end(value: &Value) -> Option<u64> {
@@ -1208,6 +1325,11 @@ fn muted(value: &Value) -> bool {
 impl Mutes {
     pub fn add(&mut self, entry: &Value) {
         if let Some(guild) = field_sf(entry, "guild_id") {
+            if entry.get("flags").and_then(Value::as_u64).unwrap_or(0) & 16384 != 0 {
+                self.opt_in.insert(guild);
+            } else {
+                self.opt_in.remove(&guild);
+            }
             self.set(guild, muted(entry).then(|| mute_end(entry)), true);
             match level(entry) {
                 Some(level) => self.levels.insert(guild, level),
@@ -1221,6 +1343,20 @@ impl Mutes {
             .flatten()
         {
             if let Some(channel) = field_sf(o, "channel_id") {
+                if o.get("flags").and_then(Value::as_u64).unwrap_or(0) & 4096 != 0 {
+                    self.opted.insert(channel);
+                } else {
+                    self.opted.remove(&channel);
+                }
+                if field_sf(entry, "guild_id").is_none() {
+                    let flags = o.get("flags").and_then(Value::as_u64).unwrap_or(0);
+                    self.dm_flags.insert(channel, flags);
+                    if flags & FAVORITED != 0 {
+                        self.favorites.insert(channel);
+                    } else {
+                        self.favorites.remove(&channel);
+                    }
+                }
                 self.set(channel, muted(o).then(|| mute_end(o)), false);
                 match level(o) {
                     Some(level) => self.levels.insert(channel, level),
@@ -1526,8 +1662,76 @@ impl Ready {
             status,
             custom_status: settings.as_deref().and_then(proto_custom_status),
             settings_proto: settings.clone().unwrap_or_default(),
+            verified: d.pointer("/user/verified").and_then(Value::as_bool).unwrap_or(true),
+            email: d.pointer("/user/email").and_then(Value::as_str).map(str::to_owned),
             session_id: d.get("session_id").and_then(Value::as_str).unwrap_or_default().to_owned(),
         })
+    }
+}
+
+/// An entry of Discord's activity feed (`/content-inventory/users/@me`):
+/// a game played, music listened to, the top artist or game of the week…
+#[derive(Clone, Debug)]
+pub struct FeedEntry {
+    pub id: String,
+    pub author: Id,
+    /// ContentInventoryEntryType: 1 played game, 2 watched media, 3 top game,
+    /// 5 listened session, 6 top artist, 8 launched activity.
+    pub kind: u64,
+    pub title: String,
+    /// A listening session's artists, under the track.
+    pub detail: String,
+    pub image: Option<String>,
+    pub application: Option<Id>,
+    /// Unix ms; a game still being played has no end.
+    pub started: Option<u64>,
+    pub ended: Option<u64>,
+    /// Traits: AGGREGATE_COUNT, STREAK_DAYS, DURATION_SECONDS, IS_LIVE.
+    pub count: Option<u64>,
+    pub streak: Option<u64>,
+    pub duration: Option<u64>,
+    pub live: bool,
+}
+
+impl FeedEntry {
+    pub fn parse(value: &Value) -> Option<Self> {
+        let content = value.get("content").unwrap_or(value);
+        let extra = content.get("extra").unwrap_or(&Value::Null);
+        let kind = content.get("content_type").and_then(Value::as_u64)?;
+        let time = |key: &str| string(content, key).and_then(|t| t.parse::<jiff::Timestamp>().ok()).map(|t| t.as_millisecond().max(0) as u64);
+        let traits = content.get("traits").and_then(Value::as_array).cloned().unwrap_or_default();
+        let trait_of = |kind: u64| traits.iter().find(|t| t.get("type").and_then(Value::as_u64) == Some(kind));
+        // A listening session holds its tracks, the latest first.
+        let media = if kind == 5 { extra.pointer("/entries/0/media") } else { extra.get("media") }.unwrap_or(&Value::Null);
+        let title = match kind {
+            1 | 3 => extra.get("game_name").and_then(Value::as_str),
+            6 => extra.pointer("/artist/name").and_then(Value::as_str),
+            8 => extra.get("activity_name").or_else(|| extra.get("application_name")).and_then(Value::as_str),
+            _ => media.get("title").and_then(Value::as_str),
+        }
+        .unwrap_or_default()
+        .to_owned();
+        let detail = media.get("artists").and_then(Value::as_array).map(|a| a.iter().filter_map(|x| x.get("name").and_then(Value::as_str)).collect::<Vec<_>>().join(", ")).unwrap_or_default();
+        Some(Self {
+            id: string(content, "id")?,
+            author: field_sf(content, "author_id")?,
+            kind,
+            title,
+            detail,
+            image: media.get("image_url").and_then(Value::as_str).map(str::to_owned),
+            application: extra.get("application_id").and_then(sf),
+            started: time("started_at"),
+            ended: time("ended_at"),
+            count: trait_of(12).and_then(|t| t.get("count")).and_then(Value::as_u64),
+            streak: trait_of(8).and_then(|t| t.get("streak_days")).and_then(Value::as_u64),
+            duration: trait_of(2).and_then(|t| t.get("duration_seconds")).and_then(Value::as_u64),
+            live: trait_of(3).and_then(|t| t.get("is_live")).and_then(Value::as_bool).unwrap_or(false),
+        })
+    }
+
+    /// Played and not over yet.
+    pub fn playing(&self) -> bool {
+        self.kind == 1 && (self.live || self.ended.is_none())
     }
 }
 
@@ -1689,6 +1893,12 @@ mod tests {
             emojis: Vec::new(),
             stickers: Vec::new(),
             default_notifications: 1,
+            features: Vec::new(),
+            events: 0,
+            joined: None,
+            banner: None,
+            boosts: 0,
+            boost_bar: false,
         };
         let mut channel =
             Channel::parse(&serde_json::json!({"id": "5", "type": 0}), Some(1), &HashMap::new())

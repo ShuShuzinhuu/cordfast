@@ -411,11 +411,22 @@ pub fn radio_card(ui: &mut egui::Ui, chosen: bool, title: &str, detail: &str) ->
 /// Discord's select: an input-coloured box with a chevron that opens the
 /// choices under it. Returns the index picked.
 pub fn select(ui: &mut egui::Ui, id: &str, shown: &str, options: &[String], width: f32) -> Option<usize> {
+    select_with_icon(ui, id, shown, options, width, None)
+}
+
+/// [`select`] with an icon before the value, as Discord's device menus
+/// (the microphone, the headphones).
+pub fn select_with_icon(ui: &mut egui::Ui, id: &str, shown: &str, options: &[String], width: f32, icon: Option<Icon>) -> Option<usize> {
     let p = theme::p();
     let (rect, response) = ui.allocate_exact_size(vec2(width, 40.0), Sense::click());
     let open = egui::Popup::is_id_open(ui.ctx(), egui::Popup::default_response_id(&response));
     ui.painter().rect(rect, 8.0, p.rail, Stroke::new(1.0, if open { p.accent } else { p.border }), egui::StrokeKind::Inside);
-    super::paint_truncated(ui, Rect::from_min_max(pos2(rect.left() + 12.0, rect.top()), pos2(rect.right() - 36.0, rect.bottom())), shown, FontId::proportional(16.0), p.text);
+    let mut left = rect.left() + 12.0;
+    if let Some(icon) = icon {
+        icons::paint(ui, Rect::from_center_size(pos2(left + 8.0, rect.center().y), Vec2::splat(16.0)), icon, p.text);
+        left += 24.0;
+    }
+    super::paint_truncated(ui, Rect::from_min_max(pos2(left, rect.top()), pos2(rect.right() - 36.0, rect.bottom())), shown, FontId::proportional(16.0), p.text);
     icons::paint(ui, Rect::from_center_size(pos2(rect.right() - 20.0, rect.center().y), Vec2::splat(18.0)), Icon::ChevronDown, if response.hovered() || open { p.strong } else { p.muted });
     let mut picked = None;
     let _ = id;

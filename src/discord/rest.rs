@@ -465,7 +465,6 @@ pub struct Profile {
     pub guild_bio: String,
     pub joined_guild: Option<String>,
     pub mutual_guilds: Vec<Id>,
-    pub mutual_friends: Option<u64>,
     pub mutual_friend_list: Vec<User>,
     /// Nicknames in mutual servers, by server.
     pub mutual_nicks: Vec<(Id, Option<String>)>,
@@ -519,7 +518,6 @@ impl Profile {
                         .collect()
                 })
                 .unwrap_or_default(),
-            mutual_friends: value.get("mutual_friends_count").and_then(Value::as_u64),
             mutual_friend_list: value
                 .get("mutual_friends")
                 .and_then(Value::as_array)
@@ -740,10 +738,10 @@ impl Api {
 impl Api {
     /// A component interaction (type 3), as the client sends one when a
     /// button is pressed or a menu value chosen.
-    pub async fn interact(&self, origin: &super::components::Origin, session: &str, data: Value) -> Result<()> {
+    pub async fn interact(&self, origin: &super::components::Origin, session: &str, data: Value, nonce: &str) -> Result<()> {
         let body = json!({
             "type": 3,
-            "nonce": super::model::now_snowflake().to_string(),
+            "nonce": nonce,
             "guild_id": origin.guild.map(|g| g.to_string()),
             "channel_id": origin.channel.to_string(),
             "message_flags": origin.flags,

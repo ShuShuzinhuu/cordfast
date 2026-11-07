@@ -70,6 +70,9 @@ pub enum Command {
     Forget { url: String },
     Profile { user: Id, guild: Option<Id> },
     OpenDm { user: Id },
+    /// An invite's link sent from the invite window, without opening the
+    /// conversation: to a person (their DM, made if new) or a group.
+    SendInvite { user: Option<Id>, channel: Option<Id>, content: String },
     ForumPosts { forum: Id },
     Notify { title: String, body: String, channel: Id, sound: bool },
     /// Turns the rich-presence server on or off.
@@ -88,7 +91,7 @@ pub enum Command {
     /// Part of the account's PreloadedUserSettings, merged into it.
     SaveSettings(Vec<u8>),
     /// A button press or menu choice, sent to the bot that owns it.
-    Interact { origin: crate::discord::components::Origin, data: Value },
+    Interact { origin: crate::discord::components::Origin, data: Value, nonce: String },
     /// A slash command (kind 2) or an autocomplete request (kind 4).
     SlashCommand { guild: Option<Id>, channel: Id, application: Id, kind: u64, data: Value, nonce: String },
     SetCustomStatus { text: Option<String>, settings: Vec<u8> },
@@ -311,6 +314,13 @@ pub fn selftest(out: &str) {
             let all = sounds.as_array().map_or(0, Vec::len);
             let parsed = sounds.as_array().into_iter().flatten().filter_map(crate::discord::model::SoundboardSound::parse).count();
             parse_note = format!("PARSE soundboard: {parsed}/{all}");
+        }
+        if let Some(feed) = ask("content inventory", "/content-inventory/users/@me".into()).await {
+            for entry in feed.get("entries").and_then(Value::as_array).into_iter().flatten() {
+                let kind = entry.pointer("/content/content_type").and_then(Value::as_u64).unwrap_or(0);
+                parse_note.push_str(&format!("
+FEED kind {kind}: {}", shape(entry.pointer("/content").unwrap_or(&Value::Null))));
+            }
         }
         ask("saved ids", "/users/@me/saved-messages?bookmark_ids=true".into()).await;
         ask("bookmarks", "/users/@me/saved-messages/bookmarks?limit=25".into()).await;
@@ -823,11 +833,11 @@ impl Worker {
                     let _ = voice.send(command);
                 }
             }
-            Command::Interact { origin, data } => {
+            Command::Interact { origin, data, nonce } => {
                 let Some(api) = self.api.clone() else { return };
                 let (events, session) = (self.events.clone(), self.session_id.clone());
                 tokio::spawn(async move {
-                    if let Err(error) = api.interact(&origin, &session, data).await {
+                    if let Err(error) = api.interact(&origin, &session, data, &nonce).await {
                         events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}"))));
                     }
                 });
@@ -836,10 +846,11 @@ impl Worker {
                 let Some(api) = self.api.clone() else { return };
                 let (events, session) = (self.events.clone(), self.session_id.clone());
                 tokio::spawn(async move {
-                    if let Err(error) = api.command(guild, channel, application, &session, kind, data, &nonce).await
-                        && kind == 2
-                    {
-                        events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}"))));
+                    match api.command(guild, channel, application, &session, kind, data, &nonce).await {
+                        Err(error) if kind == 2 => events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}")))),
+                        // A form (5): the form says it went wrong and stays open.
+                        Err(error) if kind == 5 => events.send(Event::Api { key: "modal-failed".into(), result: Err(format!("{error:#}")) }),
+                        _ => {}
                     }
                 });
             }
@@ -973,6 +984,21 @@ async fn api_call(api: Api, events: Events, command: Command) {
             Ok(channel) => events.send(Event::DmOpened(channel)),
             Err(error) => fail(t!("Couldn't open the conversation"), error),
         },
+        Command::SendInvite { user, channel, content } => {
+            let target = match (user, channel) {
+                (Some(user), _) => api.open_dm(user).await.map(|c| c.id),
+                (None, Some(channel)) => Ok(channel),
+                (None, None) => return,
+            };
+            let nonce = crate::discord::model::now_snowflake().to_string();
+            let sent = match target {
+                Ok(channel) => api.send_message(channel, &content, &nonce, None, false, false, Vec::new()).await,
+                Err(error) => Err(error),
+            };
+            if let Err(error) = sent {
+                fail(t!("Couldn't send the invite"), error);
+            }
+        }
         Command::ForumPosts { forum } => match api.forum_posts(forum).await {
             Ok(posts) => events.send(Event::ForumPosts { forum, posts }),
             Err(error) => fail(t!("Couldn't load the forum"), error),
@@ -1146,6 +1172,17 @@ impl Reel {
 fn decode_picture(bytes: &[u8], max: u32, still: bool) -> anyhow::Result<Picture> {
     use image::AnimationDecoder;
     use std::io::Cursor;
+    // Discord's own illustrations (empty states) are SVG.
+    let head = bytes.trim_ascii_start();
+    if head.starts_with(b"<svg") || head.starts_with(b"<?xml") {
+        let tree = resvg::usvg::Tree::from_data(bytes, &resvg::usvg::Options::default())?;
+        let size = tree.size();
+        let scale = max as f32 / size.width().max(size.height()).max(1.0);
+        let (width, height) = ((size.width() * scale).ceil().max(1.0) as u32, (size.height() * scale).ceil().max(1.0) as u32);
+        let mut pixmap = resvg::tiny_skia::Pixmap::new(width, height).context("empty picture")?;
+        resvg::render(&tree, resvg::tiny_skia::Transform::from_scale(scale, scale), &mut pixmap.as_mut());
+        return Ok(Picture { frames: vec![egui::ColorImage::from_rgba_premultiplied([width as usize, height as usize], pixmap.data())], delays: Vec::new() });
+    }
     let frames: Option<image::Frames<'_>> = match image::guess_format(bytes) {
         Ok(image::ImageFormat::Gif) => Some(image::codecs::gif::GifDecoder::new(Cursor::new(bytes))?.into_frames()),
         Ok(image::ImageFormat::WebP) => {

@@ -62,7 +62,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
                     header(app, ui, &user, profile.as_ref(), primary, view.guild);
                     Frame::new().inner_margin(Margin { left: 16, right: 16, top: 0, bottom: 16 }).show(ui, |ui| {
                         ui.set_width(WIDTH - 32.0);
-                        names(app, ui, &user, profile.as_ref(), view.guild);
+                        names(app, ui, &user, profile.as_ref(), view.guild, false);
                         ui.add_space(10.0);
                         ScrollArea::vertical().max_height(body_room).auto_shrink([false, true]).show(ui, |ui| {
                             ui.set_width(ui.available_width());
@@ -96,7 +96,7 @@ pub fn show(app: &mut App, ctx: &egui::Context) {
 
 /// The clicked user with what the profile endpoint knows that a message
 /// author may lack (banner, decoration, server tag).
-fn merge(clicked: &User, full: &User) -> User {
+pub(super) fn merge(clicked: &User, full: &User) -> User {
     let mut user = full.clone();
     if user.username.is_empty() {
         user = clicked.clone();
@@ -112,10 +112,13 @@ fn merge(clicked: &User, full: &User) -> User {
 
 /// The banner, the avatar over its edge with its decoration and status,
 /// the custom status in a bubble beside it, and "…" for the user menu.
-fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>, primary: Option<Color32>, guild: Option<Id>) {
+/// It fills the width it is given (the popout's, a DM's side panel) and
+/// gives the banner's rectangle.
+pub(super) fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>, primary: Option<Color32>, guild: Option<Id>) -> Rect {
     let p = theme::p();
-    let (rect, _) = ui.allocate_exact_size(vec2(WIDTH, BANNER + AVATAR / 2.0 + 8.0), Sense::hover());
-    let banner = Rect::from_min_size(rect.min, vec2(WIDTH, BANNER));
+    let width = ui.available_width();
+    let (rect, _) = ui.allocate_exact_size(vec2(width, BANNER + AVATAR / 2.0 + 8.0), Sense::hover());
+    let banner = Rect::from_min_size(rect.min, vec2(width, BANNER));
     let radius = CornerRadius { nw: 8, ne: 8, sw: 0, se: 0 };
     ui.painter().rect_filled(banner, radius, primary.or_else(|| profile.and_then(|pr| pr.accent).and_then(theme::role_color)).unwrap_or(p.accent));
     if let Some(url) = profile.and_then(|pr| pr.banner.clone())
@@ -132,6 +135,10 @@ fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profil
     ui.painter().circle_filled(avatar.center(), AVATAR / 2.0 + 6.0, p.rail);
     let url = user.avatar_moving(160);
     app.images.circle(ui, avatar, Some(&url), &initials(user.display_name()), AVATAR / 2.0);
+    // The avatar opens the full profile, as Discord's popout does.
+    if ui.interact(avatar, ui.id().with(("profile-avatar", user.id)), Sense::click()).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        super::profile_modal::open(app, user.clone());
+    }
     if let Some(decoration) = user.decoration_url()
         && let Some((texture, _)) = app.images.get(&decoration, 240)
     {
@@ -189,17 +196,38 @@ fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profil
             super::menu::user(app, ui, user, guild);
         });
     }
+    banner
 }
 
 /// The name, then the username (and pronouns, the server tag, APP) with the
 /// badges in their strip.
-fn names(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>, guild: Option<Id>) {
+/// `note`: a DM's side panel, where "Add Note" sits after the name.
+pub(super) fn names(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>, guild: Option<Id>, note: bool) {
     let p = theme::p();
     // Discord's popout writes the name in the header colour wherever it
     // opens: a role's colour (often a grey) belongs to chat and the member
     // list, and made the same card look faded from a server.
     let (name, _) = app.display(guild, user);
-    ui.add(egui::Label::new(RichText::new(&name).font(theme::strong(20.0)).color(p.strong)).wrap());
+    if note {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 6.0;
+            ui.add(egui::Label::new(RichText::new(&name).font(theme::strong(20.0)).color(p.strong)).truncate());
+            let (rect, response) = ui.allocate_exact_size(Vec2::splat(18.0), Sense::click());
+            crate::icons::paint(ui, rect, crate::icons::Icon::PaperPlus, if response.hovered() { p.strong } else { p.muted });
+            if response.on_hover_text(t!("Add Note")).clicked() {
+                app.modal = Some(crate::app::Modal::Note { user: user.id, name: user.username.clone(), note: String::new() });
+            }
+        });
+    } else {
+        ui.add(egui::Label::new(RichText::new(&name).font(theme::strong(20.0)).color(p.strong)).wrap());
+    }
+    names_line(app, ui, user, profile);
+}
+
+/// The line under the name: the username, pronouns, server tag, APP and
+/// the badges.
+pub(super) fn names_line(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>) {
+    let p = theme::p();
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = 6.0;
         ui.label(RichText::new(&user.username).size(14.0).color(p.text));
@@ -238,7 +266,7 @@ fn badges(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
         shown -= 1;
     }
     let (strip, _) = ui.allocate_exact_size(vec2(width(shown, shown < all), 26.0), Sense::hover());
-    ui.painter().rect_filled(strip, 8.0, p.sidebar);
+    ui.painter().rect(strip, 8.0, p.sidebar, Stroke::new(1.0, p.border), egui::StrokeKind::Inside);
     for (i, (description, icon, link)) in profile.badges.iter().take(shown).enumerate() {
         let cell = Rect::from_min_size(pos2(strip.left() + 5.0 + i as f32 * STEP, strip.center().y - ICON / 2.0), Vec2::splat(ICON));
         if let Some((texture, _)) = app.images.get(icon, 48) {
@@ -498,7 +526,7 @@ pub fn bot_pill(ui: &mut egui::Ui, verified: bool) {
     ui.painter().galley(pos2(rect.left() + 4.0, rect.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
 }
 
-fn section(ui: &mut egui::Ui, title: &str) {
+pub(super) fn section(ui: &mut egui::Ui, title: &str) {
     ui.add_space(10.0);
     ui.label(RichText::new(title).font(theme::strong(12.0)).color(theme::p().strong));
     ui.add_space(4.0);
@@ -548,7 +576,7 @@ fn about(app: &mut App, ui: &mut egui::Ui, user: &User, profile: &Profile, guild
     let bio = if profile.guild_bio.is_empty() { &profile.bio } else { &profile.guild_bio };
     if !bio.is_empty() {
         let blocks = markdown::parse(bio);
-        markdown::show(app, ui, &blocks, p.text, user.id);
+        markdown::show_sized(app, ui, &blocks, p.text, user.id, 14.0);
     }
     // Yours come from what this computer reports (the pipe, the detected
     // game), as Discord shows them on your own card too.
@@ -625,7 +653,7 @@ fn connection_chip(ui: &mut egui::Ui, service: &str, name: &str, verified: bool)
 
 /// "N Mutual Friends • N Mutual Servers", which opens the list it
 /// names under it, as Discord's popout leads to them.
-fn mutuals(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
+pub(super) fn mutuals(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     let p = theme::p();
     let servers = profile.mutual_guilds.iter().filter(|g| app.guild(**g).is_some()).count();
     let friends = profile.mutual_friend_list.len();
@@ -648,6 +676,14 @@ fn mutuals(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
             }
         };
         if friends > 0 {
+            // Their faces first, overlapping, as Discord's line.
+            let faces: Vec<User> = profile.mutual_friend_list.iter().take(3).cloned().collect();
+            let (strip, _) = ui.allocate_exact_size(vec2(16.0 + 10.0 * (faces.len() as f32 - 1.0), 16.0), Sense::hover());
+            for (i, face) in faces.iter().enumerate().rev() {
+                let at = Rect::from_min_size(pos2(strip.left() + 10.0 * i as f32, strip.top()), Vec2::splat(16.0));
+                ui.painter().circle_filled(at.center(), 9.0, p.rail);
+                app.images.circle(ui, at, Some(&face.avatar_url()), &initials(face.display_name()), 8.0);
+            }
             link(ui, tn!(friends, "{count} Mutual Friend", "{count} Mutual Friends"), 1);
         }
         if friends > 0 && servers > 0 {
@@ -702,7 +738,7 @@ fn connection_name(kind: &str) -> String {
     }
 }
 
-fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
+pub(super) fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     let p = theme::p();
     let guilds: Vec<(crate::discord::model::Id, Option<String>, String, Option<String>)> = profile
         .mutual_guilds
@@ -736,7 +772,7 @@ fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     }
 }
 
-fn mutual_friends(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
+pub(super) fn mutual_friends(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     let p = theme::p();
     if profile.mutual_friend_list.is_empty() {
         ui.label(RichText::new(t!("No friends in common.")).size(13.5).color(p.muted));

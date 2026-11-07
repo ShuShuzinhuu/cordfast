@@ -22,7 +22,10 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
     let Some(channel_id) = app.selected_channel else {
         if app.selected_guild.is_none() {
-            super::friends::show(app, ui);
+            match app.home {
+                crate::app::Home::Friends => super::friends::show(app, ui),
+                crate::app::Home::MessageRequests => super::requests::show(app, ui),
+            }
         } else {
             ui.centered_and_justified(|ui| {
                 ui.label(RichText::new(t!("Pick a channel  ·  Ctrl+K to search")).color(p.muted));
@@ -120,10 +123,26 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     crate::icons::paint(ui, rect, icon, p.faint);
                 }
                 None => {
-                    ui.label(RichText::new("@").size(20.0).color(p.faint));
+                    // A DM: the person's (or the group's) picture, 24 points,
+                    // with the status, as Discord's header.
+                    let (rect, _) = ui.allocate_exact_size(Vec2::splat(24.0), Sense::hover());
+                    let person = (channel.kind == ChannelKind::Dm).then(|| channel.recipients.first()).flatten();
+                    let url = person.map(|u| u.avatar_url());
+                    app.images.circle(ui, rect, url.as_deref(), &super::initials(&channel.title()), 12.0);
+                    if let Some(presence) = person.and_then(|u| app.presences.get(&u.id)).filter(|p| p.status != "offline") {
+                        super::friends::dot(ui, rect, &presence.status, p.chat);
+                    }
+                    ui.add_space(4.0);
                 }
             }
             ui.add(Label::new(RichText::new(channel.title()).font(theme::strong(16.0)).color(p.strong)).truncate());
+            // An announcement channel: Discord's "Follow" beside its name.
+            if channel.kind == ChannelKind::Announcement {
+                ui.add_space(4.0);
+                if follow_button(ui, 28.0) {
+                    app.modal = Some(crate::app::Modal::Follow { channel: channel.id, guild: None, target: None });
+                }
+            }
             if channel.kind == ChannelKind::Dm && channel.recipients.first().is_some_and(|u| app.user_voice_channel(u.id).is_some()) {
                 ui.add_space(8.0);
                 let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
@@ -142,13 +161,75 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 if matches!(channel.kind, ChannelKind::Voice | ChannelKind::Stage) && crate::icons::button(ui, crate::icons::Icon::Chat, 28.0, t!("Hide Chat")).clicked() {
                     app.voice_chat = false;
                 }
-                // Search and pins, as in Discord's header; the inbox and
-                // help moved to the title bar with Discord's.
-                let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                // Discord's header, right to left: the search box ("Search
+                // SkinsRestorer"), the member list, pins, the notification
+                // bell and threads. The inbox and help are in the title bar.
                 let searching = matches!(app.side, Some(crate::app::Side::Search { .. }));
-                crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Search, if searching || response.hovered() { p.strong } else { p.muted });
-                if response.on_hover_text(t!("Search")).clicked() {
+                // A DM's box names the person by username, a group by title.
+                let hint = match channel.guild_id.and_then(|g| app.guild(g)) {
+                    Some(guild) => t!("Search {guildName}", guildName = guild.name),
+                    None => {
+                        let name = match channel.kind {
+                            ChannelKind::Dm => channel.recipients.first().map(|u| u.username.clone()).unwrap_or_default(),
+                            _ => channel.title(),
+                        };
+                        t!("Search {name}", name = name)
+                    }
+                };
+                let width = (ui.available_width() * 0.3).clamp(144.0, 244.0);
+                let (rect, response) = ui.allocate_exact_size(vec2(width, 32.0), Sense::click());
+                ui.painter().rect(rect, 8.0, p.rail, Stroke::new(1.0, if searching || response.hovered() { p.selected } else { p.border }), egui::StrokeKind::Inside);
+                let glass = Rect::from_center_size(pos2(rect.right() - 16.0, rect.center().y), Vec2::splat(16.0));
+                crate::icons::paint(ui, glass, crate::icons::Icon::Search, p.muted);
+                super::paint_truncated(ui, Rect::from_min_max(pos2(rect.left() + 10.0, rect.top()), pos2(glass.left() - 6.0, rect.bottom())), &hint, egui::FontId::proportional(14.0), p.muted);
+                if response.on_hover_cursor(egui::CursorIcon::Text).clicked() {
                     app.toggle_search();
+                }
+                ui.add_space(8.0);
+                if !dm {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    let color = if app.show_members || response.hovered() { p.strong } else { p.muted };
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Members, color);
+                    if response.on_hover_text(if app.show_members { t!("Hide Member List") } else { t!("Show Member List") }).clicked() {
+                        app.toggle_members();
+                    }
+                }
+                // A DM's, right to left: the profile, Add Friends to DM, then
+                // pins, video and voice calls.
+                if channel.kind == ChannelKind::Dm {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    let color = if app.show_dm_profile || response.hovered() { p.strong } else { p.muted };
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::UserCircle, color);
+                    if response.on_hover_text(if app.show_dm_profile { t!("Hide User Profile") } else { t!("Show User Profile") }).clicked() {
+                        app.show_dm_profile = !app.show_dm_profile;
+                    }
+                }
+                if dm {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::GroupPlus, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Add Friends to DM")).clicked() {
+                        app.modal = Some(crate::app::Modal::GroupAdd { channel: channel.id, picked: Vec::new(), filter: String::new() });
+                    }
+                }
+                let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                let pins = matches!(app.side, Some(crate::app::Side::Pins(_)));
+                crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Pin, if pins || response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Pinned Messages")).clicked() {
+                    app.toggle_pins();
+                }
+                // The bell: crossed out while the channel is muted; it opens
+                // the channel's mute and notification menus.
+                if let Some(guild) = channel.guild_id {
+                    let muted = app.is_muted(channel);
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    let icon = if muted { crate::icons::Icon::BellSlash } else { crate::icons::Icon::Bell };
+                    crate::icons::paint(ui, rect.shrink(3.0), icon, if response.hovered() { p.strong } else { p.muted });
+                    let response = response.on_hover_text(t!("Notification Settings"));
+                    egui::Popup::menu(&response).show(|ui| {
+                        super::menu::begin(ui);
+                        super::menu::mute(app, ui, super::menu::Muted::Channel, Some(guild), Some(channel.id));
+                        super::menu::notifications(app, ui, guild, Some(channel));
+                    });
                 }
                 if !dm && channel.kind != crate::discord::model::ChannelKind::Thread {
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
@@ -159,40 +240,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                         app.modal = Some(crate::app::Modal::Threads { channel: channel.id, name: String::new() });
                     }
                 }
-                let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                let pins = matches!(app.side, Some(crate::app::Side::Pins(_)));
-                crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Pin, if pins || response.hovered() { p.strong } else { p.muted });
-                if response.on_hover_text(t!("Pinned Messages")).clicked() {
-                    app.toggle_pins();
-                }
-                if !dm {
+                if dm && app.voice.channel.map(|(_, c)| c) != Some(channel.id) {
+                    // Video is not here yet (Go Live and the camera): the
+                    // button shows, as Discord's, without a call behind it.
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                    let color = if app.show_members || response.hovered() { p.strong } else { p.muted };
-                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Members, color);
-                    if response.on_hover_text(if app.show_members { t!("Hide Member List") } else { t!("Show Member List") }).clicked() {
-                        app.toggle_members();
-                    }
-                }
-                if dm {
-                    let in_call = app.voice.channel.map(|(_, c)| c) == Some(channel.id);
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Video, p.muted.gamma_multiply(0.5));
+                    response.on_hover_text(t!("Camera and screen sharing aren't available yet."));
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                    let color = if response.hovered() { p.strong } else { p.muted };
-                    if !in_call {
-                        crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::PhoneCall, color);
-                    }
-                    if !in_call && response.on_hover_text(t!("Start Voice Call")).clicked() {
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::PhoneCall, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Start Voice Call")).clicked() {
                         app.actions.push(Action::JoinVoice { guild: None, channel: channel.id, ring: true });
-                    }
-                    if channel.kind == ChannelKind::Dm
-                        && let Some(user) = channel.recipients.first().cloned()
-                    {
-                        let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                        let color = if app.show_dm_profile || response.hovered() { p.strong } else { p.muted };
-                        crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Friends, color);
-                        if response.on_hover_text(if app.show_dm_profile { t!("Hide User Profile") } else { t!("Show User Profile") }).clicked() {
-                            app.show_dm_profile = !app.show_dm_profile;
-                        }
-                        let _ = user;
                     }
                 }
             });
@@ -200,6 +257,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     });
     let line = ui.cursor().top();
     ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.border));
+}
+
+/// Discord's secondary "Follow" button, `height` tall.
+fn follow_button(ui: &mut egui::Ui, height: f32) -> bool {
+    let p = theme::p();
+    let galley = ui.painter().layout_no_wrap(t!("Follow").to_owned(), theme::strong(14.0), p.strong);
+    let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + 24.0, height), Sense::click());
+    ui.painter().rect_filled(rect, 8.0, if response.hovered() { p.hover.gamma_multiply(1.6) } else { p.selected });
+    ui.painter().galley(rect.center() - galley.size() / 2.0, galley, p.strong);
+    response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked()
 }
 
 /// The strip over a DM with a call: who is in it, join or leave, and the
@@ -335,17 +402,21 @@ fn messages(app: &mut App, ui: &mut egui::Ui, channel: Id) {
                     first_unread_at = Some((ui.cursor().top(), message.timestamp_ms()));
                 }
                 if new_day || first_unread {
-                    ui.add_space(14.0);
-                    let (rect, _) = ui.allocate_exact_size(vec2(width, 14.0), Sense::hover());
+                    // Discord's divider: the line 24 points under the last
+                    // message, the next one's name 20 under it (its own
+                    // 17-point margin and 2-point padding follow).
+                    ui.add_space(23.0);
+                    let (rect, _) = ui.allocate_exact_size(vec2(width, 2.0), Sense::hover());
                     let y = rect.center().y;
                     let x = rect.x_range();
                     let color = if first_unread { p.red } else { p.selected };
                     ui.painter().hline(egui::Rangef::new(x.min + 16.0, x.max - 16.0), y, Stroke::new(1.0, color));
                     if new_day {
                         let galley = ui.painter().layout_no_wrap(day.clone(), theme::strong(12.0), if first_unread { p.red } else { p.muted });
-                        let bg = Rect::from_center_size(rect.center(), galley.size() + vec2(12.0, 2.0));
+                        // 12-point semibold on the chat's colour, 2 × 4 padding.
+                        let bg = Rect::from_center_size(rect.center(), galley.size() + vec2(8.0, 4.0));
                         ui.painter().rect_filled(bg, 0.0, p.chat);
-                        ui.painter().galley(bg.min + vec2(6.0, 1.0), galley, p.muted);
+                        ui.painter().galley(bg.min + vec2(4.0, 2.0), galley, p.muted);
                     }
                     if first_unread {
                         let tag = Rect::from_min_size(egui::pos2(x.max - 56.0, y - 7.0), vec2(40.0, 14.0));
@@ -492,8 +563,10 @@ fn messages(app: &mut App, ui: &mut egui::Ui, channel: Id) {
 fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Option<Id>, grouped: bool, mentioned: bool, light: f32) {
     let p = theme::p();
     let compact = app.settings.compact;
+    // A new group starts 17 points below the last, as Discord's
+    // `groupStart` margin.
     if !grouped {
-        ui.add_space(if compact { 4.0 } else { 14.0 });
+        ui.add_space(if compact { 4.0 } else { 17.0 });
     }
     let background = ui.painter().add(Shape::Noop);
     let top = ui.cursor().top();
@@ -506,7 +579,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
     // The message's own area goes in before its content, with last frame's
     // height, so the name, the reply line and links stay clickable: egui
     // gives a click to the widget added last.
-    let gap = if grouped { 0.0 } else if compact { 4.0 } else { 14.0 };
+    let gap = if grouped { 0.0 } else if compact { 4.0 } else { 17.0 };
     let message_id = ui.id().with(("message", message.id));
     let early = app
         .heights
@@ -514,10 +587,16 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
         .filter(|(w, _)| (*w - width).abs() < 1.0)
         .map(|(_, h)| ui.interact(Rect::from_min_size(pos2(left, top), vec2(width, (h - gap).max(1.0))), message_id, Sense::click()));
 
+    // Rows follow each other with nothing between them: a message is its
+    // 2-point padding and 22-point lines, 26 points for one line (Discord's
+    // `cozyMessage`).
+    ui.spacing_mut().item_spacing.y = 0.0;
     Frame::new()
         .inner_margin(Margin { left: gutter as i8, right: 16, top: 2, bottom: 2 })
         .show(ui, |ui| {
+            ui.spacing_mut().item_spacing.y = 2.0;
             ui.set_width(content_width);
+            ui.set_min_height(22.0);
             if system {
                 ui.label(RichText::new(system_text(message, &name, app.me_id(), &app.channel(message.channel_id).map(Channel::title).unwrap_or_default())).italics().color(p.muted));
                 return;
@@ -535,19 +614,26 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                     None => (author.clone(), None),
                 };
                 ui.horizontal(|ui| {
+                    // Discord's spine: a 29 × 12 box 32 points to the left,
+                    // its top and left borders 2 points wide, the corner
+                    // rounded 6, from the avatar's column to the line.
                     let start = ui.cursor().left_center();
-                    let spine = [
-                        egui::pos2(start.x - 34.0, start.y + 10.0),
-                        egui::pos2(start.x - 34.0, start.y + 2.0),
-                        egui::pos2(start.x - 6.0, start.y + 2.0),
-                    ];
-                    ui.painter().add(egui::Shape::line(spine.to_vec(), Stroke::new(2.0, p.selected)));
+                    let (left, top) = (start.x - 31.0, start.y + 1.0);
+                    let mut spine = vec![egui::pos2(left, top + 12.0)];
+                    for step in 0..=6 {
+                        let angle = std::f32::consts::PI + std::f32::consts::FRAC_PI_2 * step as f32 / 6.0;
+                        spine.push(egui::pos2(left + 6.0 + 6.0 * angle.cos(), top + 6.0 + 6.0 * angle.sin()));
+                    }
+                    spine.push(egui::pos2(start.x - 4.0, top));
+                    ui.painter().add(egui::Shape::line(spine, Stroke::new(2.0, p.selected)));
                     if let Some(user) = &message.reply_author {
                         let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
                         app.images.circle(ui, rect, Some(&user.avatar_url()), &initials(&name), 8.0);
                     }
-                    let who = ui.add(Label::new(RichText::new(format!("@{name}")).size(13.0).font(theme::strong(13.0)).color(color.unwrap_or(p.muted))).sense(Sense::click()));
-                    let what = ui.add(Label::new(RichText::new(line).size(13.0).color(p.muted)).truncate().sense(Sense::click()));
+                    // "@name" in 14-point medium and its role colour, the
+                    // text in 14 points and the text colour.
+                    let who = ui.add(Label::new(RichText::new(format!("@{name}")).font(theme::medium(14.0)).color(color.unwrap_or(p.strong))).sense(Sense::click()));
+                    let what = ui.add(Label::new(RichText::new(line).size(14.0).color(p.text)).truncate().sense(Sense::click()));
                     // A click goes to the answered message, as in Discord.
                     if let Some(id) = message.reply_id
                         && (who.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() || what.on_hover_cursor(egui::CursorIcon::PointingHand).clicked())
@@ -559,9 +645,10 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
             if !grouped {
                 ui.horizontal(|ui| {
                     let response = match app.gradient(guild, message.author.id) {
-                        Some((from, to)) => ui.add(Label::new(theme::gradient_job(&name, theme::strong(15.0), from, to)).sense(Sense::click())),
+                        // Discord's header: the name in 16-point medium.
+                        Some((from, to)) => ui.add(Label::new(theme::gradient_job(&name, theme::medium(16.0), from, to)).sense(Sense::click())),
                         None => {
-                            let name_text = RichText::new(&name).font(theme::strong(15.0)).color(name_color.unwrap_or(p.strong));
+                            let name_text = RichText::new(&name).font(theme::medium(16.0)).color(name_color.unwrap_or(p.strong));
                             ui.add(Label::new(name_text).sense(Sense::click()))
                         }
                     };
@@ -585,7 +672,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                         super::profile::bot_pill(ui, message.author.verified_bot());
                     }
                     // The whole date on hover, as Discord's tooltip.
-                    ui.label(RichText::new(text::time(message.timestamp_ms())).size(12.0).color(p.faint)).on_hover_text(text::full(message.timestamp_ms()));
+                    ui.label(RichText::new(text::time(message.timestamp_ms())).font(theme::medium(12.0)).color(p.faint)).on_hover_text(text::full(message.timestamp_ms()));
                 });
             }
             let color = if message.deleted {
@@ -608,7 +695,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                 edit_box(app, ui);
             } else if !message.content.is_empty() {
                 let blocks = markdown::parse(&message.content);
-                markdown::show(app, ui, &blocks, color, message.id);
+                markdown::show_sized(app, ui, &blocks, color, message.id, 16.0);
                 if message.edited {
                     ui.label(RichText::new(t!("(edited)")).size(11.0).color(p.faint));
                 }
@@ -1456,16 +1543,21 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
     let p = theme::p();
     ui.add_space(4.0);
     let bar = embed.color.and_then(theme::role_color).unwrap_or(p.selected);
+    // Discord's `embedFull`: 432 points at most with its 4-point bar, no
+    // border, padded 2 16 16 12 inside the bar, each part 8 points under
+    // the last (the picture 16).
     let response = Frame::new()
         .fill(p.sidebar)
-        .stroke(Stroke::new(1.0, p.border))
         .corner_radius(CornerRadius::same(4))
-        .inner_margin(Margin { left: 16, right: 16, top: 10, bottom: 12 })
+        .inner_margin(Margin { left: 16, right: 16, top: 2, bottom: 16 })
         .show(ui, |ui| {
-            ui.set_max_width(516.0);
+            ui.set_max_width(400.0);
+            ui.spacing_mut().item_spacing.y = 8.0;
+            ui.add_space(6.0);
             ui.horizontal_top(|ui| {
                 ui.vertical(|ui| {
-                    ui.set_max_width(if embed.thumbnail.is_some() { 420.0 } else { 484.0 });
+                    ui.spacing_mut().item_spacing.y = 8.0;
+                    ui.set_max_width(if embed.thumbnail.is_some() { 316.0 } else { 400.0 });
                     if let Some(provider) = &embed.provider {
                         ui.label(RichText::new(provider).size(12.0).color(p.muted));
                     }
@@ -1491,17 +1583,17 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                     if let Some(title) = &embed.title {
                         match &embed.url {
                             Some(url) => {
-                                ui.hyperlink_to(RichText::new(title).font(theme::strong(15.0)).color(p.link), url);
+                                ui.hyperlink_to(RichText::new(title).font(theme::strong(16.0)).color(p.link), url);
                             }
                             None => {
-                                ui.label(RichText::new(title).font(theme::strong(15.0)).color(p.strong));
+                                ui.label(RichText::new(title).font(theme::strong(16.0)).color(p.strong));
                             }
                         }
                     }
                     if let Some(description) = &embed.description {
                         let short: String = description.chars().take(1200).collect();
                         let blocks = markdown::parse(&short);
-                        markdown::show(app, ui, &blocks, p.text, 0);
+                        markdown::show_sized(app, ui, &blocks, p.text, 0, 14.0);
                     }
                     // Fields: inline ones side by side, up to three a row.
                     let mut row: Vec<&(String, String, bool)> = Vec::new();
@@ -1509,12 +1601,12 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                         if row.is_empty() {
                             return;
                         }
-                        ui.add_space(4.0);
                         ui.columns(row.len(), |columns| {
                             for (column, (name, value, _)) in columns.iter_mut().zip(row.iter()) {
-                                column.label(RichText::new(name).font(theme::strong(13.5)).color(p.strong));
+                                column.spacing_mut().item_spacing.y = 2.0;
+                                column.label(RichText::new(name).font(theme::strong(14.0)).color(p.strong));
                                 let blocks = markdown::parse(value);
-                                markdown::show(app, column, &blocks, p.text, 0);
+                                markdown::show_sized(app, column, &blocks, p.text, 0, 14.0);
                             }
                         });
                         row.clear();
@@ -1536,13 +1628,13 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                 }
             });
             if let Some((url, w, h)) = &embed.image {
+                ui.add_space(8.0);
                 let original = embed.url.clone().unwrap_or_else(|| url.clone());
                 picture(app, ui, url, &original, *w, *h, 400.0, 300.0, Some(message));
             }
             // The footer's picture and text, and when it happened: "Today
             // at 7:30 PM", as message times read.
             if embed.footer.is_some() || embed.timestamp.is_some() {
-                ui.add_space(6.0);
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
                     if let Some(icon) = &embed.footer_icon {
@@ -1555,7 +1647,7 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                         (None, Some(ms)) => text::time(ms),
                         (None, None) => String::new(),
                     };
-                    ui.label(RichText::new(line).font(theme::strong(12.0)).color(p.text));
+                    ui.label(RichText::new(line).font(theme::medium(12.0)).color(p.text));
                 });
             }
         });
@@ -1683,6 +1775,26 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             if ui.add(egui::Button::new(RichText::new(t!("Complete")).color(Color32::WHITE)).fill(p.accent)).clicked() {
                 super::gates::open(app, super::gates::Gate::Verification { guild, answers: Default::default(), agreed: false });
             }
+        });
+        return;
+    }
+    // An announcement channel we cannot write in: Discord's bar to follow
+    // it instead of the box.
+    const SEND_MESSAGES: u64 = 1 << 11;
+    if channel.kind == ChannelKind::Announcement
+        && let Some(guild) = channel.guild_id.and_then(|g| app.guild(g))
+        && guild.channel_permissions(app.me_id(), channel) & SEND_MESSAGES == 0
+    {
+        Frame::new().fill(p.composer).corner_radius(8).inner_margin(Margin::symmetric(16, 10)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(t!("Follow to get this channel's updates in your own server.")).font(theme::strong(15.0)).color(p.strong));
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if follow_button(ui, 32.0) {
+                        app.modal = Some(crate::app::Modal::Follow { channel: channel.id, guild: None, target: None });
+                    }
+                });
+            });
         });
         return;
     }
@@ -1832,8 +1944,9 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 }
             });
             ui.add_space(4.0);
-            // Settings → Appearance → Chat Box hides any of the three.
-            let buttons = [app.settings.sticker_button, app.settings.gif_button, app.settings.emoji_button].iter().filter(|b| **b).count();
+            // Settings → Appearance → Chat Box hides any of the three; the
+            // gift and the app launcher always show.
+            let buttons = 2 + [app.settings.sticker_button, app.settings.gif_button, app.settings.emoji_button].iter().filter(|b| **b).count();
             let width = ui.available_width() - buttons as f32 * 36.0 - 4.0;
             // A slash command picked: its options take the box's place.
             if in_command {
@@ -1865,11 +1978,13 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             }
             ui.add_space(4.0);
             let cell = |ui: &mut egui::Ui| ui.allocate_exact_size(vec2(36.0, BOX), Sense::click());
-            if app.settings.sticker_button {
+            // Discord's bar, left to right: Send a gift, GIF, stickers, emoji
+            // and the app launcher.
+            {
                 let (rect, response) = cell(ui);
-                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Sticker, if response.hovered() { p.strong } else { p.muted });
-                if response.on_hover_text(t!("Open sticker picker")).clicked() {
-                    app.toggle_expressions(crate::app::ExpressionTab::Stickers, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Gift, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Send a gift")).clicked() {
+                    let _ = open::that_detached("https://discord.com/store");
                 }
             }
             if app.settings.gif_button {
@@ -1879,11 +1994,28 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     app.toggle_expressions(crate::app::ExpressionTab::Gifs, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
                 }
             }
+            if app.settings.sticker_button {
+                let (rect, response) = cell(ui);
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Sticker, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Open sticker picker")).clicked() {
+                    app.toggle_expressions(crate::app::ExpressionTab::Stickers, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                }
+            }
             if app.settings.emoji_button {
                 let (rect, response) = cell(ui);
                 emoji_button(ui, &response, Rect::from_center_size(rect.center(), Vec2::splat(28.0)));
                 if response.on_hover_text(t!("Select emoji")).clicked() {
                     app.toggle_expressions(crate::app::ExpressionTab::Emoji, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                }
+            }
+            {
+                // The app launcher: the apps' and the built-in commands,
+                // which the slash command picker lists.
+                let (rect, response) = cell(ui);
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Apps, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Apps")).clicked() && app.composer.is_empty() {
+                    app.composer.push('/');
+                    app.focus_composer = true;
                 }
             }
         });
@@ -2033,6 +2165,7 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
     // Borrowed for the frame, put back below.
     let Some(rows) = app.member_list.as_mut().map(|m| std::mem::take(&mut m.rows)) else { return };
     const ROW: f32 = 44.0;
+    super::feed::section(app, ui, guild_id, channel_id);
     egui::ScrollArea::vertical().id_salt(("members", channel_id)).auto_shrink(false).show_rows(ui, ROW, rows.len(), |ui, range| {
         // Asks for the next hundred rows near the end.
         if range.end + 20 >= rows.len() && (rows.len() as u64) + 1 >= requested {
@@ -2043,24 +2176,30 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
             match row {
                 None => {}
                 Some(ListItem::Group { id, count }) => {
+                    // As Discord's list now writes them: "Mods — 1", the
+                    // role's name as written.
                     let name = match id.as_str() {
-                        "online" => t!("Online").to_uppercase(),
-                        "offline" => t!("Offline").to_uppercase(),
+                        "online" => t!("Online").to_owned(),
+                        "offline" => t!("Offline").to_owned(),
                         role => role
                             .parse::<Id>()
                             .ok()
                             .and_then(|r| guild.roles.iter().find(|x| x.id == r))
-                            .map(|r| r.name.to_uppercase())
+                            .map(|r| r.name.clone())
                             .unwrap_or_default(),
                     };
                     let count = counts.get(id).copied().unwrap_or(*count);
-                    ui.painter().text(rect.left_bottom() + vec2(16.0, -8.0), Align2::LEFT_BOTTOM, format!("{name} — {count}"), theme::strong(12.0), p.muted);
+                    ui.painter().text(rect.left_bottom() + vec2(16.0, -8.0), Align2::LEFT_BOTTOM, format!("{name} — {count}"), theme::strong(14.0), p.muted);
                 }
                 Some(ListItem::Member { user, member, presence }) => {
-                    let inner = rect.shrink2(vec2(8.0, 2.0));
+                    // Discord's row: 42 points inside a 1-point padding.
+                    let inner = rect.shrink2(vec2(8.0, 1.0));
                     if response.hovered() {
                         ui.painter().rect_filled(inner, 4.0, p.hover);
                     }
+                    let plate = member.nameplate.as_ref().or(user.nameplate.as_ref());
+                    let slot = ui.painter().add(egui::Shape::Noop);
+                    let mut content = 0.0f32;
                     let offline = presence.as_ref().is_none_or(|p| p.status == "offline");
                     let avatar = Rect::from_min_size(inner.left_center() + vec2(8.0, -16.0), Vec2::splat(32.0));
                     let face = if response.hovered() { user.avatar_moving(64) } else { user.avatar_url() };
@@ -2092,20 +2231,35 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                         egui::Image::from_texture((texture, at.size())).corner_radius(4.0).paint_at(ui, at);
                     }
                     let name_y = if activity.is_some() { inner.center().y - 8.0 } else { inner.center().y };
-                    super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right, name_y + 9.0)), user, &name, FontId::proportional(15.0), color);
-                    if let Some((template, bold, _)) = activity {
-                        // "Playing " and the game in bold, as Discord writes it.
-                        let mut job = egui::text::LayoutJob::default();
-                        super::rich_template(&mut job, &template, &egui::TextFormat::simple(FontId::proportional(12.0), p.muted), &egui::TextFormat::simple(theme::strong(12.0), p.muted), &[("name", &bold)]);
-                        let text_x = if voice {
-                            crate::icons::paint(ui, Rect::from_center_size(egui::pos2(x + 6.0, inner.center().y + 10.0), Vec2::splat(12.0)), crate::icons::Icon::Voice, p.green);
-                            x + 16.0
-                        } else {
-                            x
-                        };
-                        job.wrap = egui::text::TextWrapping::truncate_at_width(right - text_x);
-                        let galley = ui.fonts_mut(|f| f.layout_job(job));
-                        ui.painter().galley(egui::pos2(text_x, inner.center().y + 10.0 - galley.size().y / 2.0), galley, p.muted);
+                    let mut after = x + super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right - 22.0, name_y + 9.0)), user, &name, FontId::proportional(15.0), color);
+                    // A bot's APP tag, and the boost gem of one boosting the
+                    // server ("Server boosting since …"), after the name.
+                    if user.bot {
+                        let text = if user.verified_bot() { "✓ APP" } else { "APP" };
+                        let galley = ui.painter().layout_no_wrap(text.to_owned(), theme::strong(10.5), Color32::WHITE);
+                        let pill = Rect::from_min_size(egui::pos2(after + 4.0, name_y - 8.0), vec2(galley.size().x + 8.0, 16.0));
+                        if pill.right() < right {
+                            ui.painter().rect_filled(pill, 3.0, p.accent);
+                            ui.painter().galley(egui::pos2(pill.left() + 4.0, pill.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
+                            after = pill.right();
+                        }
+                    }
+                    if let Some(since) = member.boosting {
+                        let gem = Rect::from_center_size(egui::pos2(after + 12.0, name_y), Vec2::splat(14.0));
+                        crate::icons::paint(ui, gem, crate::icons::Icon::Boost, Color32::from_rgb(0xff, 0x73, 0xfa));
+                        ui.interact(gem, ui.id().with(("boosting", user.id)), Sense::hover()).on_hover_text(t!("Server boosting since {date}", date = crate::text::short_day(since)));
+                        after = gem.right();
+                    }
+                    content = content.max(after - x);
+                    // Under the name, Discord's activity status as its lists
+                    // now draw it: the green controller and "ROBLOX", "+1",
+                    // "In voice", the custom status.
+                    if activity.is_some() {
+                        let line = Rect::from_min_max(egui::pos2(x, inner.center().y + 2.0), egui::pos2(right, inner.center().y + 18.0));
+                        super::friends::status_line(app, ui, line, user.id, true);
+                    }
+                    if let Some(plate) = plate {
+                        super::nameplate(app, ui, slot, inner, plate, x - inner.left() + content, response.hovered(), false, super::Plate::Members);
                     }
                     if response.clicked() {
                         app.actions.push(Action::OpenProfile { user: user.clone(), guild: Some(guild_id), at: rect.left_top() - vec2(350.0, 0.0) });
@@ -2773,6 +2927,45 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     }
                 });
             }
+            // Discord's "Follow #info": a server and a text channel where we
+            // may manage webhooks get the announcements
+            // (POST /channels/{id}/followers).
+            crate::app::Modal::Follow { channel, guild, target } => {
+                ui.label(RichText::new(t!("Follow Updates")).font(theme::strong(18.0)).color(p.strong));
+                ui.label(RichText::new(t!("Follow to get this channel's updates in your own server.")).color(p.muted));
+                ui.add_space(8.0);
+                let me = app.me_id();
+                const MANAGE_WEBHOOKS: u64 = 1 << 29;
+                let servers: Vec<(Id, String)> = app.guilds.iter().filter(|g| g.channels.iter().any(|c| c.kind == ChannelKind::Text && g.can_view(me, c) && g.channel_permissions(me, c) & MANAGE_WEBHOOKS != 0)).map(|g| (g.id, g.name.clone())).collect();
+                ui.label(RichText::new(t!("Select a server")).font(theme::strong(13.0)).color(p.strong));
+                let shown = guild.and_then(|g| servers.iter().find(|(id, _)| *id == g)).map_or_else(|| t!("Select a server").to_owned(), |(_, name)| name.clone());
+                egui::ComboBox::from_id_salt("follow-server").selected_text(shown).width(ui.available_width()).show_ui(ui, |ui| {
+                    for (id, name) in &servers {
+                        if ui.selectable_label(*guild == Some(*id), name).clicked() {
+                            *guild = Some(*id);
+                            *target = None;
+                        }
+                    }
+                });
+                let channels: Vec<(Id, String)> = guild.and_then(|g| app.guild(g)).map(|g| g.channels.iter().filter(|c| c.kind == ChannelKind::Text && g.can_view(me, c) && g.channel_permissions(me, c) & MANAGE_WEBHOOKS != 0).map(|c| (c.id, c.title())).collect()).unwrap_or_default();
+                ui.add_space(6.0);
+                ui.label(RichText::new(t!("Select a channel")).font(theme::strong(13.0)).color(p.strong));
+                let shown = target.and_then(|t| channels.iter().find(|(id, _)| *id == t)).map_or_else(|| t!("Select a channel").to_owned(), |(_, name)| format!("# {name}"));
+                egui::ComboBox::from_id_salt("follow-channel").selected_text(shown).width(ui.available_width()).show_ui(ui, |ui| {
+                    for (id, name) in &channels {
+                        if ui.selectable_label(*target == Some(*id), format!("# {name}")).clicked() {
+                            *target = Some(*id);
+                        }
+                    }
+                });
+                ui.add_space(10.0);
+                if ui.add_enabled(target.is_some(), egui::Button::new(RichText::new(t!("Follow")).color(Color32::WHITE)).fill(p.accent)).clicked()
+                    && let Some(to) = target
+                {
+                    app.commands.send(call("POST", format!("/channels/{channel}/followers"), Some(serde_json::json!({ "webhook_channel_id": to.to_string() }))));
+                    keep = false;
+                }
+            }
             crate::app::Modal::GroupName { channel, name } => {
                 ui.label(RichText::new(t!("Edit Group")).font(theme::strong(18.0)).color(p.strong));
                 ui.label(RichText::new(t!("Group Name").to_uppercase()).font(theme::strong(12.0)).color(p.muted));
@@ -2807,8 +3000,16 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     }
                 });
                 if ui.add_enabled(!picked.is_empty(), egui::Button::new(RichText::new(t!("Add")).color(Color32::WHITE)).fill(p.accent)).clicked() {
-                    for user in picked.iter() {
-                        app.commands.send(call("PUT", format!("/channels/{channel}/recipients/{user}"), None));
+                    // From a one-to-one DM Discord makes a new group with
+                    // both; a group takes them in.
+                    if app.channel(*channel).is_some_and(|c| c.kind == ChannelKind::Dm) {
+                        let mut everyone: Vec<String> = already.iter().chain(picked.iter()).map(Id::to_string).collect();
+                        everyone.dedup();
+                        app.commands.send(call("POST", "/users/@me/channels".to_owned(), Some(serde_json::json!({ "recipients": everyone }))));
+                    } else {
+                        for user in picked.iter() {
+                            app.commands.send(call("PUT", format!("/channels/{channel}/recipients/{user}"), None));
+                        }
                     }
                     keep = false;
                 }
@@ -2982,77 +3183,66 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
         app.commands.send(crate::backend::Command::Profile { user: user.id, guild: None });
     }
     let profile = app.profiles.get(&user.id).cloned();
-    let banner_color = profile
-        .as_ref()
-        .and_then(|pr| pr.theme_colors.map(|c| c.0).or(pr.accent))
-        .and_then(theme::role_color)
-        .unwrap_or(p.accent);
-    let (banner, _) = ui.allocate_exact_size(vec2(ui.available_width(), 120.0), Sense::hover());
-    ui.painter().rect_filled(banner, 0.0, banner_color);
-    if let Some(url) = profile.as_ref().and_then(|pr| pr.banner.clone())
-        && let Some((texture, _)) = app.images.get(&url, 680)
-    {
-        egui::Image::from_texture((texture, banner.size())).paint_at(ui, banner);
-    }
-    let avatar = Rect::from_min_size(banner.left_bottom() + vec2(16.0, -44.0), Vec2::splat(80.0));
-    ui.painter().circle_filled(avatar.center(), 46.0, p.sidebar);
-    app.images.circle(ui, avatar, Some(&user.avatar_moving(128)), &initials(user.display_name()), 40.0);
-    if let Some(presence) = app.presences.get(&user.id).filter(|pr| pr.status != "offline") {
-        super::friends::dot(ui, avatar, &presence.status, p.sidebar);
-    }
-    ui.add_space(48.0);
-    ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
-        Frame::new().inner_margin(Margin::symmetric(16, 0)).show(ui, |ui| {
-            ui.label(RichText::new(user.display_name()).font(theme::strong(20.0)).color(p.strong));
-            let mut handle = user.username.clone();
-            if let Some(pronouns) = profile.as_ref().map(|pr| pr.pronouns.clone()).filter(|x| !x.is_empty()) {
-                handle.push_str(&format!(" · {pronouns}"));
-            }
-            ui.label(RichText::new(handle).color(p.muted));
-            if let Some(activity) = app.presences.get(&user.id).and_then(|pr| pr.activity()) {
-                ui.add_space(4.0);
-                ui.label(RichText::new(activity).size(13.0).color(p.text));
-            }
-            let activities = app.presences.get(&user.id).map(|pr| pr.activities.clone()).unwrap_or_default();
-            for activity in &activities {
-                ui.add_space(8.0);
-                super::activity::card(app, ui, activity);
-            }
-            Frame::new().fill(p.rail).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
-                ui.set_width(ui.available_width());
-                if let Some(bio) = profile.as_ref().map(|pr| pr.bio.clone()).filter(|b| !b.is_empty()) {
-                    ui.label(RichText::new(t!("About Me")).font(theme::strong(12.5)).color(p.strong));
-                    let blocks = markdown::parse(&bio);
-                    markdown::show(app, ui, &blocks, p.text, user.id);
-                    ui.add_space(8.0);
-                }
-                ui.label(RichText::new(t!("Member Since")).font(theme::strong(12.5)).color(p.strong));
-                ui.label(RichText::new(text::day(crate::discord::model::snowflake_ms(user.id))).size(13.0).color(p.text));
-            });
-            voice_card(app, ui, user.id);
-            if let Some(profile) = &profile {
-                let mutual: Vec<(Option<String>, String)> = profile
-                    .mutual_guilds
-                    .iter()
-                    .filter_map(|g| app.guild(*g).map(|g| (g.icon_url(), g.name.clone())))
-                    .collect();
-                if !mutual.is_empty() {
-                    ui.label(RichText::new(tn!(mutual.len(), "{count} Mutual Server", "{count} Mutual Servers")).font(theme::strong(13.0)).color(p.muted));
-                    for (icon, name) in mutual.iter().take(8) {
-                        ui.horizontal(|ui| {
-                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(24.0), Sense::hover());
-                            app.images.circle(ui, rect, icon.as_deref(), &initials(name), 8.0);
-                            ui.label(RichText::new(name).color(p.text));
-                        });
+    let user = profile.as_ref().map_or_else(|| user.clone(), |pr| super::profile::merge(user, &pr.user));
+    let (primary, secondary) = profile.as_ref().and_then(|pr| pr.theme_colors).map_or((None, None), |(a, b)| (theme::role_color(a), theme::role_color(b)));
+    // Discord's side panel: the profile as a card 8 points in from the
+    // panel's edges, "View Full Profile" pinned at its foot.
+    Frame::new()
+        .fill(p.rail)
+        .stroke(Stroke::new(1.0, secondary.unwrap_or(p.border)))
+        .corner_radius(8)
+        .outer_margin(Margin::same(8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.set_height(ui.available_height());
+            let banner = super::profile::header(app, ui, &user, profile.as_deref(), primary, None);
+            // Beside "…": the relationship, as Discord's banner shows it
+            // ("Friend", its menu to remove them).
+            if app.relationships.get(&user.id).is_some_and(|r| r.kind == 1) {
+                let at = Rect::from_min_size(egui::pos2(banner.right() - 76.0, banner.top() + 10.0), Vec2::splat(30.0));
+                let response = ui.interact(at, ui.id().with("dm-profile-friend"), Sense::click());
+                ui.painter().circle_filled(at.center(), 15.0, Color32::from_black_alpha(if response.hovered() { 200 } else { 140 }));
+                crate::icons::paint(ui, at.shrink(7.0), crate::icons::Icon::UserCheck, Color32::WHITE);
+                let target = user.clone();
+                egui::Popup::menu(&response.on_hover_text(t!("Friend"))).show(|ui| {
+                    super::menu::begin(ui);
+                    if super::menu::danger(ui, t!("Remove Friend"), super::menu::Tail::None).clicked() {
+                        app.modal = Some(super::menu::remove_friend(&target));
+                        ui.close();
                     }
-                }
-                if let Some(friends) = profile.mutual_friends.filter(|n| *n > 0) {
-                    ui.add_space(6.0);
-                    ui.label(RichText::new(tn!(friends, "{count} Mutual Friend", "{count} Mutual Friends")).font(theme::strong(13.0)).color(p.muted));
-                }
+                });
             }
+            let foot = 64.0;
+            let body = (ui.available_height() - foot).max(60.0);
+            Frame::new().inner_margin(Margin::symmetric(16, 0)).show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ScrollArea::vertical().max_height(body).auto_shrink([false, false]).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    super::profile::names(app, ui, &user, profile.as_deref(), None, true);
+                    if let Some(profile) = &profile {
+                        super::profile::mutuals(app, ui, profile);
+                        let bio = profile.bio.clone();
+                        if !bio.is_empty() {
+                            ui.add_space(10.0);
+                            let blocks = markdown::parse(&bio);
+                            markdown::show(app, ui, &blocks, p.text, user.id);
+                        }
+                    }
+                    super::profile::section(ui, t!("Member Since"));
+                    ui.label(RichText::new(text::short_day(crate::discord::model::snowflake_ms(user.id))).size(14.0).color(p.text));
+                    let activities = app.presences.get(&user.id).map(|pr| pr.activities.clone()).unwrap_or_default();
+                    for activity in &activities {
+                        ui.add_space(10.0);
+                        super::activity::card(app, ui, activity);
+                    }
+                    voice_card(app, ui, user.id);
+                });
+                ui.add_space(8.0);
+                if super::form::button_wide(ui, t!("View Full Profile")).clicked() {
+                    super::profile_modal::open(app, user.clone());
+                }
+            });
         });
-    });
 }
 
 /// A voice channel's own view, as Discord's: a tile for each person, in
@@ -3160,6 +3350,11 @@ fn voice_tile(app: &mut App, ui: &mut egui::Ui, channel: &Channel, id: Id, rect:
 
 /// Discord's "In voice" card on a profile: up to four of the people there,
 /// the channel and its server, and the button to join when we may connect.
+/// The "In voice" card, for the full profile.
+pub(super) fn voice_card_for(app: &mut App, ui: &mut egui::Ui, user: Id) {
+    voice_card(app, ui, user);
+}
+
 fn voice_card(app: &mut App, ui: &mut egui::Ui, user: Id) {
     /// Discord's CONNECT permission.
     const CONNECT: u64 = 1 << 20;
@@ -3172,13 +3367,16 @@ fn voice_card(app: &mut App, ui: &mut egui::Ui, user: Id) {
     };
     let inside = app.voice.channel.is_some_and(|(_, c)| c == channel.id);
     let people: Vec<crate::discord::model::User> = app.voice_members(&channel).into_iter().filter_map(|id| app.users.get(&id).cloned()).take(4).collect();
-    Frame::new().fill(p.rail).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
+    // A card of its own over the profile's (`background-mod-subtle`).
+    Frame::new().fill(p.hover.gamma_multiply(0.6)).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
         ui.set_width(ui.available_width());
-        ui.label(RichText::new(t!("In voice")).font(theme::strong(12.5)).color(p.strong));
+        ui.label(RichText::new(t!("In voice")).font(theme::strong(14.0)).color(p.strong));
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            // The people, two by two.
-            let (tile, _) = ui.allocate_exact_size(Vec2::splat(52.0), Sense::hover());
+            // The people, two by two, in their own box.
+            let (tile, _) = ui.allocate_exact_size(Vec2::splat(60.0), Sense::hover());
+            ui.painter().rect(tile, 8.0, p.rail, Stroke::new(1.0, p.border), egui::StrokeKind::Inside);
+            let tile = tile.shrink(4.0);
             for (i, person) in people.iter().enumerate() {
                 let at = tile.min + vec2((i % 2) as f32 * 28.0, (i / 2) as f32 * 28.0);
                 app.images.circle(ui, Rect::from_min_size(at, Vec2::splat(24.0)), Some(&person.avatar_url()), &initials(person.display_name()), 12.0);

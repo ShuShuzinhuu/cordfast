@@ -117,7 +117,10 @@ fn location(app: &mut App, ui: &mut egui::Ui, bar: Rect) {
             }
             None => return,
         },
-        (None, None) => (Lead::Icon(Icon::Friends), t!("Friends").to_owned()),
+        (None, None) => match app.home {
+            crate::app::Home::Friends => (Lead::Icon(Icon::Friends), t!("Friends").to_owned()),
+            crate::app::Home::MessageRequests => (Lead::Icon(Icon::Envelope), t!("Message Requests").to_owned()),
+        },
     };
     let font = FontId::proportional(14.0);
     let room = (bar.width() * 0.4).max(120.0);

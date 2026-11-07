@@ -921,18 +921,18 @@ fn voice(app: &mut App, ui: &mut egui::Ui) {
     let (inputs, outputs) = app.devices.clone();
     form::category(ui, t!("Voice"), "", |ui| {
         ui.columns(2, |columns| {
-            let pick = |ui: &mut egui::Ui, label: &str, id: &str, list: &[String], chosen: &mut Option<String>| {
+            let pick = |ui: &mut egui::Ui, label: &str, id: &str, list: &[String], chosen: &mut Option<String>, icon: crate::icons::Icon| {
                 field_title(ui, label, "");
                 let mut options = vec![super::default_device().to_owned()];
                 options.extend(list.iter().cloned());
                 let shown = chosen.clone().unwrap_or_else(|| options[0].clone());
                 let width = ui.available_width() - 8.0;
-                if let Some(i) = form::select(ui, id, &shown, &options, width) {
+                if let Some(i) = form::select_with_icon(ui, id, &shown, &options, width, Some(icon)) {
                     *chosen = (i > 0).then(|| options[i].clone());
                 }
             };
-            pick(&mut columns[0], t!("Microphone"), "input-device", &inputs, &mut app.settings.input_device);
-            pick(&mut columns[1], t!("Speaker"), "output-device", &outputs, &mut app.settings.output_device);
+            pick(&mut columns[0], t!("Microphone"), "input-device", &inputs, &mut app.settings.input_device, crate::icons::Icon::Microphone);
+            pick(&mut columns[1], t!("Speaker"), "output-device", &outputs, &mut app.settings.output_device, crate::icons::Icon::Headphones);
         });
         ui.add_space(16.0);
         ui.columns(2, |columns| {
