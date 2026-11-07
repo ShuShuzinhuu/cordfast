@@ -315,6 +315,13 @@ pub fn selftest(out: &str) {
             let parsed = sounds.as_array().into_iter().flatten().filter_map(crate::discord::model::SoundboardSound::parse).count();
             parse_note = format!("PARSE soundboard: {parsed}/{all}");
         }
+        if let Some(feed) = ask("content inventory", "/content-inventory/users/@me".into()).await {
+            for entry in feed.get("entries").and_then(Value::as_array).into_iter().flatten() {
+                let kind = entry.pointer("/content/content_type").and_then(Value::as_u64).unwrap_or(0);
+                parse_note.push_str(&format!("
+FEED kind {kind}: {}", shape(entry.pointer("/content").unwrap_or(&Value::Null))));
+            }
+        }
         ask("saved ids", "/users/@me/saved-messages?bookmark_ids=true".into()).await;
         ask("bookmarks", "/users/@me/saved-messages/bookmarks?limit=25".into()).await;
         ask("guild sounds", format!("/guilds/{member}/soundboard-sounds")).await;

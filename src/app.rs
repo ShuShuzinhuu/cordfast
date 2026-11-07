@@ -554,6 +554,12 @@ pub struct App {
     pub notice_bar: bool,
     /// Discord's invite window, while open.
     pub invite: Option<crate::ui::invite::Invite>,
+    /// Discord's activity feed, the member list's "Activity" section, and
+    /// when it was asked for.
+    pub feed: Vec<crate::discord::model::FeedEntry>,
+    pub feed_asked: Option<Instant>,
+    /// The section shows all its entries rather than three.
+    pub feed_expanded: bool,
     /// The voice channel of the last session, offered back once.
     pub last_session_voice: Option<(Option<Id>, Id)>,
     pub actions: Vec<Action>,
@@ -810,6 +816,9 @@ impl App {
             email: None,
             notice_bar: false,
             invite: None,
+            feed: Vec::new(),
+            feed_asked: None,
+            feed_expanded: false,
             last_session_voice: None,
             actions: Vec::new(),
             focus_composer: false,
@@ -2774,6 +2783,18 @@ impl App {
                 if let Some(inbox) = &mut self.inbox {
                     inbox.mentions = Some(messages(&value));
                 }
+            }
+            // The feed's entries, then its games not ranked, in the kinds the
+            // member list shows (the bundle's `uP`).
+            "content-inventory" => {
+                let list = |key: &str| value.get(key).and_then(serde_json::Value::as_array).cloned().unwrap_or_default();
+                let mut feed: Vec<crate::discord::model::FeedEntry> = Vec::new();
+                for entry in list("entries").iter().chain(list("unranked_game_entries").iter()).filter_map(crate::discord::model::FeedEntry::parse) {
+                    if [1, 2, 3, 5, 6, 8].contains(&entry.kind) && !feed.iter().any(|e| e.id == entry.id) {
+                        feed.push(entry);
+                    }
+                }
+                self.feed = feed;
             }
             "invite-modal" => {
                 if let (Some(code), Some(invite)) = (value.get("code").and_then(serde_json::Value::as_str), self.invite.as_mut()) {

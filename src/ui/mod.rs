@@ -23,6 +23,7 @@ mod requests;
 pub mod form_modal;
 pub mod notices;
 pub mod invite;
+mod feed;
 mod titlebar;
 
 use egui::{

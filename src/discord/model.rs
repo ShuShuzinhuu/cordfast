@@ -1666,6 +1666,72 @@ impl Ready {
     }
 }
 
+/// An entry of Discord's activity feed (`/content-inventory/users/@me`):
+/// a game played, music listened to, the top artist or game of the week…
+#[derive(Clone, Debug)]
+pub struct FeedEntry {
+    pub id: String,
+    pub author: Id,
+    /// ContentInventoryEntryType: 1 played game, 2 watched media, 3 top game,
+    /// 5 listened session, 6 top artist, 8 launched activity.
+    pub kind: u64,
+    pub title: String,
+    /// A listening session's artists, under the track.
+    pub detail: String,
+    pub image: Option<String>,
+    pub application: Option<Id>,
+    /// Unix ms; a game still being played has no end.
+    pub started: Option<u64>,
+    pub ended: Option<u64>,
+    /// Traits: AGGREGATE_COUNT, STREAK_DAYS, DURATION_SECONDS, IS_LIVE.
+    pub count: Option<u64>,
+    pub streak: Option<u64>,
+    pub duration: Option<u64>,
+    pub live: bool,
+}
+
+impl FeedEntry {
+    pub fn parse(value: &Value) -> Option<Self> {
+        let content = value.get("content").unwrap_or(value);
+        let extra = content.get("extra").unwrap_or(&Value::Null);
+        let kind = content.get("content_type").and_then(Value::as_u64)?;
+        let time = |key: &str| string(content, key).and_then(|t| t.parse::<jiff::Timestamp>().ok()).map(|t| t.as_millisecond().max(0) as u64);
+        let traits = content.get("traits").and_then(Value::as_array).cloned().unwrap_or_default();
+        let trait_of = |kind: u64| traits.iter().find(|t| t.get("type").and_then(Value::as_u64) == Some(kind));
+        // A listening session holds its tracks, the latest first.
+        let media = if kind == 5 { extra.pointer("/entries/0/media") } else { extra.get("media") }.unwrap_or(&Value::Null);
+        let title = match kind {
+            1 | 3 => extra.get("game_name").and_then(Value::as_str),
+            6 => extra.pointer("/artist/name").and_then(Value::as_str),
+            8 => extra.get("activity_name").or_else(|| extra.get("application_name")).and_then(Value::as_str),
+            _ => media.get("title").and_then(Value::as_str),
+        }
+        .unwrap_or_default()
+        .to_owned();
+        let detail = media.get("artists").and_then(Value::as_array).map(|a| a.iter().filter_map(|x| x.get("name").and_then(Value::as_str)).collect::<Vec<_>>().join(", ")).unwrap_or_default();
+        Some(Self {
+            id: string(content, "id")?,
+            author: field_sf(content, "author_id")?,
+            kind,
+            title,
+            detail,
+            image: media.get("image_url").and_then(Value::as_str).map(str::to_owned),
+            application: extra.get("application_id").and_then(sf),
+            started: time("started_at"),
+            ended: time("ended_at"),
+            count: trait_of(12).and_then(|t| t.get("count")).and_then(Value::as_u64),
+            streak: trait_of(8).and_then(|t| t.get("streak_days")).and_then(Value::as_u64),
+            duration: trait_of(2).and_then(|t| t.get("duration_seconds")).and_then(Value::as_u64),
+            live: trait_of(3).and_then(|t| t.get("is_live")).and_then(Value::as_bool).unwrap_or(false),
+        })
+    }
+
+    /// Played and not over yet.
+    pub fn playing(&self) -> bool {
+        self.kind == 1 && (self.live || self.ended.is_none())
+    }
+}
+
 /// A server's public card, the one its tag opens (`/guilds/{id}/profile`):
 /// banner, icon, counts, description, games and traits.
 #[derive(Clone, Debug, Default)]

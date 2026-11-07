@@ -2140,6 +2140,7 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
     // Borrowed for the frame, put back below.
     let Some(rows) = app.member_list.as_mut().map(|m| std::mem::take(&mut m.rows)) else { return };
     const ROW: f32 = 44.0;
+    super::feed::section(app, ui, guild_id, channel_id);
     egui::ScrollArea::vertical().id_salt(("members", channel_id)).auto_shrink(false).show_rows(ui, ROW, rows.len(), |ui, range| {
         // Asks for the next hundred rows near the end.
         if range.end + 20 >= rows.len() && (rows.len() as u64) + 1 >= requested {
