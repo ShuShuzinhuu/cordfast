@@ -1949,6 +1949,8 @@ pub(super) enum Plate {
     Members,
     Channel,
     Friends,
+    /// The account panel: `c/1A` to `c/66` (`c/4D` light), the picture at 40%.
+    Account,
 }
 
 /// Discord's nameplate behind a row (`NameplateBackground`): the palette's
@@ -1966,8 +1968,9 @@ pub(super) fn nameplate(app: &mut App, ui: &egui::Ui, slot: egui::layers::ShapeI
     if let Some((dark, light)) = plate.colors() {
         let [r, g, b] = if p.dark { dark } else { light };
         let end = if selected { 0x80 } else if hovered && place == Plate::Members { 0x4D } else { 0x33 };
+        let stops: &[(f32, u8)] = if place == Plate::Account { &[(0.0, 0x1A), (1.0, if p.dark { 0x66 } else { 0x4D })] } else { &[(0.0, 0u8), (0.2, 0x14), (0.5, 0x14), (1.0, end)] };
         let mut mesh = Mesh::default();
-        for (i, (at, alpha)) in [(0.0, 0u8), (0.2, 0x14), (0.5, 0x14), (1.0, end)].into_iter().enumerate() {
+        for (i, (at, alpha)) in stops.iter().copied().enumerate() {
             let x = row.left() + row.width() * at;
             let color = Color32::from_rgba_unmultiplied(r, g, b, alpha);
             mesh.vertices.push(Vertex { pos: pos2(x, row.top()), uv: WHITE_UV, color });
@@ -1988,6 +1991,7 @@ pub(super) fn nameplate(app: &mut App, ui: &egui::Ui, slot: egui::layers::ShapeI
     let width = (size.x * row.height() / size.y).min(row.width());
     let image = Rect::from_min_max(pos2(row.right() - width, row.top()), row.right_bottom());
     let opacity = match () {
+        _ if place == Plate::Account => 0.4,
         _ if selected => 0.9,
         _ if hovered && place == Plate::Channel => 0.4,
         _ => 0.6,
@@ -2399,6 +2403,10 @@ fn noise_popout(app: &mut App, button: &egui::Response) {
 fn account(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
     let Some(me) = app.me.clone() else { return };
+    // The nameplate behind the whole row, to the card's edges, the content's
+    // width known once the name is drawn.
+    let slot = ui.painter().add(egui::Shape::Noop);
+    let row = ui.max_rect().expand2(vec2(8.0, 6.0));
     ui.horizontal_centered(|ui| {
         let (rect, response) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::click());
         app.images.circle(ui, rect, Some(&me.avatar_url()), &initials(me.display_name()), 16.0);
@@ -2421,15 +2429,22 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
             // Room for the two split buttons and the cog.
             ui.set_width((ui.available_width() - 138.0).max(40.0));
             ui.add_space(2.0);
-            ui.add(Label::new(RichText::new(me.display_name()).font(theme::strong(14.0)).color(p.strong)).truncate());
+            let name = ui.add(Label::new(RichText::new(me.display_name()).font(theme::strong(14.0)).color(p.strong)).truncate());
+            if let Some(plate) = &me.nameplate {
+                nameplate(app, ui, slot, row, plate, name.rect.right() - row.left(), false, false, Plate::Account);
+            }
             // Discord's panel: your activity status (the green controller and
             // the game, "•" and the custom status), the username while the
             // panel is hovered or when there is nothing to show.
             let hovered = ui.ctx().pointer_hover_pos().is_some_and(|at| ui.data(|d| d.get_temp::<Rect>(egui::Id::new("account-card-rect"))).is_some_and(|card| card.contains(at)));
             let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 16.0), Sense::hover());
+            // Every session's activities (Spotify on the phone too), as the
+            // lists draw them: "♫ Wonder Girls +1".
+            let own = matches!(app.connection, Connection::Connected) && !hovered && app.presences.contains_key(&me.id);
             match (app.connection, &app.activity) {
                 (Connection::Connecting, _) => paint_truncated(ui, line, t!("Connecting…"), FontId::proportional(12.0), p.muted),
                 (Connection::Disconnected, _) => paint_truncated(ui, line, t!("No connection"), FontId::proportional(12.0), p.muted),
+                _ if own && friends::status_line(app, ui, line, me.id, true) => {}
                 (_, game) if !hovered && (game.is_some() || app.custom_status.is_some()) => {
                     let mut x = line.left();
                     if let Some(game) = game {

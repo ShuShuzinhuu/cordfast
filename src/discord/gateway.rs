@@ -69,6 +69,9 @@ pub enum Dispatch {
     GuildUpdate(Value),
     /// Online status and what people are doing: (user, status, activity).
     Presences(Vec<Presence>),
+    /// Our own presence over every session of the account (its "all"
+    /// entry): what the account panel's activity line reads.
+    OwnPresence(Presence),
     GuildEmojis { guild: Id, emojis: Vec<Emoji> },
     MemberList(MemberListUpdate),
     PollVote { channel: Id, message: Id, user: Id, answer: u64, add: bool },
@@ -308,6 +311,16 @@ fn asset_url(asset: &str, application: Option<Id>) -> Option<String> {
         return Some(asset.to_owned());
     }
     Some(format!("https://cdn.discordapp.com/app-assets/{}/{asset}.png", application?))
+}
+
+/// Our own presence from a list of the account's sessions (READY's
+/// `sessions`, SESSIONS_REPLACE): its "all" entry, else the first.
+fn own_presence(list: &Value) -> Option<Dispatch> {
+    let list = list.as_array()?;
+    let all = list.iter().find(|s| s.get("session_id").and_then(Value::as_str) == Some("all")).or_else(|| list.first())?;
+    let mut value = all.clone();
+    value.as_object_mut()?.insert("user_id".into(), Value::String("0".into()));
+    Presence::parse(&value).map(Dispatch::OwnPresence)
 }
 
 impl Presence {
@@ -608,6 +621,9 @@ async fn connect(
                                 if !presences.is_empty() {
                                     out(Dispatch::Presences(presences));
                                 }
+                                if let Some(own) = d.get("sessions").and_then(own_presence) {
+                                    out(own);
+                                }
                                 out(Dispatch::Connected);
                             }
                             "RESUMED" => {
@@ -814,7 +830,7 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
         "GUILD_UPDATE" => vec![Dispatch::GuildUpdate(d.clone())],
         "PRESENCE_UPDATE" => one(Presence::parse(d).map(|p| Dispatch::Presences(vec![p]))),
         "READY_SUPPLEMENTAL" => vec![Dispatch::Presences(Presence::all_in(d))],
-        "SESSIONS_REPLACE" => Vec::new(),
+        "SESSIONS_REPLACE" => one(own_presence(d)),
         "MESSAGE_POLL_VOTE_ADD" | "MESSAGE_POLL_VOTE_REMOVE" => one((|| {
             Some(Dispatch::PollVote {
                 channel: id("channel_id")?,

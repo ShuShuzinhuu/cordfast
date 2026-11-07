@@ -2135,6 +2135,10 @@ impl App {
                     g.emojis = emojis;
                 }
             }
+            Dispatch::OwnPresence(mut presence) => {
+                presence.user = self.me_id();
+                self.presences.insert(presence.user, presence);
+            }
             Dispatch::Presences(list) => {
                 let me = self.me_id();
                 for presence in list {
