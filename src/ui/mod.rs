@@ -697,6 +697,8 @@ const MANAGE_CHANNELS: u64 = 1 << 4;
 const SET_VOICE_CHANNEL_STATUS: u64 = 1 << 48;
 const MANAGE_GUILD: u64 = 1 << 5;
 const MANAGE_ROLES: u64 = 1 << 28;
+const MANAGE_WEBHOOKS: u64 = 1 << 29;
+const CONNECT: u64 = 1 << 20;
 
 /// The menu under the server's name, as in Discord.
 fn server_menu(app: &mut App, response: &egui::Response, id: Id) {
@@ -1357,6 +1359,22 @@ fn channel_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel, visible: boo
     icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0 + indent, rect.center().y), Vec2::splat(18.0)), icon, icon_color);
     let font = if unread { theme::strong(15.0) } else { FontId::proportional(15.0) };
     let mut name_right = rect.right() - 30.0;
+    // A forum's "N New" in the brand's text colour, else its unread posts
+    // in grey, as Discord's list (12-point semibold), while not muted.
+    let forum = (channel.kind == ChannelKind::Forum && !muted && mentions == 0).then(|| app.forum_counts(channel)).unwrap_or_default();
+    let new_channel = mentions == 0 && !voice && app.is_new_channel(channel);
+    let pill = new_channel.then(|| ui.painter().layout_no_wrap(t!("NEW").to_owned(), theme::strong(12.0), Color32::WHITE));
+    if let Some(galley) = &pill {
+        name_right = rect.right() - 14.0 - galley.size().x - 16.0;
+    }
+    let forum_label = match forum {
+        (0, 0) => None,
+        (0, unread) => Some(unread.to_string()),
+        (new, _) => Some(t!("{count} New", count = new)),
+    };
+    if let Some(label) = &forum_label {
+        name_right = rect.right() - 14.0 - ui.painter().layout_no_wrap(label.clone(), theme::strong(12.0), p.muted).size().x;
+    }
     if voice {
         let mut x = rect.right() - 6.0;
         // A Stage's limit (10000) is the API's default, not one anyone set.
@@ -1381,6 +1399,43 @@ fn channel_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel, visible: boo
             x -= 6.0;
         }
         name_right = x;
+    }
+    // Hovered or open: Discord's "Invite to Channel" and "Edit Channel"
+    // buttons (`iconItem`, 16-point icons 4 apart), left of the row's
+    // counts, each where the permissions allow it, as the bundle's list.
+    if visible && !thread && (response.hovered() || selected) {
+        let perms = channel.guild_id.and_then(|g| app.guild(g)).map_or(0, |g| g.channel_permissions(me, channel));
+        let mut buttons = Vec::new();
+        if perms & CREATE_INVITE != 0 {
+            buttons.push((Icon::UserPlus, if channel.kind == ChannelKind::Voice { t!("Invite to Voice") } else { t!("Invite to Channel") }, true));
+        }
+        if (!voice || perms & CONNECT != 0) && perms & (MANAGE_CHANNELS | MANAGE_ROLES | MANAGE_WEBHOOKS) != 0 {
+            buttons.push((Icon::Settings, t!("Edit Channel"), false));
+        }
+        let mut end = if voice {
+            name_right
+        } else if mentions > 0 {
+            rect.right() - 30.0
+        } else if forum_label.is_some() || pill.is_some() {
+            name_right + 2.0
+        } else {
+            rect.right() - 4.0
+        };
+        for (icon, tip, invite) in buttons.into_iter().rev() {
+            let at = Rect::from_center_size(pos2(end - 10.0, rect.center().y), Vec2::splat(20.0));
+            let button = ui.interact(at, ui.id().with(("channel-button", channel.id, invite)), Sense::click());
+            icons::paint(ui, Rect::from_center_size(at.center(), Vec2::splat(16.0)), icon, if button.hovered() { p.strong } else { p.muted });
+            if button.on_hover_text(tip).clicked() {
+                if invite {
+                    create_invite(app, channel.id);
+                } else if let Some(guild) = channel.guild_id {
+                    app.actions.push(Action::OpenGuildSettings(guild));
+                    app.actions.push(Action::GuildTab(crate::admin::Tab::Channels));
+                }
+            }
+            end = at.left();
+        }
+        name_right = name_right.min(end - 4.0);
     }
     let name_rect = Rect::from_min_max(pos2(rect.left() + 32.0 + indent, rect.top()), pos2(name_right, rect.bottom()));
     paint_truncated(ui, name_rect, &channel.name, font, color);
@@ -1408,6 +1463,15 @@ fn channel_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel, visible: boo
     }
     if mentions > 0 {
         badge(ui, pos2(rect.right() - 16.0, rect.center().y), mentions, Color32::TRANSPARENT);
+    } else if let Some(galley) = pill {
+        // Discord's badge, "new" and "primary": a round blurple pill.
+        let size = vec2(galley.size().x + 16.0, 16.0);
+        let at = Rect::from_min_size(pos2(rect.right() - 8.0 - size.x, rect.center().y - 8.0), size);
+        ui.painter().rect_filled(at, 8.0, p.accent);
+        ui.painter().galley(at.center() - galley.size() / 2.0, galley, Color32::WHITE);
+    } else if let Some(label) = forum_label {
+        let brand = if p.dark { Color32::from_rgb(0x94, 0x9c, 0xf7) } else { Color32::from_rgb(0x47, 0x52, 0xc4) };
+        ui.painter().text(pos2(rect.right() - 8.0, rect.center().y), Align2::RIGHT_CENTER, label, theme::strong(12.0), if forum.0 > 0 { brand } else { p.muted });
     } else if app.plugin(Plugin::TypingIndicator)
         && app.typing.get(&channel.id).is_some_and(|t| !t.is_empty())
     {

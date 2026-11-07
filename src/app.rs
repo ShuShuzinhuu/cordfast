@@ -1075,6 +1075,44 @@ impl App {
         }
     }
 
+    /// A forum's counts beside its name, as the bundle's channel list:
+    /// "N New", its active posts we have not joined, made after the forum
+    /// was last read (or after we joined the server) and never opened
+    /// (`getNewThreadCount`); and the posts with messages after that read
+    /// (`useUnreadThreadsCountForParent`), shown in grey when none is new.
+    pub fn forum_counts(&self, forum: &Channel) -> (u32, u32) {
+        let Some(guild) = forum.guild_id.and_then(|g| self.guild(g)) else { return (0, 0) };
+        let ack = self.read.get(&forum.id).map(|r| r.last_message_id);
+        let Some(since) = ack.or(guild.joined) else { return (0, 0) };
+        let (mut new, mut unread) = (0, 0);
+        for post in guild.channels.iter().filter(|c| c.kind == ChannelKind::Thread && c.parent_id == Some(forum.id) && !c.archived) {
+            if !post.joined && post.id > since && !self.read.contains_key(&post.id) {
+                new += 1;
+            }
+            let last = self.latest.get(&post.id).copied().or(post.last_message_id);
+            if let Some(ack) = ack
+                && self.is_unread(post.id)
+                && last.is_some_and(|l| l > ack)
+            {
+                unread += 1;
+            }
+        }
+        (new, unread)
+    }
+
+    /// Discord's "NEW" pill beside a channel (`NewChannelsStore`): in a
+    /// community server, a channel made in the last week, after we joined,
+    /// that has never been read.
+    pub fn is_new_channel(&self, channel: &Channel) -> bool {
+        let Some(guild) = channel.guild_id.and_then(|g| self.guild(g)) else { return false };
+        let week = crate::discord::model::now_snowflake().saturating_sub((7 * 24 * 3600 * 1000) << 22);
+        guild.has("COMMUNITY")
+            && channel.kind != ChannelKind::Thread
+            && channel.id > week
+            && guild.joined.is_some_and(|joined| channel.id > joined)
+            && !self.read.contains_key(&channel.id)
+    }
+
     pub fn mentions(&self, channel: Id) -> u32 {
         self.read.get(&channel).map_or(0, |r| r.mention_count)
     }

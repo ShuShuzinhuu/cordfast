@@ -436,6 +436,9 @@ pub struct Guild {
     /// Scheduled events READY listed: the sidebar's "Events" row shows
     /// while there are any.
     pub events: usize,
+    /// When we joined, as a snowflake: a forum never read counts its posts
+    /// as new from then on.
+    pub joined: Option<Id>,
 }
 
 impl Guild {
@@ -535,6 +538,9 @@ impl Guild {
             default_notifications: props.get("default_message_notifications").and_then(Value::as_u64).unwrap_or(1).min(1) as u8,
             features: props.get("features").and_then(Value::as_array).map(|l| l.iter().filter_map(Value::as_str).map(str::to_owned).collect()).unwrap_or_default(),
             events: value.get("guild_scheduled_events").and_then(Value::as_array).map_or(0, Vec::len),
+            joined: string(value, "joined_at")
+                .and_then(|t| t.parse::<jiff::Timestamp>().ok())
+                .map(|t| (t.as_millisecond().max(0) as u64).saturating_sub(DISCORD_EPOCH_MS) << 22),
             channels,
             roles,
             my_roles: my_roles.unwrap_or_default(),
@@ -1761,6 +1767,7 @@ mod tests {
             default_notifications: 1,
             features: Vec::new(),
             events: 0,
+            joined: None,
         };
         let mut channel =
             Channel::parse(&serde_json::json!({"id": "5", "type": 0}), Some(1), &HashMap::new())
