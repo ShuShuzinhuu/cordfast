@@ -22,6 +22,7 @@ pub mod splash;
 mod requests;
 pub mod form_modal;
 pub mod notices;
+pub mod invite;
 mod titlebar;
 
 use egui::{
@@ -88,6 +89,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         incoming_call(app, ui.ctx());
         switcher(app, ui.ctx());
         form_modal::show(app, ui.ctx());
+        invite::show(app, ui.ctx());
     }
     if app.page.is_none() {
         ui.ctx().data_mut(|d| d.insert_temp(egui::Id::new("settings-open"), false));
@@ -627,20 +629,12 @@ fn voice_badge(app: &App, ui: &egui::Ui, icon: Rect, guilds: &[Id]) {
     icons::paint(ui, Rect::from_center_size(center, Vec2::splat(11.0)), Icon::Voice, if ours { Color32::WHITE } else { p.strong });
 }
 
-/// Asks Discord for an invite to `channel`; the answer goes to the
-/// clipboard (see the "invite" answer in app.rs).
+/// Discord's "Invite friends to <server>" window for `channel`, with a
+/// seven-day link made for it (Streamer Mode hides the link there).
 fn create_invite(app: &mut App, channel: Id) {
-    // Streamer Mode: links stay off the screen and the clipboard's way.
-    if app.streamer_on() && app.settings.streamer_hide_invites {
-        app.notify(t!("Hide Invite Links"));
-        return;
-    }
-    app.commands.send(crate::backend::Command::Api {
-        key: "invite".into(),
-        method: "POST",
-        path: format!("/channels/{channel}/invites"),
-        body: Some(serde_json::json!({ "max_age": 604800, "max_uses": 0 })),
-    });
+    let Some(guild) = app.channel(channel).and_then(|c| c.guild_id) else { return };
+    app.invite = Some(invite::Invite::new(guild, channel));
+    invite::request(app, channel, 604800, 0);
 }
 
 /// The channel an invite to a server leads to: the open one, or the first

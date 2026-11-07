@@ -552,6 +552,8 @@ pub struct App {
     pub email: Option<String>,
     /// A notice bar is on screen this frame (the content's corner gives way).
     pub notice_bar: bool,
+    /// Discord's invite window, while open.
+    pub invite: Option<crate::ui::invite::Invite>,
     /// The voice channel of the last session, offered back once.
     pub last_session_voice: Option<(Option<Id>, Id)>,
     pub actions: Vec<Action>,
@@ -807,6 +809,7 @@ impl App {
             unverified: false,
             email: None,
             notice_bar: false,
+            invite: None,
             last_session_voice: None,
             actions: Vec::new(),
             focus_composer: false,
@@ -2278,6 +2281,15 @@ impl App {
                 self.run(Action::OpenMessageRequests);
                 self.requests_spam = n == "spam";
             }
+            // The invite window for the first server's first text channel.
+            "invite" => {
+                let channel = self.guilds.first().and_then(|g| g.channels.iter().find(|c| c.kind == ChannelKind::Text).map(|c| (g.id, c.id)));
+                if let Some((guild, channel)) = channel {
+                    self.select_guild(Some(guild));
+                    self.invite = Some(crate::ui::invite::Invite::new(guild, channel));
+                    crate::ui::invite::request(self, channel, 604800, 0);
+                }
+            }
             // The first server with these files waiting in its box.
             "uploads" => {
                 if let Some(id) = self.guilds.first().map(|g| g.id) {
@@ -2740,10 +2752,9 @@ impl App {
                     inbox.mentions = Some(messages(&value));
                 }
             }
-            "invite" => {
-                if let Some(code) = value.get("code").and_then(serde_json::Value::as_str) {
-                    self.notify(t!("Invite copied: discord.gg/{code}", code = code));
-                    self.clipboard = Some(format!("https://discord.gg/{code}"));
+            "invite-modal" => {
+                if let (Some(code), Some(invite)) = (value.get("code").and_then(serde_json::Value::as_str), self.invite.as_mut()) {
+                    invite.code = Some(code.to_owned());
                 }
             }
             "profile-saved" => self.notify(t!("Profile saved.")),

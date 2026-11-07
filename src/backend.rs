@@ -70,6 +70,9 @@ pub enum Command {
     Forget { url: String },
     Profile { user: Id, guild: Option<Id> },
     OpenDm { user: Id },
+    /// An invite's link sent from the invite window, without opening the
+    /// conversation: to a person (their DM, made if new) or a group.
+    SendInvite { user: Option<Id>, channel: Option<Id>, content: String },
     ForumPosts { forum: Id },
     Notify { title: String, body: String, channel: Id, sound: bool },
     /// Turns the rich-presence server on or off.
@@ -974,6 +977,21 @@ async fn api_call(api: Api, events: Events, command: Command) {
             Ok(channel) => events.send(Event::DmOpened(channel)),
             Err(error) => fail(t!("Couldn't open the conversation"), error),
         },
+        Command::SendInvite { user, channel, content } => {
+            let target = match (user, channel) {
+                (Some(user), _) => api.open_dm(user).await.map(|c| c.id),
+                (None, Some(channel)) => Ok(channel),
+                (None, None) => return,
+            };
+            let nonce = crate::discord::model::now_snowflake().to_string();
+            let sent = match target {
+                Ok(channel) => api.send_message(channel, &content, &nonce, None, false, false, Vec::new()).await,
+                Err(error) => Err(error),
+            };
+            if let Err(error) = sent {
+                fail(t!("Couldn't send the invite"), error);
+            }
+        }
         Command::ForumPosts { forum } => match api.forum_posts(forum).await {
             Ok(posts) => events.send(Event::ForumPosts { forum, posts }),
             Err(error) => fail(t!("Couldn't load the forum"), error),
