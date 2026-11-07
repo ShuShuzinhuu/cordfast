@@ -23,6 +23,7 @@ mod requests;
 pub mod form_modal;
 pub mod notices;
 pub mod invite;
+pub mod profile_modal;
 mod feed;
 mod titlebar;
 
@@ -91,6 +92,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         switcher(app, ui.ctx());
         form_modal::show(app, ui.ctx());
         invite::show(app, ui.ctx());
+        profile_modal::show(app, ui.ctx());
     }
     if app.page.is_none() {
         ui.ctx().data_mut(|d| d.insert_temp(egui::Id::new("settings-open"), false));

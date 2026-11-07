@@ -560,6 +560,9 @@ pub struct App {
     pub feed_asked: Option<Instant>,
     /// The section shows all its entries rather than three.
     pub feed_expanded: bool,
+    /// Discord's full profile, while open, and the notes we have read.
+    pub full_profile: Option<crate::ui::profile_modal::FullProfile>,
+    pub notes: HashMap<Id, String>,
     /// The voice channel of the last session, offered back once.
     pub last_session_voice: Option<(Option<Id>, Id)>,
     pub actions: Vec<Action>,
@@ -819,6 +822,8 @@ impl App {
             feed: Vec::new(),
             feed_asked: None,
             feed_expanded: false,
+            full_profile: None,
+            notes: HashMap::new(),
             last_session_voice: None,
             actions: Vec::new(),
             focus_composer: false,
@@ -2313,6 +2318,13 @@ impl App {
                 self.run(Action::OpenMessageRequests);
                 self.requests_spam = n == "spam";
             }
+            // The full profile of the Nth DM's person.
+            "fullprofile" => {
+                let user = self.dms.iter().filter(|c| c.kind == ChannelKind::Dm && !c.message_request).nth(n.parse::<usize>().unwrap_or(0)).and_then(|c| c.recipients.first().cloned());
+                if let Some(user) = user {
+                    crate::ui::profile_modal::open(self, user);
+                }
+            }
             // The invite window for the first server's first text channel.
             "invite" => {
                 let channel = self.guilds.first().and_then(|g| g.channels.iter().find(|c| c.kind == ChannelKind::Text).map(|c| (g.id, c.id)));
@@ -2518,6 +2530,12 @@ impl App {
 
     /// Answers to the API calls the chat makes (pins, search, joining).
     fn api_answer(&mut self, key: &str, result: Result<serde_json::Value, String>) {
+        // A note: none is a 404, an empty one.
+        if let Some(id) = key.strip_prefix("note:").and_then(|id| id.parse::<Id>().ok()) {
+            let note = result.ok().and_then(|v| v.get("note").and_then(serde_json::Value::as_str).map(str::to_owned)).unwrap_or_default();
+            self.notes.insert(id, note);
+            return;
+        }
         // [{channel_id, message_preview}] for the requests asked about; one
         // left out has no message, and a failure leaves them all without.
         if let Some(ids) = key.strip_prefix("requests-preview:") {

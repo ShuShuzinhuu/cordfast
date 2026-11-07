@@ -3214,8 +3214,7 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
                 });
                 ui.add_space(8.0);
                 if super::form::button_wide(ui, t!("View Full Profile")).clicked() {
-                    let at = ui.max_rect().left_top();
-                    app.actions.push(Action::OpenProfile { user: user.clone(), guild: None, at });
+                    super::profile_modal::open(app, user.clone());
                 }
             });
         });
@@ -3326,6 +3325,11 @@ fn voice_tile(app: &mut App, ui: &mut egui::Ui, channel: &Channel, id: Id, rect:
 
 /// Discord's "In voice" card on a profile: up to four of the people there,
 /// the channel and its server, and the button to join when we may connect.
+/// The "In voice" card, for the full profile.
+pub(super) fn voice_card_for(app: &mut App, ui: &mut egui::Ui, user: Id) {
+    voice_card(app, ui, user);
+}
+
 fn voice_card(app: &mut App, ui: &mut egui::Ui, user: Id) {
     /// Discord's CONNECT permission.
     const CONNECT: u64 = 1 << 20;

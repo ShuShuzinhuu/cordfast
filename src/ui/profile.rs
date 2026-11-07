@@ -135,6 +135,10 @@ pub(super) fn header(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Opt
     ui.painter().circle_filled(avatar.center(), AVATAR / 2.0 + 6.0, p.rail);
     let url = user.avatar_moving(160);
     app.images.circle(ui, avatar, Some(&url), &initials(user.display_name()), AVATAR / 2.0);
+    // The avatar opens the full profile, as Discord's popout does.
+    if ui.interact(avatar, ui.id().with(("profile-avatar", user.id)), Sense::click()).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+        super::profile_modal::open(app, user.clone());
+    }
     if let Some(decoration) = user.decoration_url()
         && let Some((texture, _)) = app.images.get(&decoration, 240)
     {
@@ -217,6 +221,13 @@ pub(super) fn names(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Opti
     } else {
         ui.add(egui::Label::new(RichText::new(&name).font(theme::strong(20.0)).color(p.strong)).wrap());
     }
+    names_line(app, ui, user, profile);
+}
+
+/// The line under the name: the username, pronouns, server tag, APP and
+/// the badges.
+pub(super) fn names_line(app: &mut App, ui: &mut egui::Ui, user: &User, profile: Option<&Profile>) {
+    let p = theme::p();
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing.x = 6.0;
         ui.label(RichText::new(&user.username).size(14.0).color(p.text));
@@ -727,7 +738,7 @@ fn connection_name(kind: &str) -> String {
     }
 }
 
-fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
+pub(super) fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     let p = theme::p();
     let guilds: Vec<(crate::discord::model::Id, Option<String>, String, Option<String>)> = profile
         .mutual_guilds
@@ -761,7 +772,7 @@ fn mutual_servers(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     }
 }
 
-fn mutual_friends(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
+pub(super) fn mutual_friends(app: &mut App, ui: &mut egui::Ui, profile: &Profile) {
     let p = theme::p();
     if profile.mutual_friend_list.is_empty() {
         ui.label(RichText::new(t!("No friends in common.")).size(13.5).color(p.muted));
