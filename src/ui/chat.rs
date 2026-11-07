@@ -402,17 +402,21 @@ fn messages(app: &mut App, ui: &mut egui::Ui, channel: Id) {
                     first_unread_at = Some((ui.cursor().top(), message.timestamp_ms()));
                 }
                 if new_day || first_unread {
-                    ui.add_space(14.0);
-                    let (rect, _) = ui.allocate_exact_size(vec2(width, 14.0), Sense::hover());
+                    // Discord's divider: the line 24 points under the last
+                    // message, the next one's name 20 under it (its own
+                    // 17-point margin and 2-point padding follow).
+                    ui.add_space(23.0);
+                    let (rect, _) = ui.allocate_exact_size(vec2(width, 2.0), Sense::hover());
                     let y = rect.center().y;
                     let x = rect.x_range();
                     let color = if first_unread { p.red } else { p.selected };
                     ui.painter().hline(egui::Rangef::new(x.min + 16.0, x.max - 16.0), y, Stroke::new(1.0, color));
                     if new_day {
                         let galley = ui.painter().layout_no_wrap(day.clone(), theme::strong(12.0), if first_unread { p.red } else { p.muted });
-                        let bg = Rect::from_center_size(rect.center(), galley.size() + vec2(12.0, 2.0));
+                        // 12-point semibold on the chat's colour, 2 × 4 padding.
+                        let bg = Rect::from_center_size(rect.center(), galley.size() + vec2(8.0, 4.0));
                         ui.painter().rect_filled(bg, 0.0, p.chat);
-                        ui.painter().galley(bg.min + vec2(6.0, 1.0), galley, p.muted);
+                        ui.painter().galley(bg.min + vec2(4.0, 2.0), galley, p.muted);
                     }
                     if first_unread {
                         let tag = Rect::from_min_size(egui::pos2(x.max - 56.0, y - 7.0), vec2(40.0, 14.0));
@@ -610,19 +614,26 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                     None => (author.clone(), None),
                 };
                 ui.horizontal(|ui| {
+                    // Discord's spine: a 29 × 12 box 32 points to the left,
+                    // its top and left borders 2 points wide, the corner
+                    // rounded 6, from the avatar's column to the line.
                     let start = ui.cursor().left_center();
-                    let spine = [
-                        egui::pos2(start.x - 34.0, start.y + 10.0),
-                        egui::pos2(start.x - 34.0, start.y + 2.0),
-                        egui::pos2(start.x - 6.0, start.y + 2.0),
-                    ];
-                    ui.painter().add(egui::Shape::line(spine.to_vec(), Stroke::new(2.0, p.selected)));
+                    let (left, top) = (start.x - 31.0, start.y + 1.0);
+                    let mut spine = vec![egui::pos2(left, top + 12.0)];
+                    for step in 0..=6 {
+                        let angle = std::f32::consts::PI + std::f32::consts::FRAC_PI_2 * step as f32 / 6.0;
+                        spine.push(egui::pos2(left + 6.0 + 6.0 * angle.cos(), top + 6.0 + 6.0 * angle.sin()));
+                    }
+                    spine.push(egui::pos2(start.x - 4.0, top));
+                    ui.painter().add(egui::Shape::line(spine, Stroke::new(2.0, p.selected)));
                     if let Some(user) = &message.reply_author {
                         let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
                         app.images.circle(ui, rect, Some(&user.avatar_url()), &initials(&name), 8.0);
                     }
-                    let who = ui.add(Label::new(RichText::new(format!("@{name}")).size(13.0).font(theme::strong(13.0)).color(color.unwrap_or(p.muted))).sense(Sense::click()));
-                    let what = ui.add(Label::new(RichText::new(line).size(13.0).color(p.muted)).truncate().sense(Sense::click()));
+                    // "@name" in 14-point medium and its role colour, the
+                    // text in 14 points and the text colour.
+                    let who = ui.add(Label::new(RichText::new(format!("@{name}")).font(theme::medium(14.0)).color(color.unwrap_or(p.strong))).sense(Sense::click()));
+                    let what = ui.add(Label::new(RichText::new(line).size(14.0).color(p.text)).truncate().sense(Sense::click()));
                     // A click goes to the answered message, as in Discord.
                     if let Some(id) = message.reply_id
                         && (who.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() || what.on_hover_cursor(egui::CursorIcon::PointingHand).clicked())
