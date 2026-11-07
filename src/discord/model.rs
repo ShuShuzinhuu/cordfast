@@ -439,11 +439,29 @@ pub struct Guild {
     /// When we joined, as a snowflake: a forum never read counts its posts
     /// as new from then on.
     pub joined: Option<Id>,
+    /// The banner over the channel list.
+    pub banner: Option<String>,
+    /// Boosts applied, and whether the server shows its boost goal bar.
+    pub boosts: u64,
+    pub boost_bar: bool,
 }
 
 impl Guild {
     pub fn has(&self, feature: &str) -> bool {
         self.features.iter().any(|f| f == feature)
+    }
+
+    /// The banner as the channel list shows it.
+    pub fn banner_url(&self) -> Option<String> {
+        self.banner.as_ref().map(|hash| format!("https://cdn.discordapp.com/banners/{}/{hash}.png?size=480", self.id))
+    }
+
+    /// The boost goal's end (the bundle's `tg`): Level 3's 14 boosts, none
+    /// with PREMIUM_TIER_3_OVERRIDE, plus the price of every perk bought
+    /// apart (server tags 3, enhanced role colours 3, the badge packs 3, 5,
+    /// 3 and 2).
+    pub fn boost_goal(&self) -> u64 {
+        (if self.has("PREMIUM_TIER_3_OVERRIDE") { 0 } else { 14 }) + 3 + 3 + 3 + 5 + 3 + 2
     }
 }
 
@@ -538,6 +556,10 @@ impl Guild {
             default_notifications: props.get("default_message_notifications").and_then(Value::as_u64).unwrap_or(1).min(1) as u8,
             features: props.get("features").and_then(Value::as_array).map(|l| l.iter().filter_map(Value::as_str).map(str::to_owned).collect()).unwrap_or_default(),
             events: value.get("guild_scheduled_events").and_then(Value::as_array).map_or(0, Vec::len),
+            banner: string(props, "banner"),
+            // READY keeps the count beside `properties`, not in it.
+            boosts: value.get("premium_subscription_count").or_else(|| props.get("premium_subscription_count")).and_then(Value::as_u64).unwrap_or(0),
+            boost_bar: props.get("premium_progress_bar_enabled").or_else(|| value.get("premium_progress_bar_enabled")).and_then(Value::as_bool).unwrap_or(false),
             joined: string(value, "joined_at")
                 .and_then(|t| t.parse::<jiff::Timestamp>().ok())
                 .map(|t| (t.as_millisecond().max(0) as u64).saturating_sub(DISCORD_EPOCH_MS) << 22),
@@ -1264,6 +1286,11 @@ pub struct Mutes {
     pub favorites: std::collections::HashSet<Id>,
     /// Those overrides' flags, kept so a change sets one bit only.
     pub dm_flags: HashMap<Id, u64>,
+    /// Servers whose list shows only the channels picked in "Channels &
+    /// Roles" (`OPT_IN_CHANNELS_ON`, 16384, in the server's flags).
+    pub opt_in: std::collections::HashSet<Id>,
+    /// The channels and categories picked there (`OPT_IN_ENABLED`, 4096).
+    pub opted: std::collections::HashSet<Id>,
 }
 
 /// `ChannelNotificationSettingsFlags.FAVORITED`.
@@ -1295,6 +1322,11 @@ fn muted(value: &Value) -> bool {
 impl Mutes {
     pub fn add(&mut self, entry: &Value) {
         if let Some(guild) = field_sf(entry, "guild_id") {
+            if entry.get("flags").and_then(Value::as_u64).unwrap_or(0) & 16384 != 0 {
+                self.opt_in.insert(guild);
+            } else {
+                self.opt_in.remove(&guild);
+            }
             self.set(guild, muted(entry).then(|| mute_end(entry)), true);
             match level(entry) {
                 Some(level) => self.levels.insert(guild, level),
@@ -1308,6 +1340,11 @@ impl Mutes {
             .flatten()
         {
             if let Some(channel) = field_sf(o, "channel_id") {
+                if o.get("flags").and_then(Value::as_u64).unwrap_or(0) & 4096 != 0 {
+                    self.opted.insert(channel);
+                } else {
+                    self.opted.remove(&channel);
+                }
                 if field_sf(entry, "guild_id").is_none() {
                     let flags = o.get("flags").and_then(Value::as_u64).unwrap_or(0);
                     self.dm_flags.insert(channel, flags);
@@ -1790,6 +1827,9 @@ mod tests {
             features: Vec::new(),
             events: 0,
             joined: None,
+            banner: None,
+            boosts: 0,
+            boost_bar: false,
         };
         let mut channel =
             Channel::parse(&serde_json::json!({"id": "5", "type": 0}), Some(1), &HashMap::new())

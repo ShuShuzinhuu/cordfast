@@ -954,6 +954,93 @@ fn ordered_channels(app: &App, guild: Id) -> Vec<(Option<(Id, String)>, Vec<(Cha
     groups
 }
 
+/// A server banner's height over the channel list.
+const BANNER: f32 = 130.0;
+
+/// Discord's rows over a server's channels, in its order
+/// (`useGuildActionRows`): the boost goal bar, Events, Channels & Roles,
+/// Members and Server Boosts, each where the server and our permissions
+/// allow it.
+fn guild_rows(app: &mut App, ui: &mut egui::Ui, guild: Id) {
+    let p = theme::p();
+    let Some(g) = app.guild(guild).cloned() else { return };
+    let perms = g.my_permissions(app.me_id());
+    let entry = |ui: &mut egui::Ui, icon: Icon, label: &str| -> egui::Response {
+        let (rect, response) = row(ui, 32.0, false);
+        let color = if response.hovered() { p.strong } else { p.muted };
+        icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), icon, color);
+        ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, label, FontId::proportional(15.0), color);
+        response
+    };
+    // The boost goal: a round bar filled in pink to the share applied,
+    // "Boost Goal" and "7/33 Boosts ›" over it (12-point semibold).
+    let goal = g.boost_goal();
+    if g.boost_bar && goal > 0 {
+        let (outer, response) = ui.allocate_exact_size(vec2(ui.available_width(), 40.0), Sense::click());
+        let bar = Rect::from_min_size(outer.min + vec2(12.0, 4.0), vec2(outer.width() - 20.0, 26.0));
+        ui.painter().rect_filled(bar, 13.0, p.rail);
+        let share = (g.boosts as f32 / goal as f32).clamp(0.0, 1.0);
+        let fill = Rect::from_min_size(bar.min + vec2(2.0, 2.0), vec2(((bar.width() * share) - 4.0).max(22.0), 22.0));
+        let pink = |a: f32| Color32::from_rgba_unmultiplied(255, 76, 210, (a * 255.0) as u8);
+        // A pill in one mesh, its outline's points coloured by where they
+        // fall along the gradient, so the ends do not overlap the middle.
+        let r = fill.height() / 2.0;
+        let (left, right) = (fill.left() + r, (fill.right() - r).max(fill.left() + r));
+        let at = |x: f32| pink(0.1 + 0.3 * ((x - fill.left()) / fill.width().max(1.0)));
+        let mut mesh = egui::epaint::Mesh::default();
+        let center = fill.center();
+        mesh.colored_vertex(center, at(center.x));
+        let mut outline = Vec::new();
+        for step in 0..=12 {
+            let angle = std::f32::consts::FRAC_PI_2 + std::f32::consts::PI * step as f32 / 12.0;
+            outline.push(pos2(left + r * angle.cos(), center.y - r * angle.sin()));
+        }
+        for step in 0..=12 {
+            let angle = -std::f32::consts::FRAC_PI_2 + std::f32::consts::PI * step as f32 / 12.0;
+            outline.push(pos2(right + r * angle.cos(), center.y - r * angle.sin()));
+        }
+        for point in &outline {
+            mesh.colored_vertex(*point, at(point.x));
+        }
+        let n = outline.len() as u32;
+        for k in 0..n {
+            mesh.add_triangle(0, 1 + k, 1 + (k + 1) % n);
+        }
+        ui.painter().add(mesh);
+        let text = if response.hovered() { p.strong } else { p.text };
+        ui.painter().text(pos2(bar.left() + 8.0, bar.center().y), Align2::LEFT_CENTER, t!("Boost Goal"), theme::strong(12.0), text);
+        let chevron = Rect::from_center_size(pos2(bar.right() - 14.0, bar.center().y), Vec2::splat(12.0));
+        icons::paint_chevron_right(ui, chevron, text);
+        ui.painter().text(pos2(chevron.left() - 2.0, bar.center().y), Align2::RIGHT_CENTER, tn!(goal, "{subscribers}/{count} Boost", "{subscribers}/{count} Boosts").replace("{subscribers}", &g.boosts.to_string()), theme::strong(12.0), text);
+        if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            app.actions.push(Action::OpenSettings(SettingsTab::ServerBoost));
+        }
+    }
+    // Events: for those who can make them, or while there are any.
+    const CREATE_EVENTS: u64 = 1 << 44;
+    const MANAGE_EVENTS: u64 = 1 << 33;
+    if !g.has("HUB") && (perms & (CREATE_EVENTS | MANAGE_EVENTS) != 0 || g.events > 0) {
+        let label = if g.events > 0 { tn!(g.events, "{count} Event", "{count} Events") } else { t!("Events").to_owned() };
+        if entry(ui, Icon::Calendar, &label).clicked() {
+            gates::open(app, gates::Gate::Events { guild, draft: None });
+        }
+    }
+    let community = g.has("COMMUNITY");
+    if community && entry(ui, Icon::Members, t!("Channels & Roles")).clicked() {
+        gates::open(app, gates::Gate::Onboarding { guild, picked: None, page: 0 });
+    }
+    // Members: the moderators' page, with any moderation permission.
+    const MODERATION: u64 = (1 << 3) | (1 << 5) | (1 << 2) | (1 << 1) | (1 << 40) | (1 << 28) | (1 << 27);
+    if perms & MODERATION != 0 && (community || g.has("ENABLED_MODERATION_EXPERIENCE_FOR_NON_COMMUNITY")) && entry(ui, Icon::Friends, t!("Members")).clicked() {
+        app.actions.push(Action::OpenGuildSettings(guild));
+        app.actions.push(Action::GuildTab(crate::admin::Tab::Members));
+    }
+    // Server Boosts: for administrators.
+    if perms & (1 << 3) != 0 && entry(ui, Icon::Boost, t!("Server Boosts")).clicked() {
+        app.actions.push(Action::OpenSettings(SettingsTab::ServerBoost));
+    }
+}
+
 fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
     let title = match app.selected_guild {
@@ -964,6 +1051,34 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     // secondary button that opens the quick switcher, where a server shows
     // its name.
     let margin = if app.selected_guild.is_none() { Margin::symmetric(10, 0) } else { Margin::symmetric(16, 0) };
+    // A server's banner over the list's top, 130 points tall, the header on
+    // it; it fades as the list scrolls (`1 - scroll / 78`) and the list
+    // starts under it.
+    let banner = app.selected_guild.and_then(|g| app.guild(g)).and_then(|g| g.banner_url());
+    let scrolled: f32 = ui.data(|d| d.get_temp(egui::Id::new(("sidebar-scroll", app.selected_guild)))).unwrap_or(0.0);
+    let banner_alpha = if banner.is_some() { (1.0 - scrolled / 78.0).clamp(0.0, 1.0) } else { 0.0 };
+    if let Some(url) = &banner
+        && banner_alpha > 0.0
+    {
+        let area = Rect::from_min_size(ui.max_rect().min, vec2(ui.max_rect().width(), BANNER));
+        if let Some((texture, size)) = app.images.get(url, 480) {
+            // `object-fit: cover`, centred.
+            let scale = (area.width() / size.x).max(area.height() / size.y);
+            let shown = vec2(area.width() / (size.x * scale), area.height() / (size.y * scale));
+            let uv = Rect::from_center_size(pos2(0.5, 0.5), shown);
+            egui::Image::from_texture((texture, area.size())).uv(uv).tint(Color32::WHITE.gamma_multiply(banner_alpha)).paint_at(ui, area);
+            // A shade at the top, where the name sits.
+            let mut shade = egui::epaint::Mesh::default();
+            let top = Color32::from_black_alpha((110.0 * banner_alpha) as u8);
+            shade.colored_vertex(area.left_top(), top);
+            shade.colored_vertex(area.right_top(), top);
+            shade.colored_vertex(pos2(area.right(), area.top() + 48.0), Color32::TRANSPARENT);
+            shade.colored_vertex(pos2(area.left(), area.top() + 48.0), Color32::TRANSPARENT);
+            shade.add_triangle(0, 1, 2);
+            shade.add_triangle(0, 2, 3);
+            ui.painter().add(shade);
+        }
+    }
     let header = Frame::new().inner_margin(margin).show(ui, |ui| {
         ui.set_height(48.0);
         ui.set_width(ui.available_width());
@@ -1005,7 +1120,7 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
     });
     if let Some(guild) = app.selected_guild {
         let response = ui.interact(header.response.rect, ui.id().with("server-menu"), Sense::click());
-        if response.hovered() {
+        if response.hovered() && banner_alpha == 0.0 {
             ui.painter().rect_filled(header.response.rect, 0.0, p.hover.linear_multiply(0.5));
         }
         server_menu(app, &response, guild);
@@ -1023,16 +1138,24 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
             }
         }
     }
-    let line = ui.cursor().top();
-    ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.border));
+    // Over the banner the header has no line under it.
+    if banner_alpha == 0.0 {
+        let line = ui.cursor().top();
+        ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.border));
+    }
 
     // Room for the account card, which covers this and the rail's bottom.
     egui::Panel::bottom("under-card").exact_size(account_card_height(app) + 16.0).show_separator_line(false).frame(Frame::NONE).show(ui, |_| {});
 
-    ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
+    let scroll_key = egui::Id::new(("sidebar-scroll", app.selected_guild));
+    let scrolled_now = ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
         // Rows follow each other as in Discord: 32 points and a point
         // above and below, no gap.
         ui.spacing_mut().item_spacing.y = 0.0;
+        // Under a banner the list starts below it.
+        if banner.is_some() {
+            ui.add_space(BANNER - 48.0);
+        }
         ui.add_space(8.0);
         match app.selected_guild {
             Some(guild) => {
@@ -1041,26 +1164,22 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                 // can land.
                 // Discord's rows over the channels: "Channels & Roles" in a
                 // community server, "Events" while there are any.
-                let (community, events) = app.guild(guild).map_or((false, 0), |g| (g.has("COMMUNITY"), g.events));
-                if community {
-                    let (rect, response) = row(ui, 32.0, false);
-                    icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Members, p.muted);
-                    ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Channels & Roles"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
-                    if response.clicked() {
-                        gates::open(app, gates::Gate::Onboarding { guild, picked: None, page: 0 });
-                    }
-                }
-                if events > 0 {
-                    let (rect, response) = row(ui, 32.0, false);
-                    icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Calendar, p.muted);
-                    ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Events"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
-                    if response.clicked() {
-                        gates::open(app, gates::Gate::Events { guild, draft: None });
-                    }
-                }
+                guild_rows(app, ui, guild);
                 let draggable = app.guild(guild).is_some_and(|g| g.my_permissions(app.me_id()) & MANAGE_CHANNELS != 0);
                 let mut targets: Vec<(Rect, DropTarget)> = Vec::new();
                 for (category, channels) in ordered_channels(app, guild) {
+                    // Channels not picked in "Channels & Roles" are left out,
+                    // but for the open one, those with mentions and the call
+                    // we are in; a category with none left goes too.
+                    let kept = |app: &App, channel: &Channel| {
+                        !app.opted_out(channel) || app.selected_channel == Some(channel.id) || app.mentions(channel.id) > 0 || app.voice.channel.map(|(_, c)| c) == Some(channel.id)
+                    };
+                    // Types Discord's list has no row for (a hub's
+                    // directory) are left out as well.
+                    let channels: Vec<_> = channels.into_iter().filter(|(channel, _)| channel.kind != ChannelKind::Other && kept(app, channel)).collect();
+                    if category.is_some() && channels.is_empty() && app.mutes.opt_in.contains(&guild) {
+                        continue;
+                    }
                     let mut collapsed = false;
                     let parent = category.as_ref().map(|(id, _)| *id);
                     if let Some((id, name)) = category {
@@ -1159,6 +1278,7 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
         }
         ui.add_space(8.0);
     });
+    ui.data_mut(|d| d.insert_temp(scroll_key, scrolled_now.state.offset.y));
 }
 
 /// A channel or category being dragged.

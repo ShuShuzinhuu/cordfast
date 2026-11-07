@@ -1081,6 +1081,16 @@ impl App {
             .unwrap_or_else(|| channel.guild_id.and_then(|g| self.guild(g)).map_or(1, |g| g.default_notifications))
     }
 
+    /// Whether the list leaves this channel out: a server showing only the
+    /// channels picked in "Channels & Roles", and neither it nor its
+    /// category picked (`isChannelRecordOrParentOptedIn`).
+    pub fn opted_out(&self, channel: &Channel) -> bool {
+        channel.guild_id.is_some_and(|g| self.mutes.opt_in.contains(&g))
+            && channel.kind != ChannelKind::Thread
+            && !self.mutes.opted.contains(&channel.id)
+            && !channel.parent_id.is_some_and(|p| self.mutes.opted.contains(&p))
+    }
+
     pub fn is_muted(&self, channel: &Channel) -> bool {
         self.mutes.channels.contains(&channel.id)
             || channel.parent_id.is_some_and(|p| self.mutes.channels.contains(&p))
@@ -1144,7 +1154,8 @@ impl App {
         let mut mentions = 0;
         for channel in &guild.channels {
             if channel.kind.is_text() && guild.can_view(me, channel) {
-                if !muted_guild && !self.is_muted(channel) {
+                // A channel not picked counts only with mentions.
+                if !muted_guild && !self.is_muted(channel) && !self.opted_out(channel) {
                     unread |= self.is_unread(channel.id);
                 }
                 mentions += self.mentions(channel.id);
@@ -2179,6 +2190,18 @@ impl App {
                     }
                     if let Some(owner) = update.get("owner_id").and_then(sf) {
                         g.owner_id = Some(owner);
+                    }
+                    if let Some(banner) = update.get("banner") {
+                        g.banner = banner.as_str().map(str::to_owned);
+                    }
+                    if let Some(count) = update.get("premium_subscription_count").and_then(serde_json::Value::as_u64) {
+                        g.boosts = count;
+                    }
+                    if let Some(on) = update.get("premium_progress_bar_enabled").and_then(serde_json::Value::as_bool) {
+                        g.boost_bar = on;
+                    }
+                    if let Some(list) = update.get("features").and_then(serde_json::Value::as_array) {
+                        g.features = list.iter().filter_map(serde_json::Value::as_str).map(str::to_owned).collect();
                     }
                 }
             }
