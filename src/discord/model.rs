@@ -708,6 +708,8 @@ pub struct Member {
     pub nick: Option<String>,
     /// This server's own nameplate, over the account's.
     pub nameplate: Option<Nameplate>,
+    /// Boosting the server since then (Unix ms).
+    pub boosting: Option<u64>,
     pub roles: Vec<Id>,
     /// Has not finished the server's verification form yet.
     pub pending: bool,
@@ -718,6 +720,7 @@ impl Member {
         Self {
             pending: value.get("pending").and_then(Value::as_bool).unwrap_or(false),
             nameplate: Nameplate::parse(value),
+            boosting: string(value, "premium_since").and_then(|t| t.parse::<jiff::Timestamp>().ok()).map(|t| t.as_millisecond().max(0) as u64),
             nick: string(value, "nick").filter(|n| !n.is_empty()),
             roles: value
                 .get("roles")

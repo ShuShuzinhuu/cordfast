@@ -2206,21 +2206,32 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
                         egui::Image::from_texture((texture, at.size())).corner_radius(4.0).paint_at(ui, at);
                     }
                     let name_y = if activity.is_some() { inner.center().y - 8.0 } else { inner.center().y };
-                    content = content.max(super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right, name_y + 9.0)), user, &name, FontId::proportional(15.0), color));
-                    if let Some((template, bold, _)) = activity {
-                        // "Playing " and the game in bold, as Discord writes it.
-                        let mut job = egui::text::LayoutJob::default();
-                        super::rich_template(&mut job, &template, &egui::TextFormat::simple(FontId::proportional(12.0), p.muted), &egui::TextFormat::simple(theme::strong(12.0), p.muted), &[("name", &bold)]);
-                        let text_x = if voice {
-                            crate::icons::paint(ui, Rect::from_center_size(egui::pos2(x + 6.0, inner.center().y + 10.0), Vec2::splat(12.0)), crate::icons::Icon::Voice, p.green);
-                            x + 16.0
-                        } else {
-                            x
-                        };
-                        job.wrap = egui::text::TextWrapping::truncate_at_width(right - text_x);
-                        let galley = ui.fonts_mut(|f| f.layout_job(job));
-                        content = content.max(text_x - x + galley.size().x);
-                        ui.painter().galley(egui::pos2(text_x, inner.center().y + 10.0 - galley.size().y / 2.0), galley, p.muted);
+                    let mut after = x + super::name_with_tag(app, ui, Rect::from_min_max(egui::pos2(x, name_y - 9.0), egui::pos2(right - 22.0, name_y + 9.0)), user, &name, FontId::proportional(15.0), color);
+                    // A bot's APP tag, and the boost gem of one boosting the
+                    // server ("Server boosting since …"), after the name.
+                    if user.bot {
+                        let text = if user.verified_bot() { "✓ APP" } else { "APP" };
+                        let galley = ui.painter().layout_no_wrap(text.to_owned(), theme::strong(10.5), Color32::WHITE);
+                        let pill = Rect::from_min_size(egui::pos2(after + 4.0, name_y - 8.0), vec2(galley.size().x + 8.0, 16.0));
+                        if pill.right() < right {
+                            ui.painter().rect_filled(pill, 3.0, p.accent);
+                            ui.painter().galley(egui::pos2(pill.left() + 4.0, pill.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
+                            after = pill.right();
+                        }
+                    }
+                    if let Some(since) = member.boosting {
+                        let gem = Rect::from_center_size(egui::pos2(after + 12.0, name_y), Vec2::splat(14.0));
+                        crate::icons::paint(ui, gem, crate::icons::Icon::Boost, Color32::from_rgb(0xff, 0x73, 0xfa));
+                        ui.interact(gem, ui.id().with(("boosting", user.id)), Sense::hover()).on_hover_text(t!("Server boosting since {date}", date = crate::text::short_day(since)));
+                        after = gem.right();
+                    }
+                    content = content.max(after - x);
+                    // Under the name, Discord's activity status as its lists
+                    // now draw it: the green controller and "ROBLOX", "+1",
+                    // "In voice", the custom status.
+                    if activity.is_some() {
+                        let line = Rect::from_min_max(egui::pos2(x, inner.center().y + 2.0), egui::pos2(right, inner.center().y + 18.0));
+                        super::friends::status_line(app, ui, line, user.id, true);
                     }
                     if let Some(plate) = plate {
                         super::nameplate(app, ui, slot, inner, plate, x - inner.left() + content, response.hovered(), false, super::Plate::Members);
