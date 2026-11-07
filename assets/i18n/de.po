@@ -1424,7 +1424,7 @@ msgctxt "thousands separator"
 msgid ","
 msgstr "."
 
-#: src\ui\activity.rs:60 src\ui\friends.rs:541
+#: src\ui\activity.rs:60 src\ui\friends.rs:631
 msgid "by {artist}"
 msgstr "von {artist}"
 
@@ -2604,13 +2604,27 @@ msgstr "{n} T."
 msgid "Active Now"
 msgstr "Gerade aktiv"
 
-#: src\ui\friends.rs:470
+#: src\ui\friends.rs:481
 msgid "It's quiet for now..."
 msgstr "Gerade ist es ruhig ..."
 
-#: src\ui\friends.rs:471
+#: src\ui\friends.rs:482
 msgid "When a friend starts an activity—like playing a game or hanging out on voice—we'll show it here!"
 msgstr "Wenn ein Freund eine Aktivität beginnt – etwa ein Spiel spielt oder im Sprachkanal abhängt –, zeigen wir es hier an!"
+
+#: src\ui\friends.rs:527
+msgid "{user1} and {user2}"
+msgstr "{user1} und {user2}"
+
+#: src\ui\friends.rs:528
+msgid "{user1}, {user2} and {count} other"
+msgid_plural "{user1}, {user2} and {count} others"
+msgstr[0] "{user1}, {user2} und {count} weiterer"
+msgstr[1] "{user1}, {user2} und {count} weitere"
+
+#: src\ui\friends.rs:533
+msgid "In a Voice Channel"
+msgstr "In einem Sprachkanal"
 
 #: src\ui\gates.rs:140 src\ui\gates.rs:165
 msgid "Enable Authenticator App"

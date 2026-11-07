@@ -452,10 +452,21 @@ fn active_now(app: &mut App, ui: &mut egui::Ui) {
     let p = theme::p();
     ui.label(RichText::new(t!("Active Now")).font(theme::strong(20.0)).color(p.strong));
     ui.add_space(14.0);
+    // Friends in a server's voice channel make one card per channel, as
+    // Discord's party: "bb, ℒ. and 6 others", "In a Voice Channel".
+    let mut parties: Vec<(Id, Vec<User>)> = Vec::new();
+    for r in app.relationships.values().filter(|r| r.kind == 1) {
+        let Some(channel) = app.user_voice_channel(r.user.id).filter(|c| c.guild_id.is_some()) else { continue };
+        match parties.iter_mut().find(|(id, _)| *id == channel.id) {
+            Some((_, friends)) => friends.push(r.user.clone()),
+            None => parties.push((channel.id, vec![r.user.clone()])),
+        }
+    }
+    let in_voice: std::collections::HashSet<Id> = parties.iter().flat_map(|(_, friends)| friends.iter().map(|u| u.id)).collect();
     let mut active: Vec<(User, Activity)> = app
         .relationships
         .values()
-        .filter(|r| r.kind == 1)
+        .filter(|r| r.kind == 1 && !in_voice.contains(&r.user.id))
         .filter_map(|r| {
             let presence = app.presences.get(&r.user.id)?;
             let activity = presence.activities.iter().find(|a| matches!(a.kind, 0 | 1 | 2 | 3 | 5))?.clone();
@@ -464,7 +475,7 @@ fn active_now(app: &mut App, ui: &mut egui::Ui) {
         .collect();
     // Who started most recently first, as Discord orders them.
     active.sort_by_key(|(_, a)| std::cmp::Reverse(a.start.unwrap_or(0)));
-    if active.is_empty() {
+    if active.is_empty() && parties.is_empty() {
         ui.add_space(20.0);
         ui.vertical_centered(|ui| {
             ui.label(RichText::new(t!("It's quiet for now...")).font(theme::strong(15.0)).color(p.strong));
@@ -473,11 +484,95 @@ fn active_now(app: &mut App, ui: &mut egui::Ui) {
         return;
     }
     ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
+        for (channel, friends) in parties {
+            voice_party(app, ui, channel, &friends);
+            ui.add_space(12.0);
+        }
         for (user, activity) in active {
             active_card(app, ui, &user, &activity);
             ui.add_space(12.0);
         }
         ui.add_space(4.0);
+    });
+}
+
+/// A voice channel's "Active Now" card (the bundle's party header and
+/// VoiceSection): the first friend's picture, "bb, ℒ. and 6 others" and "In a
+/// Voice Channel"; under a line the server's icon with the speaker, its name
+/// and the channel's, and who is in it, three faces and "+N". The server
+/// opens on its icon, the channel on its name.
+fn voice_party(app: &mut App, ui: &mut egui::Ui, channel_id: Id, friends: &[User]) {
+    let p = theme::p();
+    let Some(channel) = app.channel(channel_id).cloned() else { return };
+    let Some(guild) = channel.guild_id.and_then(|g| app.guild(g)).map(|g| (g.id, g.name.clone(), g.icon_url())) else { return };
+    let members = app.voice_members(&channel);
+    let Some(first) = friends.first() else { return };
+    Frame::new().fill(p.sidebar).stroke(Stroke::new(1.0, p.border)).corner_radius(8).show(ui, |ui| {
+        ui.set_width(ui.available_width());
+        let (top, top_response) = ui.allocate_exact_size(vec2(ui.available_width(), 60.0), Sense::click());
+        let avatar = Rect::from_min_size(top.left_top() + vec2(12.0, 14.0), Vec2::splat(32.0));
+        app.images.circle(ui, avatar, Some(&first.avatar_url()), &super::initials(first.display_name()), 16.0);
+        if let Some(status) = app.presences.get(&first.id).map(|pr| pr.status.clone()) {
+            dot(ui, avatar, &status, p.sidebar);
+        }
+        let x = avatar.right() + 10.0;
+        // The names in bold: one, "A and B", or "A, B and N others".
+        let everyone = members.len().max(friends.len());
+        let second = friends.get(1).map(|u| u.display_name().to_owned()).or_else(|| members.iter().find(|id| **id != first.id).and_then(|id| app.users.get(id)).map(|u| u.display_name().to_owned()));
+        let plain = egui::TextFormat::simple(FontId::proportional(15.0), p.strong);
+        let bold = egui::TextFormat::simple(theme::strong(15.0), p.strong);
+        let mut job = egui::text::LayoutJob::default();
+        match (&second, everyone) {
+            (_, 0 | 1) | (None, _) => job.append(first.display_name(), 0.0, bold.clone()),
+            (Some(second), 2) => super::rich_template(&mut job, t!("{user1} and {user2}"), &plain, &bold, &[("user1", first.display_name()), ("user2", second)]),
+            (Some(second), _) => super::rich_template(&mut job, &tn!(everyone - 2, "{user1}, {user2} and {count} other", "{user1}, {user2} and {count} others"), &plain, &bold, &[("user1", first.display_name()), ("user2", second)]),
+        }
+        job.wrap = egui::text::TextWrapping::truncate_at_width(top.right() - 12.0 - x);
+        let galley = ui.fonts_mut(|f| f.layout_job(job));
+        ui.painter().galley(pos2(x, top.top() + 20.0 - galley.size().y / 2.0), galley, p.strong);
+        super::paint_truncated(ui, Rect::from_min_max(pos2(x, top.top() + 30.0), pos2(top.right() - 12.0, top.top() + 48.0)), t!("In a Voice Channel"), FontId::proportional(13.0), p.muted);
+        if top_response.clicked() {
+            app.actions.push(Action::OpenProfile { user: first.clone(), guild: Some(guild.0), at: top.left_top() - vec2(312.0, 0.0) });
+        }
+        ui.painter().hline(top.x_range(), top.bottom(), Stroke::new(1.0, p.border));
+        // The server and channel.
+        let (row, _) = ui.allocate_exact_size(vec2(ui.available_width(), 64.0), Sense::hover());
+        let icon = Rect::from_min_size(pos2(row.left() + 12.0, row.center().y - 16.0), Vec2::splat(32.0));
+        app.images.circle(ui, icon, guild.2.as_deref(), &super::initials(&guild.1), 8.0);
+        let badge = Rect::from_center_size(icon.right_bottom() - vec2(2.0, 2.0), Vec2::splat(16.0));
+        ui.painter().circle_filled(badge.center(), 9.0, p.sidebar);
+        icons::paint(ui, badge.shrink(2.0), Icon::Voice, p.muted);
+        if ui.interact(icon, ui.id().with(("party-guild", channel_id)), Sense::click()).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            app.actions.push(Action::SelectGuild(Some(guild.0)));
+        }
+        // Who is in it: three faces, then "+N".
+        let shown = members.len().min(3);
+        let more = members.len().saturating_sub(shown);
+        let more_width = if more > 0 { ui.painter().layout_no_wrap(format!("+{more}"), theme::strong(12.0), p.muted).size().x + 6.0 } else { 0.0 };
+        let faces_width = if shown > 0 { 24.0 + (shown as f32 - 1.0) * 16.0 } else { 0.0 };
+        let faces_left = row.right() - 12.0 - more_width - faces_width;
+        for (i, id) in members.iter().take(shown).enumerate() {
+            let face = Rect::from_min_size(pos2(faces_left + i as f32 * 16.0, row.center().y - 12.0), Vec2::splat(24.0));
+            ui.painter().circle_filled(face.center(), 13.5, p.sidebar);
+            // Someone READY named by id only: asked of the gateway, as the
+            // channel list does.
+            if !app.users.contains_key(id) {
+                app.request_member(guild.0, *id);
+            }
+            let user = app.users.get(id).cloned();
+            app.images.circle(ui, face, user.as_ref().map(|u| u.avatar_url()).as_deref(), &super::initials(user.as_ref().map_or("?", |u| u.display_name())), 12.0);
+        }
+        if more > 0 {
+            ui.painter().text(pos2(row.right() - 12.0, row.center().y), egui::Align2::RIGHT_CENTER, format!("+{more}"), theme::strong(12.0), p.muted);
+        }
+        let text = Rect::from_min_max(pos2(icon.right() + 12.0, row.top() + 12.0), pos2(faces_left - 8.0, row.bottom() - 12.0));
+        let name = ui.interact(text, ui.id().with(("party-channel", channel_id)), Sense::click());
+        let color = if name.hovered() { p.strong } else { p.text };
+        super::paint_truncated(ui, Rect::from_min_max(text.min, pos2(text.right(), text.center().y)), &guild.1, theme::strong(14.0), color);
+        super::paint_truncated(ui, Rect::from_min_max(pos2(text.left(), text.center().y), text.max), &channel.title(), FontId::proportional(13.0), p.muted);
+        if name.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            app.actions.push(Action::SelectChannel(channel_id));
+        }
     });
 }
 
