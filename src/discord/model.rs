@@ -1116,6 +1116,9 @@ pub struct Ready {
     pub session_id: String,
     /// The account's PreloadedUserSettings, whole.
     pub settings_proto: Vec<u8>,
+    /// The email is verified (Discord's "Please check your email" bar).
+    pub verified: bool,
+    pub email: Option<String>,
 }
 
 /// `PreloadedUserSettings.status.custom_status.text` (11 → 2 → 1), when
@@ -1602,6 +1605,8 @@ impl Ready {
             status,
             custom_status: settings.as_deref().and_then(proto_custom_status),
             settings_proto: settings.clone().unwrap_or_default(),
+            verified: d.pointer("/user/verified").and_then(Value::as_bool).unwrap_or(true),
+            email: d.pointer("/user/email").and_then(Value::as_str).map(str::to_owned),
             session_id: d.get("session_id").and_then(Value::as_str).unwrap_or_default().to_owned(),
         })
     }

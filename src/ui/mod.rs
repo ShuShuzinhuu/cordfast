@@ -21,6 +21,7 @@ pub mod soundboard;
 pub mod splash;
 mod requests;
 pub mod form_modal;
+pub mod notices;
 mod titlebar;
 
 use egui::{
@@ -51,7 +52,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         crate::discord::model::ANIMATE_EMOJI.store(app.preloaded.flag(pre::ANIMATE_EMOJI), Ordering::Relaxed);
     }
     titlebar::show(app, ui);
-    voice_notice(app, ui);
     if !matches!(app.auth, AuthView::Checking) {
         app.loading = None;
     }
@@ -109,39 +109,6 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
     }
     // The window's edges resize it, as the system frame's would.
     fastframe_titlebar::resize(ui);
-}
-
-/// Discord's red bar over the app when the call went on without us:
-/// another device of the account joined voice, or the call ended. Its
-/// "Reconnect" joins the same channel again.
-fn voice_notice(app: &mut App, ui: &mut egui::Ui) {
-    let Some(notice) = app.voice_notice else { return };
-    let p = theme::p();
-    egui::Panel::top("voice-notice").exact_size(32.0).show_separator_line(false).frame(Frame::new().fill(p.red.gamma_multiply(0.35))).show(ui, |ui| {
-        let rect = ui.max_rect();
-        let text = if notice.elsewhere { t!("Your voice has been disconnected because you connected at another location.") } else { t!("Your voice has been disconnected.") };
-        let message = ui.painter().layout_no_wrap(text.to_owned(), FontId::proportional(14.0), p.strong);
-        let link = ui.painter().layout_no_wrap(t!("Reconnect").to_owned(), theme::strong(14.0), p.strong);
-        let width = message.size().x + 16.0 + link.size().x;
-        let x = rect.center().x - width / 2.0;
-        ui.painter().galley(pos2(x, rect.center().y - message.size().y / 2.0), message.clone(), p.strong);
-        let link_rect = Rect::from_min_size(pos2(x + message.size().x + 16.0, rect.center().y - link.size().y / 2.0), link.size());
-        let reconnect = ui.interact(link_rect.expand(4.0), ui.id().with("voice-notice-reconnect"), Sense::click());
-        ui.painter().galley(link_rect.min, link, p.strong);
-        if reconnect.hovered() {
-            ui.painter().hline(link_rect.x_range(), link_rect.bottom(), Stroke::new(1.0, p.strong));
-        }
-        if reconnect.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-            app.voice_notice = None;
-            app.actions.push(Action::JoinVoice { guild: notice.guild, channel: notice.channel, ring: false });
-        }
-        let close = Rect::from_center_size(pos2(rect.right() - 20.0, rect.center().y), Vec2::splat(20.0));
-        let response = ui.interact(close, ui.id().with("voice-notice-close"), Sense::click());
-        icons::paint(ui, close.shrink(3.0), Icon::Close, if response.hovered() { p.strong } else { p.text });
-        if response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-            app.voice_notice = None;
-        }
-    });
 }
 
 pub fn initials(name: &str) -> String {
@@ -447,6 +414,7 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
             egui::Panel::bottom("rail-under-card").exact_size(card + 16.0).show_separator_line(false).frame(Frame::NONE).show(ui, |_| {});
             rail(app, ui);
         });
+    notices::show(app, ui);
     let width = app.settings.sidebar_width.clamp(*SIDEBAR_WIDTH.start(), *SIDEBAR_WIDTH.end());
     let sidebar_panel = egui::Panel::left("sidebar")
         .resizable(false)
@@ -460,7 +428,7 @@ fn main(app: &mut App, ui: &mut egui::Ui) {
         .show(ui, |ui| chat::show(app, ui));
     sidebar_edge(app, ui, sidebar_panel.response.rect, width);
     let bottom = sidebar_panel.response.rect.bottom();
-    content_edge(ui, sidebar_panel.response.rect.left_top(), bottom - card - 16.0, app.page.is_some());
+    content_edge(ui, sidebar_panel.response.rect.left_top(), bottom - card - 16.0, app.page.is_some(), app.notice_bar);
     let area = Rect::from_min_max(pos2(rail_panel.response.rect.left() + 8.0, bottom - card - 8.0), pos2(sidebar_panel.response.rect.right() - 8.0, bottom - 8.0));
     account_card(app, ui.ctx(), area);
 }
@@ -519,13 +487,19 @@ fn account_card(app: &mut App, ctx: &egui::Context, area: Rect) {
 /// Where the content meets the title bar and the rail, as Discord's: a
 /// rounded corner and a 1-point line along the top and the left, in the
 /// line colour (the rail's in the dark theme, a grey on AMOLED black).
-fn content_edge(ui: &egui::Ui, corner: egui::Pos2, left_end: f32, covered: bool) {
+fn content_edge(ui: &egui::Ui, corner: egui::Pos2, left_end: f32, covered: bool, under_notice: bool) {
     let p = theme::p();
     const RADIUS: f32 = 8.0;
     // A layer egui hasn't ordered paints over every window of its order, so
     // under the settings window the edge stays on the panels' own layer.
     let layer = if covered { ui.layer_id() } else { egui::LayerId::new(egui::Order::Middle, egui::Id::new("content-edge")) };
     let painter = ui.ctx().layer_painter(layer);
+    // Under a notice bar the bar has the corner (`border-start-start-radius:
+    // 0` on the content): only the left line goes on.
+    if under_notice {
+        painter.vline(corner.x + 0.5, corner.y..=left_end, Stroke::new(1.0, p.border));
+        return;
+    }
     let screen = ui.ctx().content_rect();
     // The rail's colour outside the curve, the sidebar's inside it.
     painter.rect_filled(Rect::from_min_size(corner, Vec2::splat(RADIUS)), 0.0, p.rail);

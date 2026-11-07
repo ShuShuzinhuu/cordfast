@@ -543,6 +543,15 @@ pub struct App {
     /// Discord's bar over the app after the call went on without us, with
     /// "Reconnect" to the channel it was in.
     pub voice_notice: Option<VoiceNotice>,
+    /// The bars over the app closed this session (`ui::notices::Kind`).
+    pub dismissed_notices: Vec<crate::ui::notices::Kind>,
+    /// READY said the email is not verified.
+    pub unverified: bool,
+    pub email: Option<String>,
+    /// A notice bar is on screen this frame (the content's corner gives way).
+    pub notice_bar: bool,
+    /// The voice channel of the last session, offered back once.
+    pub last_session_voice: Option<(Option<Id>, Id)>,
     pub actions: Vec<Action>,
     pub focus_composer: bool,
     pub page: Option<SettingsTab>,
@@ -792,6 +801,11 @@ impl App {
             login_form: LoginForm::default(),
             notice: None,
             voice_notice: None,
+            dismissed_notices: Vec::new(),
+            unverified: false,
+            email: None,
+            notice_bar: false,
+            last_session_voice: None,
             actions: Vec::new(),
             focus_composer: false,
             page: None,
@@ -1586,6 +1600,16 @@ impl App {
         match event {
             VoiceEvent::Channel(channel) => {
                 self.voice.channel = channel;
+                // Remembered while in it: a close without leaving keeps it
+                // for the next start's bar.
+                let last = channel.map(|(g, c)| format!("{}:{c}", g.unwrap_or(0)));
+                if self.settings.last_voice != last {
+                    self.settings.last_voice = last;
+                    self.actions.push(Action::SettingsChanged);
+                }
+                if channel.is_some() {
+                    self.last_session_voice = None;
+                }
                 self.voice.connected = false;
                 self.voice.error = None;
                 self.voice.since = channel.map(|_| Instant::now());
@@ -1691,6 +1715,20 @@ impl App {
             Dispatch::Ready(ready) => {
                 let ready = *ready;
                 self.preloaded = crate::discord::preloaded::Preloaded::new(ready.settings_proto.clone());
+                self.unverified = !ready.verified;
+                self.email = ready.email.clone();
+                // Nitro's payment bars read the subscription and its
+                // payment source, as Discord's notices do.
+                if ready.me.premium > 0 {
+                    for (key, path) in [("settings:subscriptions", "/users/@me/billing/subscriptions"), ("settings:payment-sources", "/users/@me/billing/payment-sources")] {
+                        self.settings_data.insert(key, None);
+                        self.commands.send(crate::admin::get(key, path.to_owned()));
+                    }
+                }
+                self.last_session_voice = self.settings.last_voice.as_deref().and_then(|v| v.split_once(':')).and_then(|(g, c)| {
+                    let guild = g.parse::<Id>().ok().filter(|g| *g != 0);
+                    Some((guild, c.parse::<Id>().ok()?))
+                });
                 self.learn(&ready.me);
                 self.me = Some(ready.me);
                 for channel in &ready.private_channels {
