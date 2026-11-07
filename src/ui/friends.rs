@@ -233,37 +233,98 @@ fn add_friend(app: &mut App, ui: &mut egui::Ui) {
     });
 }
 
-/// What someone is doing, in the few words Discord's friend and DM lists
-/// put under a name: the game after a controller, the song after
-/// headphones, a stream or what they watch, or the custom status with its
-/// emoji. None when there is nothing.
-pub fn doing_short(app: &App, user: Id) -> Option<(Option<Icon>, String)> {
-    let presence = app.presences.get(&user)?;
-    if let Some(activity) = presence.activities.first() {
-        return Some(match activity.kind {
-            0 => (Some(Icon::Controller), activity.name.clone()),
-            2 => (Some(Icon::Headphones), t!("Listening to {name}", name = activity.name)),
-            1 => (None, t!("Streaming {name}", name = activity.details.clone().unwrap_or_else(|| activity.name.clone()))),
-            3 => (None, t!("Watching {name}", name = activity.name)),
-            5 => (Some(Icon::Controller), t!("Competing in {name}", name = activity.name)),
-            _ => (None, activity.name.clone()),
-        });
+/// Discord's activity status (the bundle's `ActivityStatus`), the line
+/// under a name in the friend, DM and member lists and the account panel:
+/// the first activity with its green icon (a controller, music, a screen)
+/// or "In voice" with the speaker, "+1" for each more, then "•" and the
+/// custom status with its emoji. Small lists (`small`, 12 points) keep only
+/// the activity's icon when a custom status has words. Paints nothing and
+/// returns false when there is nothing to say.
+pub fn status_line(app: &App, ui: &egui::Ui, rect: Rect, user: Id, small: bool) -> bool {
+    let p = theme::p();
+    let presence = app.presences.get(&user);
+    let custom = presence.and_then(|presence| presence.custom.clone()).filter(|c| !c.trim().is_empty());
+    // Activities other than the custom status (4) and a hang status (6),
+    // one per application or name.
+    let mut activities: Vec<&Activity> = Vec::new();
+    for activity in presence.map(|p| p.activities.as_slice()).unwrap_or_default() {
+        if activity.kind == 4 || activity.kind == 6 {
+            continue;
+        }
+        if !activities.iter().any(|a| (a.application.is_some() && a.application == activity.application) || a.name == activity.name) {
+            activities.push(activity);
+        }
     }
-    presence.custom.clone().map(|custom| (None, custom))
+    let voice = app.user_voice_channel(user).map(|channel| match channel.kind {
+        crate::discord::model::ChannelKind::Dm | crate::discord::model::ChannelKind::GroupDm => t!("In a call"),
+        crate::discord::model::ChannelKind::Stage => t!("In a stage"),
+        _ => t!("In voice"),
+    });
+    let count = activities.len() + usize::from(voice.is_some());
+    if count == 0 && custom.is_none() {
+        return false;
+    }
+    let size = if small { 12.0 } else { 14.0 };
+    let font = egui::FontId::proportional(size);
+    let green = p.green;
+    // A custom status with words hides the activity's own words in small lists.
+    let custom_words = custom.as_ref().is_some_and(|c| c.chars().any(char::is_alphanumeric));
+    let icon_only = small && custom_words;
+    let mut x = rect.left();
+    let y = rect.center().y;
+    let text = |ui: &egui::Ui, x: &mut f32, words: &str, color: Color32| {
+        let room = (rect.right() - *x).max(0.0);
+        let mut job = crate::text::script_job(words, font.clone(), color);
+        job.wrap = egui::text::TextWrapping::truncate_at_width(room);
+        let galley = ui.fonts_mut(|f| f.layout_job(job));
+        let width = galley.size().x;
+        ui.painter().galley(pos2(*x, y - galley.size().y / 2.0), galley, color);
+        *x += width;
+    };
+    if count > 0 {
+        let (icon, words) = match activities.first() {
+            Some(activity) => {
+                let icon = match activity.kind {
+                    0 | 5 => Some(Icon::Controller),
+                    2 => Some(Icon::Music),
+                    1 | 3 => Some(Icon::Tv),
+                    _ => None,
+                };
+                (icon, activity.short())
+            }
+            None => (Some(Icon::Voice), voice.clone().unwrap_or_default().to_owned()),
+        };
+        if let Some(icon) = icon {
+            icons::paint(ui, Rect::from_center_size(pos2(x + size / 2.0, y), Vec2::splat(size)), icon, green);
+            x += size + 4.0;
+        }
+        if !icon_only || icon.is_none() {
+            text(ui, &mut x, &words, p.muted);
+        }
+        if count > 1 {
+            x += 4.0;
+            text(ui, &mut x, &format!("+{}", count - 1), if custom_words { green } else { p.muted });
+        }
+    }
+    if let Some(custom) = custom {
+        if count > 0 {
+            text(ui, &mut x, " • ", p.muted);
+        }
+        text(ui, &mut x, &custom, p.muted);
+    }
+    true
+}
+
+/// Whether `status_line` has something to say for someone.
+pub fn has_status_line(app: &App, user: Id) -> bool {
+    let presence = app.presences.get(&user);
+    presence.is_some_and(|p| p.custom.as_ref().is_some_and(|c| !c.trim().is_empty()) || p.activities.iter().any(|a| a.kind != 4 && a.kind != 6)) || app.user_voice_channel(user).is_some()
 }
 
 /// Whether someone's line says they are in voice: Discord's list names a
 /// game or another activity first.
 pub fn shows_voice(app: &App, user: Id) -> bool {
     app.presences.get(&user).is_none_or(|presence| presence.activities.is_empty()) && app.user_voice_channel(user).is_some()
-}
-
-/// The line under a friend's name: what they do or else their status.
-fn doing(app: &App, user: &User) -> (Option<Icon>, String) {
-    doing_short(app, user.id).unwrap_or_else(|| {
-        let status = app.presences.get(&user.id).map_or("offline", |p| p.status.as_str());
-        (None, status_name(status).to_owned())
-    })
 }
 
 fn friend_row(app: &mut App, ui: &mut egui::Ui, r: &Relationship) {
@@ -283,23 +344,29 @@ fn friend_row(app: &mut App, ui: &mut egui::Ui, r: &Relationship) {
         dot(ui, avatar, &status, if hovered { p.hover } else { p.chat });
     }
     let x = avatar.right() + 12.0;
-    let name = ui.painter().text(pos2(x, rect.center().y - 9.0), egui::Align2::LEFT_CENTER, user.display_name(), theme::strong(16.0), p.strong);
-    // The username shows beside the name while hovered, as Discord's.
+    // The name with the server tag it wears; the username beside them while
+    // hovered, as Discord's.
+    let name_room = Rect::from_min_max(pos2(x, rect.center().y - 19.0), pos2(rect.right() - 110.0, rect.center().y + 1.0));
+    super::name_with_tag(app, ui, name_room, user, user.display_name(), theme::strong(16.0), p.strong);
     if hovered {
-        ui.painter().text(pos2(name.right() + 6.0, rect.center().y - 8.5), egui::Align2::LEFT_CENTER, &user.username, FontId::proportional(14.0), p.muted);
+        let name = ui.painter().layout_no_wrap(user.display_name().to_owned(), theme::strong(16.0), p.strong).size().x;
+        let tag = user.tag.as_ref().map_or(0.0, |(_, tag, _)| super::profile::tag_size(ui, user, tag, 16.0).x + 6.0);
+        let at = x + name + tag + 6.0;
+        if at < name_room.right() {
+            super::paint_truncated(ui, Rect::from_min_max(pos2(at, name_room.top()), name_room.max), &user.username, FontId::proportional(14.0), p.muted);
+        }
     }
-    let (icon, line) = match r.kind {
-        3 => (None, t!("Incoming Friend Request").to_owned()),
-        4 => (None, t!("Outgoing Friend Request").to_owned()),
-        2 => (None, t!("Blocked").to_owned()),
-        _ => doing(app, user),
-    };
-    let mut lx = x;
-    if let Some(icon) = icon {
-        icons::paint(ui, Rect::from_center_size(pos2(lx + 7.0, rect.center().y + 11.0), Vec2::splat(14.0)), icon, p.muted);
-        lx += 19.0;
+    // A friend's line is Discord's activity status, or else their status.
+    let line_rect = Rect::from_min_max(pos2(x, rect.center().y + 2.0), pos2(rect.right() - 100.0, rect.center().y + 20.0));
+    if !(r.kind == 1 && status_line(app, ui, line_rect, user.id, false)) {
+        let line = match r.kind {
+            3 => t!("Incoming Friend Request").to_owned(),
+            4 => t!("Outgoing Friend Request").to_owned(),
+            2 => t!("Blocked").to_owned(),
+            _ => status_name(&status).to_owned(),
+        };
+        super::paint_truncated(ui, line_rect, &line, FontId::proportional(14.0), p.muted);
     }
-    super::paint_truncated(ui, Rect::from_min_max(pos2(lx, rect.center().y + 2.0), pos2(rect.right() - 100.0, rect.center().y + 20.0)), &line, FontId::proportional(14.0), p.muted);
 
     // Round buttons on the right, as in Discord.
     let round = |ui: &mut egui::Ui, at: Pos2, id: &str| -> egui::Response {

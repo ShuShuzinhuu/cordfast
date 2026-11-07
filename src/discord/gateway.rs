@@ -210,6 +210,9 @@ pub struct Activity {
     pub buttons: Vec<String>,
     /// Spotify's track id, for "Play on Spotify".
     pub sync_id: Option<String>,
+    /// Which field lists show (`status_display_type`): 0 the name, 1 the
+    /// state, 2 the details.
+    pub display: Option<u64>,
 }
 
 impl Activity {
@@ -239,7 +242,29 @@ impl Activity {
                 .map(|l| l.iter().filter_map(|b| b.as_str().or_else(|| b.get("label")?.as_str()).map(str::to_owned)).collect())
                 .unwrap_or_default(),
             sync_id: text("sync_id"),
+            display: a.get("status_display_type").and_then(Value::as_u64),
         })
+    }
+
+    /// The few words of Discord's activity status in lists (its
+    /// `getActivityText` for lists): the name, a stream's details, the field
+    /// the activity asks for, and for Spotify the artists.
+    pub fn short(&self) -> String {
+        let mut text = if self.kind == 1 { self.details.clone().unwrap_or_else(|| self.name.clone()) } else { self.name.clone() };
+        let chosen = match self.display {
+            Some(1) => self.state.as_ref(),
+            Some(2) => self.details.as_ref(),
+            _ => None,
+        };
+        if let Some(chosen) = chosen {
+            text = chosen.clone();
+        }
+        if self.kind == 2 && self.name == "Spotify" && self.application.is_none()
+            && let Some(state) = &self.state
+        {
+            return state.split("; ").collect::<Vec<_>>().join(", ");
+        }
+        text
     }
 
     /// "Listening to Spotify", "Playing", as the card's header says.

@@ -1728,36 +1728,27 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     }
     let color = if selected || response.hovered() || unread { p.strong } else { p.muted };
     let font = if unread { theme::strong(15.0) } else { FontId::proportional(15.0) };
-    // Under the name, as Discord's list: what they are doing (the game
-    // after a controller, the custom status), or a group's size.
-    let voice = channel.kind == ChannelKind::Dm && channel.recipients.first().is_some_and(|u| friends::shows_voice(app, u.id));
-    let sub = match channel.kind {
-        ChannelKind::Dm if voice => {
-            // Discord's line: the green speaker, its text giving way to a
-            // custom status.
-            let custom = channel.recipients.first().and_then(|u| app.presences.get(&u.id)).and_then(|pr| pr.custom.clone());
-            Some((None, custom.map_or_else(|| t!("In voice").to_owned(), |custom| format!("• {custom}"))))
-        }
-        ChannelKind::Dm => channel.recipients.first().and_then(|u| friends::doing_short(app, u.id)),
-        _ => Some((None, tn!(channel.recipients.len() + 1, "{count} Member", "{count} Members"))),
-    };
     let x = avatar.right() + 12.0;
     let right = rect.right() - 30.0;
-    match sub {
-        Some((icon, text)) => {
-            paint_truncated(ui, Rect::from_min_max(pos2(x, rect.center().y - 17.0), pos2(right, rect.center().y + 1.0)), &title, font, color);
-            let mut sx = x;
-            if let Some(icon) = icon {
-                icons::paint(ui, Rect::from_center_size(pos2(sx + 6.0, rect.center().y + 9.0), Vec2::splat(12.0)), icon, p.muted);
-                sx += 16.0;
-            }
-            if voice {
-                icons::paint(ui, Rect::from_center_size(pos2(sx + 6.0, rect.center().y + 9.0), Vec2::splat(12.0)), Icon::Voice, p.green);
-                sx += 16.0;
-            }
-            paint_truncated(ui, Rect::from_min_max(pos2(sx, rect.center().y + 1.0), pos2(right, rect.center().y + 17.0)), &text, FontId::proportional(12.0), p.muted);
+    // Under the name, as Discord's list: its activity status for a person
+    // (the game, "In voice", "+1", the custom status), a group's size.
+    let top = Rect::from_min_max(pos2(x, rect.center().y - 17.0), pos2(right, rect.center().y + 1.0));
+    let bottom = Rect::from_min_max(pos2(x, rect.center().y + 1.0), pos2(right, rect.center().y + 17.0));
+    let person = (channel.kind == ChannelKind::Dm).then(|| channel.recipients.first().cloned()).flatten();
+    let has_line = match &person {
+        Some(user) => friends::has_status_line(app, user.id),
+        None => true,
+    };
+    let name_rect = if has_line { top } else { Rect::from_min_max(pos2(x, rect.top()), pos2(right, rect.bottom())) };
+    match &person {
+        Some(user) => name_with_tag(app, ui, name_rect, user, &title, font, color),
+        None => paint_truncated(ui, name_rect, &title, font, color),
+    }
+    match &person {
+        Some(user) => {
+            friends::status_line(app, ui, bottom, user.id, true);
         }
-        None => paint_truncated(ui, Rect::from_min_max(pos2(x, rect.top()), pos2(right, rect.bottom())), &title, font, color),
+        None => paint_truncated(ui, bottom, &tn!(channel.recipients.len() + 1, "{count} Member", "{count} Members"), FontId::proportional(12.0), p.muted),
     }
     if mentions > 0 {
         badge(ui, pos2(rect.right() - 16.0, rect.center().y), mentions, Color32::TRANSPARENT);
@@ -1829,7 +1820,7 @@ pub fn rich_template(job: &mut egui::text::LayoutJob, template: &str, plain: &eg
 
 /// A name in `rect` with the server tag it wears after it, the name cut
 /// short so the tag keeps its room, as Discord's lists show them.
-fn name_with_tag(app: &mut App, ui: &mut egui::Ui, rect: Rect, user: &crate::discord::model::User, name: &str, font: FontId, color: Color32) {
+pub(super) fn name_with_tag(app: &mut App, ui: &mut egui::Ui, rect: Rect, user: &crate::discord::model::User, name: &str, font: FontId, color: Color32) {
     let tag = user.tag.as_ref().map(|(_, tag, _)| tag.as_str());
     let chip = tag.map(|tag| profile::tag_size(ui, user, tag, 16.0));
     let room = (rect.width() - chip.map_or(0.0, |c| c.x + 6.0)).max(0.0);
@@ -2233,14 +2224,31 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
             ui.set_width((ui.available_width() - 138.0).max(40.0));
             ui.add_space(2.0);
             ui.add(Label::new(RichText::new(me.display_name()).font(theme::strong(14.0)).color(p.strong)).truncate());
-            let state = match (app.connection, &app.activity) {
-                (Connection::Connecting, _) => t!("Connecting…").into(),
-                (Connection::Disconnected, _) => t!("No connection").into(),
-                (_, Some(game)) => t!("Playing {name}", name = game),
-                _ if app.custom_status.is_some() => app.custom_status.clone().unwrap_or_default(),
-                _ => me.username.clone(),
-            };
-            ui.add(Label::new(RichText::new(state).size(12.0).color(p.muted)).truncate());
+            // Discord's panel: your activity status (the green controller and
+            // the game, "•" and the custom status), the username while the
+            // panel is hovered or when there is nothing to show.
+            let hovered = ui.ctx().pointer_hover_pos().is_some_and(|at| ui.data(|d| d.get_temp::<Rect>(egui::Id::new("account-card-rect"))).is_some_and(|card| card.contains(at)));
+            let (line, _) = ui.allocate_exact_size(vec2(ui.available_width(), 16.0), Sense::hover());
+            match (app.connection, &app.activity) {
+                (Connection::Connecting, _) => paint_truncated(ui, line, t!("Connecting…"), FontId::proportional(12.0), p.muted),
+                (Connection::Disconnected, _) => paint_truncated(ui, line, t!("No connection"), FontId::proportional(12.0), p.muted),
+                (_, game) if !hovered && (game.is_some() || app.custom_status.is_some()) => {
+                    let mut x = line.left();
+                    if let Some(game) = game {
+                        icons::paint(ui, Rect::from_center_size(pos2(x + 6.0, line.center().y), Vec2::splat(12.0)), Icon::Controller, p.green);
+                        x += 16.0;
+                        // Small lists keep the icon alone beside words of a custom status.
+                        if app.custom_status.is_none() {
+                            paint_truncated(ui, Rect::from_min_max(pos2(x, line.top()), line.max), game, FontId::proportional(12.0), p.muted);
+                        }
+                    }
+                    if let Some(custom) = &app.custom_status {
+                        let text = if game.is_some() { format!("• {custom}") } else { custom.clone() };
+                        paint_truncated(ui, Rect::from_min_max(pos2(x, line.top()), line.max), &text, FontId::proportional(12.0), p.muted);
+                    }
+                }
+                _ => paint_truncated(ui, line, &me.username, FontId::proportional(12.0), p.muted),
+            }
         });
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             ui.spacing_mut().item_spacing.x = 2.0;
