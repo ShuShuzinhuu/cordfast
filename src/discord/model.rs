@@ -381,6 +381,17 @@ pub struct Guild {
     pub stickers: Vec<(Id, String, u64)>,
     /// What members hear about by default: 0 every message, 1 @mentions.
     pub default_notifications: u8,
+    /// Discord's feature flags ("COMMUNITY", "NEWS"…).
+    pub features: Vec<String>,
+    /// Scheduled events READY listed: the sidebar's "Events" row shows
+    /// while there are any.
+    pub events: usize,
+}
+
+impl Guild {
+    pub fn has(&self, feature: &str) -> bool {
+        self.features.iter().any(|f| f == feature)
+    }
 }
 
 impl Role {
@@ -472,6 +483,8 @@ impl Guild {
             icon: string(props, "icon"),
             owner_id: field_sf(props, "owner_id"),
             default_notifications: props.get("default_message_notifications").and_then(Value::as_u64).unwrap_or(1).min(1) as u8,
+            features: props.get("features").and_then(Value::as_array).map(|l| l.iter().filter_map(Value::as_str).map(str::to_owned).collect()).unwrap_or_default(),
+            events: value.get("guild_scheduled_events").and_then(Value::as_array).map_or(0, Vec::len),
             channels,
             roles,
             my_roles: my_roles.unwrap_or_default(),
@@ -1693,6 +1706,8 @@ mod tests {
             emojis: Vec::new(),
             stickers: Vec::new(),
             default_notifications: 1,
+            features: Vec::new(),
+            events: 0,
         };
         let mut channel =
             Channel::parse(&serde_json::json!({"id": "5", "type": 0}), Some(1), &HashMap::new())

@@ -979,7 +979,7 @@ fn ordered_channels(app: &App, guild: Id) -> Vec<(Option<(Id, String)>, Vec<(Cha
             continue;
         }
         children.sort_by_key(|(c, _)| rank(c));
-        groups.push((Some((category.id, category.name.to_uppercase())), with_threads(children)));
+        groups.push((Some((category.id, category.name.clone())), with_threads(children)));
     }
     groups
 }
@@ -1054,11 +1054,24 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                 // With "Manage Channels", channels and categories drag to
                 // new places, as in Discord; the rows seen are where they
                 // can land.
-                let (rect, response) = row(ui, 32.0, false);
-                icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Calendar, p.muted);
-                ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Events"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
-                if response.clicked() {
-                    gates::open(app, gates::Gate::Events { guild, draft: None });
+                // Discord's rows over the channels: "Channels & Roles" in a
+                // community server, "Events" while there are any.
+                let (community, events) = app.guild(guild).map_or((false, 0), |g| (g.has("COMMUNITY"), g.events));
+                if community {
+                    let (rect, response) = row(ui, 32.0, false);
+                    icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Members, p.muted);
+                    ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Channels & Roles"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
+                    if response.clicked() {
+                        gates::open(app, gates::Gate::Onboarding { guild, picked: None, page: 0 });
+                    }
+                }
+                if events > 0 {
+                    let (rect, response) = row(ui, 32.0, false);
+                    icons::paint(ui, Rect::from_center_size(pos2(rect.left() + 18.0, rect.center().y), Vec2::splat(18.0)), Icon::Calendar, p.muted);
+                    ui.painter().text(pos2(rect.left() + 34.0, rect.center().y), Align2::LEFT_CENTER, t!("Events"), FontId::proportional(15.0), if response.hovered() { p.strong } else { p.muted });
+                    if response.clicked() {
+                        gates::open(app, gates::Gate::Events { guild, draft: None });
+                    }
                 }
                 let draggable = app.guild(guild).is_some_and(|g| g.my_permissions(app.me_id()) & MANAGE_CHANNELS != 0);
                 let mut targets: Vec<(Rect, DropTarget)> = Vec::new();
@@ -1075,14 +1088,15 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                             ui.data_mut(|d| d.insert_temp(egui::Id::new("channel-drag"), Dragging { id, category: true, label: name.clone() }));
                         }
                         let color = if response.hovered() { p.strong } else { p.muted };
-                        let arrow = Rect::from_center_size(pos2(rect.left() + 12.0, rect.center().y), Vec2::splat(12.0));
-                        // The chevron points right while collapsed.
+                        // Discord's current list: the name as written, the
+                        // chevron after it, pointing right while collapsed.
+                        let text = ui.painter().text(pos2(rect.left() + 16.0, rect.center().y), Align2::LEFT_CENTER, &name, theme::strong(13.0), color);
+                        let arrow = Rect::from_center_size(pos2(text.right() + 9.0, rect.center().y), Vec2::splat(12.0));
                         if collapsed {
                             icons::paint_chevron_right(ui, arrow, color);
                         } else {
                             icons::paint(ui, arrow, Icon::ChevronDown, color);
                         }
-                        ui.painter().text(pos2(rect.left() + 20.0, rect.center().y), Align2::LEFT_CENTER, &name, theme::strong(12.0), color);
                         if response.clicked() {
                             if collapsed {
                                 app.collapsed.remove(&id);
