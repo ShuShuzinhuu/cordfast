@@ -127,6 +127,13 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 }
             }
             ui.add(Label::new(RichText::new(channel.title()).font(theme::strong(16.0)).color(p.strong)).truncate());
+            // An announcement channel: Discord's "Follow" beside its name.
+            if channel.kind == ChannelKind::Announcement {
+                ui.add_space(4.0);
+                if follow_button(ui, 28.0) {
+                    app.modal = Some(crate::app::Modal::Follow { channel: channel.id, guild: None, target: None });
+                }
+            }
             if channel.kind == ChannelKind::Dm && channel.recipients.first().is_some_and(|u| app.user_voice_channel(u.id).is_some()) {
                 ui.add_space(8.0);
                 let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
@@ -145,21 +152,30 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 if matches!(channel.kind, ChannelKind::Voice | ChannelKind::Stage) && crate::icons::button(ui, crate::icons::Icon::Chat, 28.0, t!("Hide Chat")).clicked() {
                     app.voice_chat = false;
                 }
-                // Search and pins, as in Discord's header; the inbox and
-                // help moved to the title bar with Discord's.
-                let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                // Discord's header, right to left: the search box ("Search
+                // SkinsRestorer"), the member list, pins, the notification
+                // bell and threads. The inbox and help are in the title bar.
                 let searching = matches!(app.side, Some(crate::app::Side::Search { .. }));
-                crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Search, if searching || response.hovered() { p.strong } else { p.muted });
-                if response.on_hover_text(t!("Search")).clicked() {
+                let hint = match channel.guild_id.and_then(|g| app.guild(g)) {
+                    Some(guild) => t!("Search {guildName}", guildName = guild.name),
+                    None => t!("Search").to_owned(),
+                };
+                let width = (ui.available_width() * 0.3).clamp(144.0, 244.0);
+                let (rect, response) = ui.allocate_exact_size(vec2(width, 32.0), Sense::click());
+                ui.painter().rect(rect, 8.0, p.rail, Stroke::new(1.0, if searching || response.hovered() { p.selected } else { p.border }), egui::StrokeKind::Inside);
+                let glass = Rect::from_center_size(pos2(rect.right() - 16.0, rect.center().y), Vec2::splat(16.0));
+                crate::icons::paint(ui, glass, crate::icons::Icon::Search, p.muted);
+                super::paint_truncated(ui, Rect::from_min_max(pos2(rect.left() + 10.0, rect.top()), pos2(glass.left() - 6.0, rect.bottom())), &hint, egui::FontId::proportional(14.0), p.muted);
+                if response.on_hover_cursor(egui::CursorIcon::Text).clicked() {
                     app.toggle_search();
                 }
-                if !dm && channel.kind != crate::discord::model::ChannelKind::Thread {
+                ui.add_space(8.0);
+                if !dm {
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Thread, if response.hovered() { p.strong } else { p.muted });
-                    if response.on_hover_text(t!("Threads")).clicked() {
-                        app.archived_threads = None;
-                        app.commands.send(crate::admin::get("threads-archived", format!("/channels/{}/threads/archived/public?limit=25", channel.id)));
-                        app.modal = Some(crate::app::Modal::Threads { channel: channel.id, name: String::new() });
+                    let color = if app.show_members || response.hovered() { p.strong } else { p.muted };
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Members, color);
+                    if response.on_hover_text(if app.show_members { t!("Hide Member List") } else { t!("Show Member List") }).clicked() {
+                        app.toggle_members();
                     }
                 }
                 let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
@@ -168,12 +184,27 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 if response.on_hover_text(t!("Pinned Messages")).clicked() {
                     app.toggle_pins();
                 }
-                if !dm {
+                // The bell: crossed out while the channel is muted; it opens
+                // the channel's mute and notification menus.
+                if let Some(guild) = channel.guild_id {
+                    let muted = app.is_muted(channel);
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                    let color = if app.show_members || response.hovered() { p.strong } else { p.muted };
-                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Members, color);
-                    if response.on_hover_text(if app.show_members { t!("Hide Member List") } else { t!("Show Member List") }).clicked() {
-                        app.toggle_members();
+                    let icon = if muted { crate::icons::Icon::BellSlash } else { crate::icons::Icon::Bell };
+                    crate::icons::paint(ui, rect.shrink(3.0), icon, if response.hovered() { p.strong } else { p.muted });
+                    let response = response.on_hover_text(t!("Notification Settings"));
+                    egui::Popup::menu(&response).show(|ui| {
+                        super::menu::begin(ui);
+                        super::menu::mute(app, ui, super::menu::Muted::Channel, Some(guild), Some(channel.id));
+                        super::menu::notifications(app, ui, guild, Some(channel));
+                    });
+                }
+                if !dm && channel.kind != crate::discord::model::ChannelKind::Thread {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Thread, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Threads")).clicked() {
+                        app.archived_threads = None;
+                        app.commands.send(crate::admin::get("threads-archived", format!("/channels/{}/threads/archived/public?limit=25", channel.id)));
+                        app.modal = Some(crate::app::Modal::Threads { channel: channel.id, name: String::new() });
                     }
                 }
                 if dm {
@@ -203,6 +234,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     });
     let line = ui.cursor().top();
     ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.border));
+}
+
+/// Discord's secondary "Follow" button, `height` tall.
+fn follow_button(ui: &mut egui::Ui, height: f32) -> bool {
+    let p = theme::p();
+    let galley = ui.painter().layout_no_wrap(t!("Follow").to_owned(), theme::strong(14.0), p.strong);
+    let (rect, response) = ui.allocate_exact_size(vec2(galley.size().x + 24.0, height), Sense::click());
+    ui.painter().rect_filled(rect, 8.0, if response.hovered() { p.hover.gamma_multiply(1.6) } else { p.selected });
+    ui.painter().galley(rect.center() - galley.size() / 2.0, galley, p.strong);
+    response.on_hover_cursor(egui::CursorIcon::PointingHand).clicked()
 }
 
 /// The strip over a DM with a call: who is in it, join or leave, and the
@@ -1689,6 +1730,26 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
         });
         return;
     }
+    // An announcement channel we cannot write in: Discord's bar to follow
+    // it instead of the box.
+    const SEND_MESSAGES: u64 = 1 << 11;
+    if channel.kind == ChannelKind::Announcement
+        && let Some(guild) = channel.guild_id.and_then(|g| app.guild(g))
+        && guild.channel_permissions(app.me_id(), channel) & SEND_MESSAGES == 0
+    {
+        Frame::new().fill(p.composer).corner_radius(8).inner_margin(Margin::symmetric(16, 10)).show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(t!("Follow to get this channel's updates in your own server.")).font(theme::strong(15.0)).color(p.strong));
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if follow_button(ui, 32.0) {
+                        app.modal = Some(crate::app::Modal::Follow { channel: channel.id, guild: None, target: None });
+                    }
+                });
+            });
+        });
+        return;
+    }
     // Someone who is no friend wrote: nothing goes out until it is accepted.
     if channel.message_request {
         Frame::new().fill(p.sidebar).corner_radius(8).inner_margin(Margin::same(14)).show(ui, |ui| {
@@ -2046,18 +2107,20 @@ fn member_list(app: &mut App, ui: &mut egui::Ui) {
             match row {
                 None => {}
                 Some(ListItem::Group { id, count }) => {
+                    // As Discord's list now writes them: "Mods — 1", the
+                    // role's name as written.
                     let name = match id.as_str() {
-                        "online" => t!("Online").to_uppercase(),
-                        "offline" => t!("Offline").to_uppercase(),
+                        "online" => t!("Online").to_owned(),
+                        "offline" => t!("Offline").to_owned(),
                         role => role
                             .parse::<Id>()
                             .ok()
                             .and_then(|r| guild.roles.iter().find(|x| x.id == r))
-                            .map(|r| r.name.to_uppercase())
+                            .map(|r| r.name.clone())
                             .unwrap_or_default(),
                     };
                     let count = counts.get(id).copied().unwrap_or(*count);
-                    ui.painter().text(rect.left_bottom() + vec2(16.0, -8.0), Align2::LEFT_BOTTOM, format!("{name} — {count}"), theme::strong(12.0), p.muted);
+                    ui.painter().text(rect.left_bottom() + vec2(16.0, -8.0), Align2::LEFT_BOTTOM, format!("{name} — {count}"), theme::strong(14.0), p.muted);
                 }
                 Some(ListItem::Member { user, member, presence }) => {
                     let inner = rect.shrink2(vec2(8.0, 2.0));
@@ -2775,6 +2838,45 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                         keep = false;
                     }
                 });
+            }
+            // Discord's "Follow #info": a server and a text channel where we
+            // may manage webhooks get the announcements
+            // (POST /channels/{id}/followers).
+            crate::app::Modal::Follow { channel, guild, target } => {
+                ui.label(RichText::new(t!("Follow Updates")).font(theme::strong(18.0)).color(p.strong));
+                ui.label(RichText::new(t!("Follow to get this channel's updates in your own server.")).color(p.muted));
+                ui.add_space(8.0);
+                let me = app.me_id();
+                const MANAGE_WEBHOOKS: u64 = 1 << 29;
+                let servers: Vec<(Id, String)> = app.guilds.iter().filter(|g| g.channels.iter().any(|c| c.kind == ChannelKind::Text && g.can_view(me, c) && g.channel_permissions(me, c) & MANAGE_WEBHOOKS != 0)).map(|g| (g.id, g.name.clone())).collect();
+                ui.label(RichText::new(t!("Select a server")).font(theme::strong(13.0)).color(p.strong));
+                let shown = guild.and_then(|g| servers.iter().find(|(id, _)| *id == g)).map_or_else(|| t!("Select a server").to_owned(), |(_, name)| name.clone());
+                egui::ComboBox::from_id_salt("follow-server").selected_text(shown).width(ui.available_width()).show_ui(ui, |ui| {
+                    for (id, name) in &servers {
+                        if ui.selectable_label(*guild == Some(*id), name).clicked() {
+                            *guild = Some(*id);
+                            *target = None;
+                        }
+                    }
+                });
+                let channels: Vec<(Id, String)> = guild.and_then(|g| app.guild(g)).map(|g| g.channels.iter().filter(|c| c.kind == ChannelKind::Text && g.can_view(me, c) && g.channel_permissions(me, c) & MANAGE_WEBHOOKS != 0).map(|c| (c.id, c.title())).collect()).unwrap_or_default();
+                ui.add_space(6.0);
+                ui.label(RichText::new(t!("Select a channel")).font(theme::strong(13.0)).color(p.strong));
+                let shown = target.and_then(|t| channels.iter().find(|(id, _)| *id == t)).map_or_else(|| t!("Select a channel").to_owned(), |(_, name)| format!("# {name}"));
+                egui::ComboBox::from_id_salt("follow-channel").selected_text(shown).width(ui.available_width()).show_ui(ui, |ui| {
+                    for (id, name) in &channels {
+                        if ui.selectable_label(*target == Some(*id), format!("# {name}")).clicked() {
+                            *target = Some(*id);
+                        }
+                    }
+                });
+                ui.add_space(10.0);
+                if ui.add_enabled(target.is_some(), egui::Button::new(RichText::new(t!("Follow")).color(Color32::WHITE)).fill(p.accent)).clicked()
+                    && let Some(to) = target
+                {
+                    app.commands.send(call("POST", format!("/channels/{channel}/followers"), Some(serde_json::json!({ "webhook_channel_id": to.to_string() }))));
+                    keep = false;
+                }
             }
             crate::app::Modal::GroupName { channel, name } => {
                 ui.label(RichText::new(t!("Edit Group")).font(theme::strong(18.0)).color(p.strong));

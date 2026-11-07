@@ -137,7 +137,7 @@ msgstr "Permissions des membres"
 msgid "Create Invite"
 msgstr "Créer une invitation"
 
-#: src\admin.rs:132 src\ui\chat.rs:2422 src\ui\menu.rs:358
+#: src\admin.rs:132 src\ui\chat.rs:2485 src\ui\menu.rs:358
 msgid "Change Nickname"
 msgstr "Changer de pseudo"
 
@@ -261,7 +261,7 @@ msgstr "Administrateur"
 msgid "Discord is indexing the members. Try again in a moment."
 msgstr "Discord indexe les membres. Réessaie dans un instant."
 
-#: src\admin.rs:312 src\app.rs:2612 src\ui\settings.rs:496
+#: src\admin.rs:312 src\app.rs:2614 src\ui\settings.rs:496
 msgid "Done."
 msgstr "Terminé."
 
@@ -525,185 +525,185 @@ msgstr "{user} a modifié AutoMod"
 msgid "{user} made a change"
 msgstr "{user} a fait une modification"
 
-#: src\app.rs:349
+#: src\app.rs:351
 msgid "Role deleted."
 msgstr "Rôle supprimé."
 
-#: src\app.rs:356
+#: src\app.rs:358
 msgid "Channel deleted."
 msgstr "Salon supprimé."
 
-#: src\app.rs:1375
+#: src\app.rs:1377
 msgid "Unmute Microphone"
 msgstr "Réactiver le micro"
 
-#: src\app.rs:1375 src\main.rs:66
+#: src\app.rs:1377 src\main.rs:66
 msgid "Mute Microphone"
 msgstr "Couper le micro"
 
-#: src\app.rs:1379
+#: src\app.rs:1381
 msgid "CordFast — {count} mention"
 msgid_plural "CordFast — {count} mentions"
 msgstr[0] "CordFast — {count} mention"
 msgstr[1] "CordFast — {count} mentions"
 
-#: src\app.rs:1384 src\main.rs:65
+#: src\app.rs:1386 src\main.rs:65
 msgid "Open CordFast"
 msgstr "Ouvrir CordFast"
 
-#: src\app.rs:1385 src\main.rs:68
+#: src\app.rs:1387 src\main.rs:68
 msgid "Quit CordFast"
 msgstr "Quitter CordFast"
 
-#: src\app.rs:1442
+#: src\app.rs:1444
 msgid "Message not sent: {error}"
 msgstr "Message non envoyé : {error}"
 
-#: src\app.rs:1524
+#: src\app.rs:1526
 msgid "This action needs a verification only Discord's site offers."
 msgstr "Cette action demande une vérification que seul le site de Discord propose."
 
-#: src\app.rs:1565 src\sounds.rs:34
+#: src\app.rs:1567 src\sounds.rs:34
 msgid "Voice Disconnected"
 msgstr "Vocal déconnecté"
 
-#: src\app.rs:1648
+#: src\app.rs:1650
 msgid "The session expired. Log in again."
 msgstr "La session a expiré. Reconnecte-toi."
 
-#: src\app.rs:1744
+#: src\app.rs:1746
 msgid "Server"
 msgstr "Serveur"
 
-#: src\app.rs:1744
+#: src\app.rs:1746
 msgid "You are no longer in {name}"
 msgstr "Tu n'es plus sur {name}"
 
-#: src\app.rs:1793 src\app.rs:2438
+#: src\app.rs:1795 src\app.rs:2440
 msgid "Something went wrong. Try again."
 msgstr "Une erreur s'est produite. Réessaie."
 
-#: src\app.rs:1795
+#: src\app.rs:1797
 msgid "The application did not respond."
 msgstr "L'application n'a pas répondu."
 
-#: src\app.rs:1940
+#: src\app.rs:1942
 msgid "Friendship"
 msgstr "Amitié"
 
-#: src\app.rs:1940
+#: src\app.rs:1942
 msgid "{name} is no longer your friend"
 msgstr "{name} n'est plus ton ami"
 
-#: src\app.rs:2032 src\ui\guild.rs:990 src\ui\guild.rs:1269 src\ui\mod.rs:2297
+#: src\app.rs:2034 src\ui\guild.rs:990 src\ui\guild.rs:1269 src\ui\mod.rs:2312
 msgid "Someone"
 msgstr "Quelqu'un"
 
-#: src\app.rs:2034 src\ui\overlay.rs:588
+#: src\app.rs:2036 src\ui\overlay.rs:588
 msgid "Incoming Call"
 msgstr "Appel entrant"
 
-#: src\app.rs:2034
+#: src\app.rs:2036
 msgid "{name} is calling you"
 msgstr "{name} t'appelle"
 
-#: src\app.rs:2443
+#: src\app.rs:2445
 msgid "Uh-oh! Something went wrong while updating this message request. Please wait a moment and try again."
 msgstr "Oh oh, une erreur s'est produite lors de la mise à jour de cette demande de message. Essaie à nouveau un peu plus tard."
 
-#: src\app.rs:2473
+#: src\app.rs:2475
 msgid "Discord asked for a captcha: opening the invite in the browser."
 msgstr "Discord a demandé un captcha : ouverture de l'invitation dans le navigateur."
 
-#: src\app.rs:2560
+#: src\app.rs:2562
 msgid "This server has no public profile."
 msgstr "Ce serveur n'a pas de profil public."
 
-#: src\app.rs:2575
+#: src\app.rs:2577
 msgid "Discord is still indexing this channel. Try again in a moment."
 msgstr "Discord indexe encore ce salon. Réessaie dans un instant."
 
-#: src\app.rs:2590 src\app.rs:2689
+#: src\app.rs:2592 src\app.rs:2691
 msgid "the server"
 msgstr "le serveur"
 
-#: src\app.rs:2591 src\app.rs:2690
+#: src\app.rs:2593 src\app.rs:2692
 msgid "You joined {name}."
 msgstr "Tu as rejoint {name}."
 
-#: src\app.rs:2595
+#: src\app.rs:2597
 msgid "Server created."
 msgstr "Serveur créé."
 
-#: src\app.rs:2661
+#: src\app.rs:2663
 msgid "Invite copied: discord.gg/{code}"
 msgstr "Invitation copiée : discord.gg/{code}"
 
-#: src\app.rs:2665
+#: src\app.rs:2667
 msgid "Profile saved."
 msgstr "Profil enregistré."
 
-#: src\app.rs:2666
+#: src\app.rs:2668
 msgid "Member kicked."
 msgstr "Membre expulsé."
 
-#: src\app.rs:2667 src\ui\guild.rs:918
+#: src\app.rs:2669 src\ui\guild.rs:918
 msgid "Member timed out."
 msgstr "Membre exclu temporairement."
 
-#: src\app.rs:2668
+#: src\app.rs:2670
 msgid "Member banned."
 msgstr "Membre banni."
 
-#: src\app.rs:2669
+#: src\app.rs:2671
 msgid "Nickname changed."
 msgstr "Pseudo changé."
 
-#: src\app.rs:2670
+#: src\app.rs:2672
 msgid "Note saved."
 msgstr "Note enregistrée."
 
-#: src\app.rs:2685
+#: src\app.rs:2687
 msgid "Image saved to {path}"
 msgstr "Image enregistrée dans {path}"
 
-#: src\app.rs:2687
+#: src\app.rs:2689
 msgid "Image copied."
 msgstr "Image copiée."
 
-#: src\app.rs:2898 src\app.rs:2905
+#: src\app.rs:2900 src\app.rs:2907
 msgid "New message"
 msgstr "Nouveau message"
 
-#: src\app.rs:2903
+#: src\app.rs:2905
 msgid "Attachment"
 msgstr "Pièce jointe"
 
-#: src\app.rs:3234
+#: src\app.rs:3236
 msgid "Fill in the email and the password."
 msgstr "Renseigne l'e-mail et le mot de passe."
 
-#: src\app.rs:3340
+#: src\app.rs:3342
 msgid "Open a conversation with them before calling."
 msgstr "Ouvre une conversation avec cette personne avant d'appeler."
 
-#: src\app.rs:3353
+#: src\app.rs:3355
 msgid "Looks like you're in another voice channel. Are you sure you want to switch to {channel}?"
 msgstr "On dirait que tu es dans un autre salon vocal. Veux-tu vraiment changer pour aller dans {channel} ?"
 
-#: src\app.rs:3354
+#: src\app.rs:3356
 msgid "You sure?"
 msgstr "Veux-tu vraiment continuer ?"
 
-#: src\app.rs:3354 src\ui\mod.rs:304
+#: src\app.rs:3356 src\ui\mod.rs:304
 msgid "Confirm"
 msgstr "Confirmer"
 
-#: src\app.rs:3456
+#: src\app.rs:3458
 msgid "Upload Files"
 msgstr "Envoyer des fichiers"
 
-#: src\app.rs:3660
+#: src\app.rs:3662
 msgid "Couldn't update: {error}"
 msgstr "Impossible de mettre à jour : {error}"
 
@@ -807,19 +807,19 @@ msgstr "Affiche le texte avec emphase."
 msgid "Marks your message as a spoiler."
 msgstr "Définit ton message comme étant un spoiler."
 
-#: src\discord\gateway.rs:277 src\discord\gateway.rs:289 src\ui\chat.rs:3217
+#: src\discord\gateway.rs:277 src\discord\gateway.rs:289 src\ui\chat.rs:3319
 msgid "Streaming {name}"
 msgstr "Diffuse {name}"
 
-#: src\discord\gateway.rs:278 src\discord\gateway.rs:290 src\ui\chat.rs:3218
+#: src\discord\gateway.rs:278 src\discord\gateway.rs:290 src\ui\chat.rs:3320
 msgid "Listening to {name}"
 msgstr "Écoute {name}"
 
-#: src\discord\gateway.rs:279 src\discord\gateway.rs:291 src\ui\chat.rs:3219
+#: src\discord\gateway.rs:279 src\discord\gateway.rs:291 src\ui\chat.rs:3321
 msgid "Watching {name}"
 msgstr "Regarde {name}"
 
-#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3220
+#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3322
 msgid "Competing in {name}"
 msgstr "En compétition sur {name}"
 
@@ -827,7 +827,7 @@ msgstr "En compétition sur {name}"
 msgid "Playing"
 msgstr "Joue"
 
-#: src\discord\gateway.rs:288 src\ui\chat.rs:3221
+#: src\discord\gateway.rs:288 src\ui\chat.rs:3323
 msgid "Playing {name}"
 msgstr "Joue à {name}"
 
@@ -883,7 +883,7 @@ msgstr "aucune raison donnée"
 msgid "login cancelled on the phone"
 msgstr "connexion annulée sur le téléphone"
 
-#: src\discord\rest.rs:59 src\ui\chat.rs:2603 src\ui\mod.rs:287 src\ui\settings.rs:384
+#: src\discord\rest.rs:59 src\ui\chat.rs:2666 src\ui\mod.rs:287 src\ui\settings.rs:384
 msgid "Multi-Factor Authentication"
 msgstr "Authentification multifacteur"
 
@@ -1007,7 +1007,7 @@ msgstr "Salon suivant avec mentions"
 msgid "Jump to Oldest Unread Message"
 msgstr "Aller au plus ancien message non lu"
 
-#: src\keybinds.rs:78 src\ui\chat.rs:168 src\ui\chat.rs:2140
+#: src\keybinds.rs:78 src\ui\chat.rs:184 src\ui\chat.rs:2203
 msgid "Pinned Messages"
 msgstr "Messages épinglés"
 
@@ -1019,7 +1019,7 @@ msgstr "Boîte de réception"
 msgid "Member List"
 msgstr "Liste des membres"
 
-#: src\keybinds.rs:81 src\ui\chat.rs:153 src\ui\chat.rs:2141 src\ui\chat.rs:2328
+#: src\keybinds.rs:81 src\ui\chat.rs:161 src\ui\chat.rs:2204 src\ui\chat.rs:2391
 msgid "Search"
 msgstr "Rechercher"
 
@@ -1035,7 +1035,7 @@ msgstr "Sélecteur de GIF"
 msgid "Sticker Picker"
 msgstr "Sélecteur d'autocollants"
 
-#: src\keybinds.rs:85 src\ui\chat.rs:1828
+#: src\keybinds.rs:85 src\ui\chat.rs:1889
 msgid "Upload a File"
 msgstr "Envoyer un fichier"
 
@@ -1063,11 +1063,11 @@ msgstr "Copier le lien du salon"
 msgid "Collapse or Expand All Categories"
 msgstr "Réduire ou développer toutes les catégories"
 
-#: src\keybinds.rs:92 src\ui\chat.rs:1382
+#: src\keybinds.rs:92 src\ui\chat.rs:1423
 msgid "Zoom In"
 msgstr "Zoomer"
 
-#: src\keybinds.rs:93 src\ui\chat.rs:1382
+#: src\keybinds.rs:93 src\ui\chat.rs:1423
 msgid "Zoom Out"
 msgstr "Dézoomer"
 
@@ -1223,23 +1223,23 @@ msgstr "Affiche depuis combien de temps tu es dans l'appel."
 msgid "Allows user volumes up to 400% (instead of 200%)."
 msgstr "Permet des volumes d'utilisateur jusqu'à 400 % (au lieu de 200 %)."
 
-#: src\sounds.rs:29 src\ui\chat.rs:2630 src\ui\friends.rs:397 src\ui\menu.rs:274
+#: src\sounds.rs:29 src\ui\chat.rs:2693 src\ui\friends.rs:397 src\ui\menu.rs:274
 msgid "Message"
 msgstr "Message"
 
-#: src\sounds.rs:30 src\ui\mod.rs:2276 src\ui\overlay.rs:539
+#: src\sounds.rs:30 src\ui\mod.rs:2291 src\ui\overlay.rs:539
 msgid "Deafen"
 msgstr "Mettre en sourdine"
 
-#: src\sounds.rs:31 src\ui\mod.rs:2276 src\ui\overlay.rs:539
+#: src\sounds.rs:31 src\ui\mod.rs:2291 src\ui\overlay.rs:539
 msgid "Undeafen"
 msgstr "Rétablir le son"
 
-#: src\sounds.rs:32 src\ui\mod.rs:1638 src\ui\mod.rs:2283 src\ui\overlay.rs:538
+#: src\sounds.rs:32 src\ui\mod.rs:1653 src\ui\mod.rs:2298 src\ui\overlay.rs:538
 msgid "Mute"
 msgstr "Rendre muet"
 
-#: src\sounds.rs:33 src\ui\mod.rs:2283 src\ui\overlay.rs:538
+#: src\sounds.rs:33 src\ui\mod.rs:2298 src\ui\overlay.rs:538
 msgid "Unmute"
 msgstr "Réactiver le micro"
 
@@ -1476,903 +1476,931 @@ msgstr "Choisis un salon  ·  Ctrl+K pour rechercher"
 msgid "Pick a channel"
 msgstr "Choisis un salon"
 
-#: src\ui\chat.rs:134 src\ui\chat.rs:2086 src\ui\chat.rs:3180 src\ui\friends.rs:261
+#: src\ui\chat.rs:141 src\ui\chat.rs:2149 src\ui\chat.rs:3282 src\ui\friends.rs:261
 msgid "In voice"
 msgstr "Dans un salon vocal"
 
-#: src\ui\chat.rs:145
+#: src\ui\chat.rs:152
 msgid "Hide Chat"
 msgstr "Masquer la discussion"
 
-#: src\ui\chat.rs:159 src\ui\chat.rs:2643
-msgid "Threads"
-msgstr "Fils"
+#: src\ui\chat.rs:160
+msgid "Search {guildName}"
+msgstr "Rechercher {guildName}"
 
-#: src\ui\chat.rs:175
+#: src\ui\chat.rs:177
 msgid "Hide Member List"
 msgstr "Masquer la liste des membres"
 
-#: src\ui\chat.rs:175
+#: src\ui\chat.rs:177
 msgid "Show Member List"
 msgstr "Afficher la liste des membres"
 
-#: src\ui\chat.rs:186 src\ui\friends.rs:386
+#: src\ui\chat.rs:194 src\ui\menu.rs:200
+msgid "Notification Settings"
+msgstr "Paramètres de notification"
+
+#: src\ui\chat.rs:204 src\ui\chat.rs:2706
+msgid "Threads"
+msgstr "Fils"
+
+#: src\ui\chat.rs:217 src\ui\friends.rs:386
 msgid "Start Voice Call"
 msgstr "Démarrer un appel vocal"
 
-#: src\ui\chat.rs:195
+#: src\ui\chat.rs:226
 msgid "Hide User Profile"
 msgstr "Masquer le profil utilisateur"
 
-#: src\ui\chat.rs:195
+#: src\ui\chat.rs:226
 msgid "Show User Profile"
 msgstr "Afficher le profil utilisateur"
 
-#: src\ui\chat.rs:236
+#: src\ui\chat.rs:242 src\ui\chat.rs:2874
+msgid "Follow"
+msgstr "Suivre"
+
+#: src\ui\chat.rs:277
 msgid "Leave Call"
 msgstr "Quitter l'appel"
 
-#: src\ui\chat.rs:239 src\ui\overlay.rs:592
+#: src\ui\chat.rs:280 src\ui\overlay.rs:592
 msgid "Join Call"
 msgstr "Rejoindre l'appel"
 
-#: src\ui\chat.rs:253
+#: src\ui\chat.rs:294
 msgid "automatic"
 msgstr "automatique"
 
-#: src\ui\chat.rs:256 src\ui\mod.rs:2119
+#: src\ui\chat.rs:297 src\ui\mod.rs:2134
 msgid "Region: {region}"
 msgstr "Région : {region}"
 
-#: src\ui\chat.rs:260
+#: src\ui\chat.rs:301
 msgid "Best route ({region}, {ms} ms)"
 msgstr "Meilleure route ({region}, {ms} ms)"
 
-#: src\ui\chat.rs:270
+#: src\ui\chat.rs:311
 msgid "Measuring latency…"
 msgstr "Mesure de la latence…"
 
-#: src\ui\chat.rs:307
+#: src\ui\chat.rs:348
 msgid "Couldn't load: {error}"
 msgstr "Impossible de charger : {error}"
 
-#: src\ui\chat.rs:308
+#: src\ui\chat.rs:349
 msgid "Try Again"
 msgstr "Réessayer"
 
-#: src\ui\chat.rs:317
+#: src\ui\chat.rs:358
 msgid "This is the beginning of the conversation."
 msgstr "C'est le début de la conversation."
 
-#: src\ui\chat.rs:356
+#: src\ui\chat.rs:397
 msgid "New"
 msgstr "Nouveau"
 
-#: src\ui\chat.rs:393
+#: src\ui\chat.rs:434
 msgid "Message from someone you blocked"
 msgstr "Message d'une personne que tu as bloquée"
 
-#: src\ui\chat.rs:429
+#: src\ui\chat.rs:470
 msgid "Couldn't find the original message."
 msgstr "Impossible de trouver le message d'origine."
 
-#: src\ui\chat.rs:452
+#: src\ui\chat.rs:493
 msgid "{count} new message since {time}"
 msgid_plural "{count} new messages since {time}"
 msgstr[0] "{count} nouveau message depuis {time}"
 msgstr[1] "{count} nouveaux messages depuis {time}"
 
-#: src\ui\chat.rs:455 src\ui\mod.rs:762 src\ui\mod.rs:1447 src\ui\mod.rs:1505
+#: src\ui\chat.rs:496 src\ui\mod.rs:762 src\ui\mod.rs:1462 src\ui\mod.rs:1520
 msgid "Mark As Read"
 msgstr "Marquer comme lu"
 
-#: src\ui\chat.rs:470
+#: src\ui\chat.rs:511
 msgid "You're Viewing Older Messages"
 msgstr "Tu consultes d'anciens messages"
 
-#: src\ui\chat.rs:471
+#: src\ui\chat.rs:512
 msgid "Jump To Present"
 msgstr "Revenir au présent"
 
-#: src\ui\chat.rs:607
+#: src\ui\chat.rs:648
 msgid "Forwarded"
 msgstr "Transféré"
 
-#: src\ui\chat.rs:616
+#: src\ui\chat.rs:657
 msgid "(edited)"
 msgstr "(modifié)"
 
-#: src\ui\chat.rs:620
+#: src\ui\chat.rs:661
 msgid "(deleted)"
 msgstr "(supprimé)"
 
-#: src\ui\chat.rs:647 src\ui\chat.rs:2880
+#: src\ui\chat.rs:688 src\ui\chat.rs:2982
 msgid "Play"
 msgstr "Lire"
 
-#: src\ui\chat.rs:650
+#: src\ui\chat.rs:691
 msgid "Voice Message"
 msgstr "Message vocal"
 
-#: src\ui\chat.rs:663 src\ui\chat.rs:1176 src\ui\components.rs:253
+#: src\ui\chat.rs:704 src\ui\chat.rs:1217 src\ui\components.rs:253
 msgid "Spoiler"
 msgstr "Spoiler"
 
-#: src\ui\chat.rs:765
+#: src\ui\chat.rs:806
 msgid "Click to react"
 msgstr "Clique pour réagir"
 
-#: src\ui\chat.rs:772 src\ui\chat.rs:888
+#: src\ui\chat.rs:813 src\ui\chat.rs:929
 msgid "Add Reaction"
 msgstr "Ajouter une réaction"
 
-#: src\ui\chat.rs:776 src\ui\settings.rs:342 src\ui\settings.rs:351 src\ui\settings.rs:363
+#: src\ui\chat.rs:817 src\ui\settings.rs:342 src\ui\settings.rs:351 src\ui\settings.rs:363
 msgid "Edit"
 msgstr "Modifier"
 
-#: src\ui\chat.rs:779 src\ui\chat.rs:786 src\ui\chat.rs:909
+#: src\ui\chat.rs:820 src\ui\chat.rs:827 src\ui\chat.rs:950
 msgid "Reply"
 msgstr "Répondre"
 
-#: src\ui\chat.rs:782 src\ui\chat.rs:913 src\ui\chat.rs:1383
+#: src\ui\chat.rs:823 src\ui\chat.rs:954 src\ui\chat.rs:1424
 msgid "Forward"
 msgstr "Transférer"
 
-#: src\ui\chat.rs:789 src\ui\chat.rs:991
+#: src\ui\chat.rs:830 src\ui\chat.rs:1032
 msgid "Mark Unread"
 msgstr "Marquer comme non lu"
 
-#: src\ui\chat.rs:798 src\ui\chat.rs:1046 src\ui\guild.rs:533 src\ui\guild_more.rs:111
+#: src\ui\chat.rs:839 src\ui\chat.rs:1087 src\ui\guild.rs:533 src\ui\guild_more.rs:111
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src\ui\chat.rs:803 src\ui\chat.rs:1386 src\ui\friends.rs:384 src\ui\profile.rs:187
+#: src\ui\chat.rs:844 src\ui\chat.rs:1427 src\ui\friends.rs:384 src\ui\profile.rs:187
 msgid "More"
 msgstr "Plus"
 
-#: src\ui\chat.rs:897
+#: src\ui\chat.rs:938
 msgid "View More"
 msgstr "Voir plus"
 
-#: src\ui\chat.rs:905
+#: src\ui\chat.rs:946
 msgid "Edit Message"
 msgstr "Modifier le message"
 
-#: src\ui\chat.rs:917
+#: src\ui\chat.rs:958
 msgid "View Reactions"
 msgstr "Voir les réactions"
 
-#: src\ui\chat.rs:923 src\ui\chat.rs:2820
+#: src\ui\chat.rs:964 src\ui\chat.rs:2922
 msgid "Create Thread"
 msgstr "Créer un fil"
 
-#: src\ui\chat.rs:928 src\ui\chat.rs:2646
+#: src\ui\chat.rs:969 src\ui\chat.rs:2709
 msgid "New Thread"
 msgstr "Nouveau fil"
 
-#: src\ui\chat.rs:934
+#: src\ui\chat.rs:975
 msgid "Remove Bookmark"
 msgstr "Ne plus marquer ce message"
 
-#: src\ui\chat.rs:934
+#: src\ui\chat.rs:975
 msgid "Bookmark Message"
 msgstr "Marquer un message"
 
-#: src\ui\chat.rs:944
+#: src\ui\chat.rs:985
 msgid "Remind Me"
 msgstr "Rappelle-moi"
 
-#: src\ui\chat.rs:945
+#: src\ui\chat.rs:986
 msgid "In 1 hour"
 msgstr "Dans 1 heure"
 
-#: src\ui\chat.rs:945
+#: src\ui\chat.rs:986
 msgid "In 3 hours"
 msgstr "Dans 3 heures"
 
-#: src\ui\chat.rs:945
+#: src\ui\chat.rs:986
 msgid "Tomorrow"
 msgstr "Demain"
 
-#: src\ui\chat.rs:949
+#: src\ui\chat.rs:990
 msgid "Reminder added."
 msgstr "Rappel ajouté."
 
-#: src\ui\chat.rs:954
+#: src\ui\chat.rs:995
 msgid "Copy Text"
 msgstr "Copier le texte"
 
-#: src\ui\chat.rs:959
+#: src\ui\chat.rs:1000
 msgid "Unpin Message"
 msgstr "Désépingler le message"
 
-#: src\ui\chat.rs:959
+#: src\ui\chat.rs:1000
 msgid "Pin Message"
 msgstr "Épingler le message"
 
-#: src\ui\chat.rs:973
+#: src\ui\chat.rs:1014
 msgid "Publish"
 msgstr "Publier"
 
-#: src\ui\chat.rs:977
+#: src\ui\chat.rs:1018
 msgid "Remove Embeds"
 msgstr "Supprimer les intégrations"
 
-#: src\ui\chat.rs:981 src\ui\chat.rs:983 src\ui\chat.rs:985
+#: src\ui\chat.rs:1022 src\ui\chat.rs:1024 src\ui\chat.rs:1026
 msgid "Remove All Reactions"
 msgstr "Supprimer toutes les réactions"
 
-#: src\ui\chat.rs:984
+#: src\ui\chat.rs:1025
 msgid "Are you sure you want to remove all the reactions from this message?"
 msgstr "Veux-tu vraiment retirer toutes les réactions de ce message ?"
 
-#: src\ui\chat.rs:995
+#: src\ui\chat.rs:1036
 msgid "Copy Message Link"
 msgstr "Copier le lien du message"
 
-#: src\ui\chat.rs:1000
+#: src\ui\chat.rs:1041
 msgid "View Raw"
 msgstr "Afficher le texte brut"
 
-#: src\ui\chat.rs:1007
+#: src\ui\chat.rs:1048
 msgid "Search Image (Google Lens)"
 msgstr "Rechercher l'image (Google Lens)"
 
-#: src\ui\chat.rs:1015 src\ui\chat.rs:1044
+#: src\ui\chat.rs:1056 src\ui\chat.rs:1085
 msgid "Delete Message"
 msgstr "Supprimer le message"
 
-#: src\ui\chat.rs:1025
+#: src\ui\chat.rs:1066
 msgid "Copy Message ID"
 msgstr "Copier l'identifiant du message"
 
-#: src\ui\chat.rs:1039 src\ui\chat.rs:1041
+#: src\ui\chat.rs:1080 src\ui\chat.rs:1082
 msgid "Are you sure you want to delete this message?"
 msgstr "Tu es sûr(e) de vouloir supprimer ce message ?"
 
-#: src\ui\chat.rs:1045
+#: src\ui\chat.rs:1086
 msgid "PROTIP: You can hold down shift when clicking delete message to bypass this confirmation entirely."
 msgstr "ASTUCE : Tu peux maintenir Maj en cliquant sur supprimer le message pour passer complètement cette confirmation."
 
-#: src\ui\chat.rs:1054
+#: src\ui\chat.rs:1095
 msgid "{name} joined the party."
 msgstr "{name} a rejoint la fête."
 
-#: src\ui\chat.rs:1055
+#: src\ui\chat.rs:1096
 msgid "{name} is here."
 msgstr "{name} est là."
 
-#: src\ui\chat.rs:1056
+#: src\ui\chat.rs:1097
 msgid "Welcome, {name}. We hope you brought pizza."
 msgstr "Bienvenue, {name}. On espère que tu as apporté de la pizza."
 
-#: src\ui\chat.rs:1057
+#: src\ui\chat.rs:1098
 msgid "A wild {name} appeared."
 msgstr "Un {name} sauvage apparaît."
 
-#: src\ui\chat.rs:1058
+#: src\ui\chat.rs:1099
 msgid "{name} just landed."
 msgstr "{name} vient d'atterrir."
 
-#: src\ui\chat.rs:1059
+#: src\ui\chat.rs:1100
 msgid "{name} just slid into the server."
 msgstr "{name} vient de se glisser dans le serveur."
 
-#: src\ui\chat.rs:1060
+#: src\ui\chat.rs:1101
 msgid "{name} just showed up!"
 msgstr "{name} vient de débarquer !"
 
-#: src\ui\chat.rs:1061
+#: src\ui\chat.rs:1102
 msgid "Welcome {name}. Say hi!"
 msgstr "Bienvenue {name}. Dis bonjour !"
 
-#: src\ui\chat.rs:1062
+#: src\ui\chat.rs:1103
 msgid "{name} hopped into the server."
 msgstr "{name} a sauté dans le serveur."
 
-#: src\ui\chat.rs:1063
+#: src\ui\chat.rs:1104
 msgid "Everyone welcome {name}!"
 msgstr "Souhaitez tous la bienvenue à {name} !"
 
-#: src\ui\chat.rs:1064
+#: src\ui\chat.rs:1105
 msgid "Glad you're here, {name}."
 msgstr "Content de te voir ici, {name}."
 
-#: src\ui\chat.rs:1065
+#: src\ui\chat.rs:1106
 msgid "Good to see you, {name}."
 msgstr "Ravi de te voir, {name}."
 
-#: src\ui\chat.rs:1066
+#: src\ui\chat.rs:1107
 msgid "Yay you made it, {name}!"
 msgstr "Youpi, tu es là, {name} !"
 
-#: src\ui\chat.rs:1071 src\ui\guild.rs:1284
+#: src\ui\chat.rs:1112 src\ui\guild.rs:1284
 msgid "someone"
 msgstr "quelqu'un"
 
-#: src\ui\chat.rs:1074
+#: src\ui\chat.rs:1115
 msgid "{name} added {other} to the group."
 msgstr "{name} a ajouté {other} au groupe."
 
-#: src\ui\chat.rs:1075
+#: src\ui\chat.rs:1116
 msgid "{name} removed {other} from the group."
 msgstr "{name} a retiré {other} du groupe."
 
-#: src\ui\chat.rs:1076
+#: src\ui\chat.rs:1117
 msgid "{name} started a call."
 msgstr "{name} a lancé un appel."
 
-#: src\ui\chat.rs:1077
+#: src\ui\chat.rs:1118
 msgid "{name} changed the channel name: {channel}"
 msgstr "{name} a changé le nom du salon : {channel}"
 
-#: src\ui\chat.rs:1078
+#: src\ui\chat.rs:1119
 msgid "{name} changed the channel icon."
 msgstr "{name} a changé l'icône du salon."
 
-#: src\ui\chat.rs:1079
+#: src\ui\chat.rs:1120
 msgid "{name} pinned a message to this channel."
 msgstr "{name} a épinglé un message dans ce salon."
 
-#: src\ui\chat.rs:1084
+#: src\ui\chat.rs:1125
 msgid "{name} just boosted the server!"
 msgstr "{name} vient de booster le serveur !"
 
-#: src\ui\chat.rs:1085
+#: src\ui\chat.rs:1126
 msgid "{name} just boosted the server! The server has achieved Level {level}!"
 msgstr "{name} vient de booster le serveur ! Le serveur a atteint le niveau {level} !"
 
-#: src\ui\chat.rs:1086
+#: src\ui\chat.rs:1127
 msgid "{name} has added {channel} to this channel. Its most important updates will show up here."
 msgstr "{name} a ajouté {channel} à ce salon. Ses mises à jour les plus importantes apparaîtront ici."
 
-#: src\ui\chat.rs:1087
+#: src\ui\chat.rs:1128
 msgid "{name} started a thread: {thread}"
 msgstr "{name} a lancé un fil : {thread}"
 
-#: src\ui\chat.rs:1088
+#: src\ui\chat.rs:1129
 msgid "AutoMod has blocked a message."
 msgstr "AutoMod a bloqué un message."
 
-#: src\ui\chat.rs:1089
+#: src\ui\chat.rs:1130
 msgid "{name} started {stage}"
 msgstr "{name} a lancé {stage}"
 
-#: src\ui\chat.rs:1090
+#: src\ui\chat.rs:1131
 msgid "{name} ended {stage}"
 msgstr "{name} a terminé {stage}"
 
-#: src\ui\chat.rs:1091
+#: src\ui\chat.rs:1132
 msgid "{name} is now a speaker."
 msgstr "{name} est maintenant intervenant."
 
-#: src\ui\chat.rs:1092
+#: src\ui\chat.rs:1133
 msgid "{name} changed the Stage topic: {topic}"
 msgstr "{name} a changé le sujet de la conférence : {topic}"
 
-#: src\ui\chat.rs:1093
+#: src\ui\chat.rs:1134
 msgid "{name}'s poll has closed."
 msgstr "Le sondage de {name} est terminé."
 
-#: src\ui\chat.rs:1094
+#: src\ui\chat.rs:1135
 msgid "{name} added a new emoji."
 msgstr "{name} a ajouté un nouvel emoji."
 
-#: src\ui\chat.rs:1095
+#: src\ui\chat.rs:1136
 msgid "You and {name} are now friends."
 msgstr "{name} et toi êtes maintenant amis."
 
-#: src\ui\chat.rs:1188
+#: src\ui\chat.rs:1229
 msgid "Spoiler Attachment"
 msgstr "Masquer la pièce jointe (spoiler)"
 
-#: src\ui\chat.rs:1189 src\ui\chat.rs:2470
+#: src\ui\chat.rs:1230 src\ui\chat.rs:2533
 msgid "Modify Attachment"
 msgstr "Modifier la pièce jointe"
 
-#: src\ui\chat.rs:1190
+#: src\ui\chat.rs:1231
 msgid "Remove Attachment"
 msgstr "Supprimer la pièce jointe"
 
-#: src\ui\chat.rs:1384
+#: src\ui\chat.rs:1425
 msgid "Save Image"
 msgstr "Enregistrer l'image"
 
-#: src\ui\chat.rs:1385
+#: src\ui\chat.rs:1426
 msgid "Open in Browser"
 msgstr "Ouvrir dans le navigateur"
 
-#: src\ui\chat.rs:1387 src\ui\chat.rs:2145 src\ui\form_modal.rs:220 src\ui\gates.rs:318
+#: src\ui\chat.rs:1428 src\ui\chat.rs:2208 src\ui\form_modal.rs:220 src\ui\gates.rs:318
 msgid "Close"
 msgstr "Fermer"
 
-#: src\ui\chat.rs:1406
+#: src\ui\chat.rs:1447
 msgid "Copy Image"
 msgstr "Copier l'image"
 
-#: src\ui\chat.rs:1410
+#: src\ui\chat.rs:1451
 msgid "Copy Media Link"
 msgstr "Copier le lien du média"
 
-#: src\ui\chat.rs:1412
+#: src\ui\chat.rs:1453
 msgid "Link Copied!"
 msgstr "Lien copié !"
 
-#: src\ui\chat.rs:1579
+#: src\ui\chat.rs:1620
 msgid "Poll closed"
 msgstr "Sondage terminé"
 
-#: src\ui\chat.rs:1581
+#: src\ui\chat.rs:1622
 msgid "Select one or more answers"
 msgstr "Sélectionne une ou plusieurs réponses"
 
-#: src\ui\chat.rs:1583
+#: src\ui\chat.rs:1624
 msgid "Select one answer"
 msgstr "Sélectionne une réponse"
 
-#: src\ui\chat.rs:1599 src\ui\chat.rs:1621
+#: src\ui\chat.rs:1640 src\ui\chat.rs:1662
 msgid "{count} vote"
 msgid_plural "{count} votes"
 msgstr[0] "{count} vote"
 msgstr[1] "{count} votes"
 
-#: src\ui\chat.rs:1625
+#: src\ui\chat.rs:1666
 msgid "ends {when}"
 msgstr "se termine {when}"
 
-#: src\ui\chat.rs:1637 src\ui\chat.rs:2626
+#: src\ui\chat.rs:1678 src\ui\chat.rs:2689
 msgid "New Post"
 msgstr "Nouveau post"
 
-#: src\ui\chat.rs:1646
+#: src\ui\chat.rs:1687
 msgid "No active posts."
 msgstr "Aucune publication active."
 
-#: src\ui\chat.rs:1665
+#: src\ui\chat.rs:1706
 msgid "Last activity: {when}"
 msgstr "Dernière activité : {when}"
 
-#: src\ui\chat.rs:1686 src\ui\gates.rs:244
+#: src\ui\chat.rs:1727 src\ui\gates.rs:244
 msgid "Complete"
 msgstr "Terminer"
 
-#: src\ui\chat.rs:1696 src\ui\mod.rs:1140 src\ui\requests.rs:74 src\ui\titlebar.rs:122
+#: src\ui\chat.rs:1743 src\ui\chat.rs:2847
+msgid "Follow to get this channel's updates in your own server."
+msgstr "Suis pour que les mises à jour de ce salon apparaissent dans ton propre serveur."
+
+#: src\ui\chat.rs:1757 src\ui\mod.rs:1155 src\ui\requests.rs:74 src\ui\titlebar.rs:122
 msgid "Message Requests"
 msgstr "Demandes de message"
 
-#: src\ui\chat.rs:1700 src\ui\friends.rs:409
+#: src\ui\chat.rs:1761 src\ui\friends.rs:409
 msgid "Accept"
 msgstr "Accepter"
 
-#: src\ui\chat.rs:1703 src\ui\friends.rs:404 src\ui\menu.rs:329 src\ui\requests.rs:105
+#: src\ui\chat.rs:1764 src\ui\friends.rs:404 src\ui\menu.rs:329 src\ui\requests.rs:105
 msgid "Ignore"
 msgstr "Ignorer"
 
-#: src\ui\chat.rs:1719
+#: src\ui\chat.rs:1780
 msgid "Replying to {author}"
 msgstr "En réponse à {author}"
 
-#: src\ui\chat.rs:1805
+#: src\ui\chat.rs:1866
 msgid "Message #{channel}"
 msgstr "Envoyer un message dans #{channel}"
 
-#: src\ui\chat.rs:1807
+#: src\ui\chat.rs:1868
 msgid "Message @{user}"
 msgstr "Envoyer un message à @{user}"
 
-#: src\ui\chat.rs:1823
+#: src\ui\chat.rs:1884
 msgid "Upload a File (or drag it onto the window)"
 msgstr "Envoyer un fichier (ou glisse-le sur la fenêtre)"
 
-#: src\ui\chat.rs:1832 src\ui\chat.rs:2733
+#: src\ui\chat.rs:1893 src\ui\chat.rs:2796
 msgid "Create Poll"
 msgstr "Créer le sondage"
 
-#: src\ui\chat.rs:1874
+#: src\ui\chat.rs:1935
 msgid "Open sticker picker"
 msgstr "Ouvrir le sélecteur d'autocollant"
 
-#: src\ui\chat.rs:1881
+#: src\ui\chat.rs:1942
 msgid "Open GIF picker"
 msgstr "Ouvrir l'onglet des GIF"
 
-#: src\ui\chat.rs:1888
+#: src\ui\chat.rs:1949
 msgid "Select emoji"
 msgstr "Sélectionner un émoji"
 
-#: src\ui\chat.rs:1908
+#: src\ui\chat.rs:1969
 msgid "Your message is too long: the limit is {limit} characters."
 msgstr "Ton message est trop long : la limite est de {limit} caractères."
 
-#: src\ui\chat.rs:1937
+#: src\ui\chat.rs:1998
 msgid "{a} is typing…"
 msgstr "{a} est en train d'écrire…"
 
-#: src\ui\chat.rs:1938
+#: src\ui\chat.rs:1999
 msgid "{a} and {b} are typing…"
 msgstr "{a} et {b} sont en train d'écrire…"
 
-#: src\ui\chat.rs:1939
+#: src\ui\chat.rs:2000
 msgid "{a}, {b}, and {c} are typing…"
 msgstr "{a}, {b} et {c} sont en train d'écrire…"
 
-#: src\ui\chat.rs:1940
+#: src\ui\chat.rs:2001
 msgid "Several people are typing…"
 msgstr "Plusieurs personnes sont en train d'écrire…"
 
-#: src\ui\chat.rs:2020 src\ui\chat.rs:2282 src\ui\chat.rs:2633 src\ui\chat.rs:2769
+#: src\ui\chat.rs:2081 src\ui\chat.rs:2345 src\ui\chat.rs:2696 src\ui\chat.rs:2832
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src\ui\chat.rs:2050 src\ui\friends.rs:26 src\ui\friends.rs:130
+#: src\ui\chat.rs:2113 src\ui\friends.rs:26 src\ui\friends.rs:130
 msgid "Online"
 msgstr "En ligne"
 
-#: src\ui\chat.rs:2051 src\ui\friends.rs:30
+#: src\ui\chat.rs:2114 src\ui\friends.rs:30
 msgid "Offline"
 msgstr "Hors ligne"
 
-#: src\ui\chat.rs:2152
+#: src\ui\chat.rs:2215
 msgid "Search Messages"
 msgstr "Rechercher des messages"
 
-#: src\ui\chat.rs:2160 src\ui\overlay.rs:867 src\ui\settings.rs:1206
+#: src\ui\chat.rs:2223 src\ui\overlay.rs:867 src\ui\settings.rs:1206
 msgid "Messages"
 msgstr "Messages"
 
-#: src\ui\chat.rs:2160
+#: src\ui\chat.rs:2223
 msgid "Media"
 msgstr "Contenu multimédia"
 
-#: src\ui\chat.rs:2160 src\ui\settings.rs:1248
+#: src\ui\chat.rs:2223 src\ui\settings.rs:1248
 msgid "Links"
 msgstr "Liens"
 
-#: src\ui\chat.rs:2160
+#: src\ui\chat.rs:2223
 msgid "Files"
 msgstr "Fichiers"
 
-#: src\ui\chat.rs:2168
+#: src\ui\chat.rs:2231
 msgid "Newest"
 msgstr "Plus récents"
 
-#: src\ui\chat.rs:2172
+#: src\ui\chat.rs:2235
 msgid "Oldest"
 msgstr "Date"
 
-#: src\ui\chat.rs:2224
+#: src\ui\chat.rs:2287
 msgid "{count} Pinned Message"
 msgid_plural "{count} Pinned Messages"
 msgstr[0] "{count} message épinglé"
 msgstr[1] "{count} messages épinglés"
 
-#: src\ui\chat.rs:2225
+#: src\ui\chat.rs:2288
 msgid "{count} Result"
 msgid_plural "{count} Results"
 msgstr[0] "{count} résultat"
 msgstr[1] "{count} résultats"
 
-#: src\ui\chat.rs:2252 src\ui\titlebar.rs:421
+#: src\ui\chat.rs:2315 src\ui\titlebar.rs:421
 msgid "{count} attachment"
 msgid_plural "{count} attachments"
 msgstr[0] "{count} pièce jointe"
 msgstr[1] "{count} pièces jointes"
 
-#: src\ui\chat.rs:2257
+#: src\ui\chat.rs:2320
 msgid "Jump"
 msgstr "Y aller"
 
-#: src\ui\chat.rs:2302
+#: src\ui\chat.rs:2365
 msgid "PROTIP:"
 msgstr "ASTUCE :"
 
-#: src\ui\chat.rs:2309
+#: src\ui\chat.rs:2372
 msgid "Don't ask again"
 msgstr "Ne plus demander"
 
-#: src\ui\chat.rs:2325
+#: src\ui\chat.rs:2388
 msgid "Forward To"
 msgstr "Transférer vers"
 
-#: src\ui\chat.rs:2326
+#: src\ui\chat.rs:2389
 msgid "Choose up to 5 conversations."
 msgstr "Choisis jusqu'à 5 conversations."
 
-#: src\ui\chat.rs:2387
+#: src\ui\chat.rs:2450
 msgid "Add an optional message…"
 msgstr "Ajoute un message facultatif…"
 
-#: src\ui\chat.rs:2388
+#: src\ui\chat.rs:2451
 msgid "Send"
 msgstr "Envoyer"
 
-#: src\ui\chat.rs:2413
+#: src\ui\chat.rs:2476
 msgid "Message forwarded."
 msgstr "Message transféré."
 
-#: src\ui\chat.rs:2413
+#: src\ui\chat.rs:2476
 msgid "Message forwarded to the conversations."
 msgstr "Message transféré dans les conversations."
 
-#: src\ui\chat.rs:2424
+#: src\ui\chat.rs:2487
 msgid "Nickname"
 msgstr "Pseudo"
 
-#: src\ui\chat.rs:2426
+#: src\ui\chat.rs:2489
 msgid "Reset Nickname"
 msgstr "Réinitialiser le pseudo"
 
-#: src\ui\chat.rs:2429 src\ui\chat.rs:2454 src\ui\chat.rs:2479 src\ui\chat.rs:2497
+#: src\ui\chat.rs:2492 src\ui\chat.rs:2517 src\ui\chat.rs:2542 src\ui\chat.rs:2560
 msgid "Save"
 msgstr "Enregistrer"
 
-#: src\ui\chat.rs:2450
+#: src\ui\chat.rs:2513
 msgid "Note"
 msgstr "Note"
 
-#: src\ui\chat.rs:2451
+#: src\ui\chat.rs:2514
 msgid "About @{name}, only visible to you"
 msgstr "À propos de @{name}, visible uniquement par toi"
 
-#: src\ui\chat.rs:2453
+#: src\ui\chat.rs:2516
 msgid "Click to add a note"
 msgstr "Clique pour ajouter une note"
 
-#: src\ui\chat.rs:2472
+#: src\ui\chat.rs:2535
 msgid "Filename"
 msgstr "Nom du fichier"
 
-#: src\ui\chat.rs:2475
+#: src\ui\chat.rs:2538
 msgid "Description (Alt Text)"
 msgstr "Description (texte alternatif)"
 
-#: src\ui\chat.rs:2476
+#: src\ui\chat.rs:2539
 msgid "Add a description"
 msgstr "Ajoute une description"
 
-#: src\ui\chat.rs:2478
+#: src\ui\chat.rs:2541
 msgid "Mark as spoiler"
 msgstr "Marquer comme spoiler"
 
-#: src\ui\chat.rs:2493 src\ui\mod.rs:1311
+#: src\ui\chat.rs:2556 src\ui\mod.rs:1326
 msgid "Set a channel status"
 msgstr "Définir un statut du salon"
 
-#: src\ui\chat.rs:2494
+#: src\ui\chat.rs:2557
 msgid "Everyone in the channel sees it under its name."
 msgstr "Tout le monde dans le salon le voit sous son nom."
 
-#: src\ui\chat.rs:2496
+#: src\ui\chat.rs:2559
 msgid "What's going on?"
 msgstr "Qu'est-ce qui se passe ?"
 
-#: src\ui\chat.rs:2512
+#: src\ui\chat.rs:2575
 msgid "Join a Server"
 msgstr "Rejoindre un serveur"
 
-#: src\ui\chat.rs:2513
+#: src\ui\chat.rs:2576
 msgid "Paste an invite, such as discord.gg/abc123"
 msgstr "Colle une invitation, par exemple discord.gg/abc123"
 
-#: src\ui\chat.rs:2517 src\ui\gates.rs:565 src\ui\profile.rs:452
+#: src\ui\chat.rs:2580 src\ui\gates.rs:565 src\ui\profile.rs:452
 msgid "Join"
 msgstr "Rejoindre"
 
-#: src\ui\chat.rs:2528
+#: src\ui\chat.rs:2591
 msgid "Create Your Server"
 msgstr "Crée ton serveur"
 
-#: src\ui\chat.rs:2529 src\ui\guild.rs:178
+#: src\ui\chat.rs:2592 src\ui\guild.rs:178
 msgid "Server Name"
 msgstr "Nom du serveur"
 
-#: src\ui\chat.rs:2530 src\ui\chat.rs:2647 src\ui\chat.rs:2822 src\ui\guild_more.rs:190
+#: src\ui\chat.rs:2593 src\ui\chat.rs:2710 src\ui\chat.rs:2924 src\ui\guild_more.rs:190
 msgid "Create"
 msgstr "Créer"
 
-#: src\ui\chat.rs:2540
+#: src\ui\chat.rs:2603
 msgid "Set a custom status"
 msgstr "Définir un statut personnalisé"
 
-#: src\ui\chat.rs:2543
+#: src\ui\chat.rs:2606
 msgid "What's cookin', {name}?"
 msgstr "Quoi de neuf, {name} ?"
 
-#: src\ui\chat.rs:2544
+#: src\ui\chat.rs:2607
 msgid "Support has arrived!"
 msgstr "Les secours sont arrivés !"
 
-#: src\ui\chat.rs:2546
+#: src\ui\chat.rs:2609
 msgid "Clear after"
 msgstr "Effacer après"
 
-#: src\ui\chat.rs:2548
+#: src\ui\chat.rs:2611
 msgid "Today"
 msgstr "Aujourd'hui"
 
-#: src\ui\chat.rs:2549
+#: src\ui\chat.rs:2612
 msgid "4 hours"
 msgstr "4 heures"
 
-#: src\ui\chat.rs:2550 src\ui\guild.rs:203
+#: src\ui\chat.rs:2613 src\ui\guild.rs:203
 msgid "1 hour"
 msgstr "1 heure"
 
-#: src\ui\chat.rs:2551 src\ui\guild.rs:203
+#: src\ui\chat.rs:2614 src\ui\guild.rs:203
 msgid "30 minutes"
 msgstr "30 minutes"
 
-#: src\ui\chat.rs:2552
+#: src\ui\chat.rs:2615
 msgid "Don't clear"
 msgstr "Ne pas effacer"
 
-#: src\ui\chat.rs:2569
+#: src\ui\chat.rs:2632
 msgid "Select Friends"
 msgstr "Sélectionner des amis"
 
-#: src\ui\chat.rs:2570
+#: src\ui\chat.rs:2633
 msgid "You can add {count} more friend."
 msgid_plural "You can add {count} more friends."
 msgstr[0] "Tu peux ajouter encore {count} ami."
 msgstr[1] "Tu peux ajouter encore {count} amis."
 
-#: src\ui\chat.rs:2571
+#: src\ui\chat.rs:2634
 msgid "Type the username of a friend"
 msgstr "Saisis le nom d'utilisateur d'un ami"
 
-#: src\ui\chat.rs:2597
+#: src\ui\chat.rs:2660
 msgid "Create Group"
 msgstr "Créer un groupe"
 
-#: src\ui\chat.rs:2597 src\ui\mod.rs:1160
+#: src\ui\chat.rs:2660 src\ui\mod.rs:1175
 msgid "Create DM"
 msgstr "Créer un MP"
 
-#: src\ui\chat.rs:2604
+#: src\ui\chat.rs:2667
 msgid "Enter your password to continue."
 msgstr "Saisis ton mot de passe pour continuer."
 
-#: src\ui\chat.rs:2604 src\ui\gates.rs:164 src\ui\gates.rs:202 src\ui\mod.rs:327
+#: src\ui\chat.rs:2667 src\ui\gates.rs:164 src\ui\gates.rs:202 src\ui\mod.rs:327
 msgid "Password"
 msgstr "Mot de passe"
 
-#: src\ui\chat.rs:2604
+#: src\ui\chat.rs:2667
 msgid "Open your authentication app and enter the code below."
 msgstr "Ouvre ton application d'authentification et saisis le code ci-dessous."
 
-#: src\ui\chat.rs:2604
+#: src\ui\chat.rs:2667
 msgid "Enter Discord Auth/Backup Code"
 msgstr "Entrer le code d'authentification/code de sauvegarde Discord"
 
-#: src\ui\chat.rs:2610
+#: src\ui\chat.rs:2673
 msgid "Verify"
 msgstr "Vérifier"
 
-#: src\ui\chat.rs:2628
+#: src\ui\chat.rs:2691
 msgid "Post Title"
 msgstr "Titre du post"
 
-#: src\ui\chat.rs:2636 src\ui\chat.rs:2772
+#: src\ui\chat.rs:2699 src\ui\chat.rs:2835
 msgid "Post"
 msgstr "Post"
 
-#: src\ui\chat.rs:2657
+#: src\ui\chat.rs:2720
 msgid "Active Threads"
 msgstr "Fils actifs"
 
-#: src\ui\chat.rs:2665
+#: src\ui\chat.rs:2728
 msgid "Archived Threads"
 msgstr "Fils archivés"
 
-#: src\ui\chat.rs:2682
+#: src\ui\chat.rs:2745
 msgid "Reactions"
 msgstr "Réactions"
 
-#: src\ui\chat.rs:2720 src\ui\guild.rs:287 src\ui\guild_more.rs:176 src\ui\settings.rs:1534
+#: src\ui\chat.rs:2783 src\ui\guild.rs:287 src\ui\guild_more.rs:176 src\ui\settings.rs:1534
 msgid "Remove"
 msgstr "Retirer"
 
-#: src\ui\chat.rs:2735
+#: src\ui\chat.rs:2798
 msgid "Question"
 msgstr "Question"
 
-#: src\ui\chat.rs:2738
+#: src\ui\chat.rs:2801
 msgid "Answers"
 msgstr "Réponses"
 
-#: src\ui\chat.rs:2751
+#: src\ui\chat.rs:2814
 msgid "Add another answer"
 msgstr "Ajouter une autre réponse"
 
-#: src\ui\chat.rs:2757
+#: src\ui\chat.rs:2820
 msgid "Duration"
 msgstr "Durée"
 
-#: src\ui\chat.rs:2758
+#: src\ui\chat.rs:2821
 msgid "{count} hour"
 msgid_plural "{count} hours"
 msgstr[0] "{count} heure"
 msgstr[1] "{count} heures"
 
-#: src\ui\chat.rs:2758 src\ui\guild_more.rs:269
+#: src\ui\chat.rs:2821 src\ui\guild_more.rs:269
 msgid "{count} day"
 msgid_plural "{count} days"
 msgstr[0] "{count} jour"
 msgstr[1] "{count} jours"
 
-#: src\ui\chat.rs:2764
+#: src\ui\chat.rs:2827
 msgid "Allow Multiple Answers"
 msgstr "Autoriser plusieurs réponses"
 
-#: src\ui\chat.rs:2780 src\ui\mod.rs:1792
+#: src\ui\chat.rs:2846
+msgid "Follow Updates"
+msgstr "Suivre les mises à jour"
+
+#: src\ui\chat.rs:2852 src\ui\chat.rs:2853
+msgid "Select a server"
+msgstr "Sélectionner un serveur"
+
+#: src\ui\chat.rs:2864 src\ui\chat.rs:2865
+msgid "Select a channel"
+msgstr "Sélectionne un salon"
+
+#: src\ui\chat.rs:2882 src\ui\mod.rs:1807
 msgid "Edit Group"
 msgstr "Modifier le groupe"
 
-#: src\ui\chat.rs:2781
+#: src\ui\chat.rs:2883
 msgid "Group Name"
 msgstr "Nom du groupe"
 
-#: src\ui\chat.rs:2789 src\ui\mod.rs:1796
+#: src\ui\chat.rs:2891 src\ui\mod.rs:1811
 msgid "Add Friends to DM"
 msgstr "Ajouter des amis au groupe privé"
 
-#: src\ui\chat.rs:2812 src\ui\settings.rs:363
+#: src\ui\chat.rs:2914 src\ui\settings.rs:363
 msgid "Add"
 msgstr "Ajouter"
 
-#: src\ui\chat.rs:2969
+#: src\ui\chat.rs:3071
 msgid "escape to"
 msgstr "Échap pour"
 
-#: src\ui\chat.rs:2970
+#: src\ui\chat.rs:3072
 msgid "cancel"
 msgstr "annuler"
 
-#: src\ui\chat.rs:2974
+#: src\ui\chat.rs:3076
 msgid "enter to"
 msgstr "Entrée pour"
 
-#: src\ui\chat.rs:2975
+#: src\ui\chat.rs:3077
 msgid "save"
 msgstr "enregistrer"
 
-#: src\ui\chat.rs:3027 src\ui\settings.rs:288
+#: src\ui\chat.rs:3129 src\ui\settings.rs:288
 msgid "About Me"
 msgstr "À propos de moi"
 
-#: src\ui\chat.rs:3032 src\ui\guild.rs:827 src\ui\profile.rs:563
+#: src\ui\chat.rs:3134 src\ui\guild.rs:827 src\ui\profile.rs:563
 msgid "Member Since"
 msgstr "Membre depuis"
 
-#: src\ui\chat.rs:3043 src\ui\profile.rs:657 src\ui\requests.rs:187
+#: src\ui\chat.rs:3145 src\ui\profile.rs:657 src\ui\requests.rs:187
 msgid "{count} Mutual Server"
 msgid_plural "{count} Mutual Servers"
 msgstr[0] "{count} serveur en commun"
 msgstr[1] "{count} serveurs en commun"
 
-#: src\ui\chat.rs:3054 src\ui\profile.rs:651
+#: src\ui\chat.rs:3156 src\ui\profile.rs:651
 msgid "{count} Mutual Friend"
 msgid_plural "{count} Mutual Friends"
 msgstr[0] "{count} ami en commun"
 msgstr[1] "{count} amis en commun"
 
-#: src\ui\chat.rs:3077
+#: src\ui\chat.rs:3179
 msgid "Show Chat"
 msgstr "Afficher la discussion"
 
-#: src\ui\chat.rs:3084 src\ui\chat.rs:3203
+#: src\ui\chat.rs:3186 src\ui\chat.rs:3305
 msgid "Join Voice"
 msgstr "Rejoindre le salon vocal"
 
-#: src\ui\chat.rs:3198
+#: src\ui\chat.rs:3300
 msgid "in {name}"
 msgstr "dans {name}"
 
-#: src\ui\chat.rs:3203
+#: src\ui\chat.rs:3305
 msgid "Open Voice"
 msgstr "Ouvrir le salon vocal"
 
-#: src\ui\commands.rs:53 src\ui\mod.rs:1577 src\ui\soundboard.rs:210
+#: src\ui\commands.rs:53 src\ui\mod.rs:1592 src\ui\soundboard.rs:210
 msgid "Loading…"
 msgstr "Chargement…"
 
@@ -2548,7 +2576,7 @@ msgstr "Personne ne porte ce nom."
 msgid "Blocked — {count}"
 msgstr "Bloqués — {count}"
 
-#: src\ui\friends.rs:126 src\ui\mod.rs:1136 src\ui\overlay.rs:76 src\ui\titlebar.rs:121
+#: src\ui\friends.rs:126 src\ui\mod.rs:1151 src\ui\overlay.rs:76 src\ui\titlebar.rs:121
 msgid "Friends"
 msgstr "Amis"
 
@@ -2714,7 +2742,7 @@ msgstr "Désactive temporairement ton compte."
 msgid "Current Password"
 msgstr "Mot de passe actuel"
 
-#: src\ui\gates.rs:310 src\ui\markdown.rs:274 src\ui\mod.rs:735 src\ui\mod.rs:1063
+#: src\ui\gates.rs:310 src\ui\markdown.rs:274 src\ui\mod.rs:735 src\ui\mod.rs:1078
 msgid "Channels & Roles"
 msgstr "Salons et rôles"
 
@@ -2754,7 +2782,7 @@ msgstr "Ailleurs"
 msgid "Description"
 msgstr "Description"
 
-#: src\ui\gates.rs:448 src\ui\mod.rs:731 src\ui\mod.rs:1071
+#: src\ui\gates.rs:448 src\ui\mod.rs:731 src\ui\mod.rs:1086
 msgid "Events"
 msgstr "Événements"
 
@@ -2794,7 +2822,7 @@ msgid_plural "{count} members"
 msgstr[0] "{count} membre"
 msgstr[1] "{count} membres"
 
-#: src\ui\gates.rs:578 src\ui\gates.rs:587 src\ui\mod.rs:1496
+#: src\ui\gates.rs:578 src\ui\gates.rs:587 src\ui\mod.rs:1511
 msgid "Start Stage"
 msgstr "Commencer la conférence"
 
@@ -2810,7 +2838,7 @@ msgstr "Baisser la main"
 msgid "Request to Speak"
 msgstr "Demander à prendre la parole"
 
-#: src\ui\gates.rs:613 src\ui\mod.rs:1689
+#: src\ui\gates.rs:613 src\ui\mod.rs:1704
 msgid "Move to Audience"
 msgstr "Déplacer dans l'audience"
 
@@ -3074,7 +3102,7 @@ msgstr "Veux-tu vraiment supprimer le rôle {name} ? Cette action est irréversi
 msgid "Display"
 msgstr "Affichage"
 
-#: src\ui\guild.rs:545 src\ui\guild_more.rs:355 src\ui\mod.rs:1519
+#: src\ui\guild.rs:545 src\ui\guild_more.rs:355 src\ui\mod.rs:1534
 msgid "Permissions"
 msgstr "Permissions"
 
@@ -3286,7 +3314,7 @@ msgstr "Veux-tu vraiment bannir @{name} ? Cette personne ne pourra pas revenir s
 msgid "Ban"
 msgstr "Bannir"
 
-#: src\ui\guild.rs:945 src\ui\menu.rs:424 src\ui\mod.rs:2760
+#: src\ui\guild.rs:945 src\ui\menu.rs:424 src\ui\mod.rs:2775
 msgid "Copy User ID"
 msgstr "Copier l'identifiant"
 
@@ -3326,11 +3354,11 @@ msgstr "Aucune invitation active."
 msgid "Never"
 msgstr "Jamais"
 
-#: src\ui\guild.rs:1001 src\ui\guild_more.rs:257 src\ui\mod.rs:1514
+#: src\ui\guild.rs:1001 src\ui\guild_more.rs:257 src\ui\mod.rs:1529
 msgid "Copy Link"
 msgstr "Copier le lien"
 
-#: src\ui\guild.rs:1003 src\ui\mod.rs:2440
+#: src\ui\guild.rs:1003 src\ui\mod.rs:2455
 msgid "Link copied"
 msgstr "Lien copié"
 
@@ -3584,11 +3612,11 @@ msgstr "Rôles associés"
 msgid "unknown-channel"
 msgstr "salon-inconnu"
 
-#: src\ui\menu.rs:136 src\ui\mod.rs:2661
+#: src\ui\menu.rs:136 src\ui\mod.rs:2676
 msgid "For 15 Minutes"
 msgstr "Pendant 15 minutes"
 
-#: src\ui\menu.rs:137 src\ui\mod.rs:2662
+#: src\ui\menu.rs:137 src\ui\mod.rs:2677
 msgid "For 1 Hour"
 msgstr "Pendant 1 heure"
 
@@ -3596,11 +3624,11 @@ msgstr "Pendant 1 heure"
 msgid "For 3 Hours"
 msgstr "Pendant 3 heures"
 
-#: src\ui\menu.rs:139 src\ui\mod.rs:2663
+#: src\ui\menu.rs:139 src\ui\mod.rs:2678
 msgid "For 8 Hours"
 msgstr "Pendant 8 heures"
 
-#: src\ui\menu.rs:140 src\ui\mod.rs:2664
+#: src\ui\menu.rs:140 src\ui\mod.rs:2679
 msgid "For 24 Hours"
 msgstr "Pendant 24 heures"
 
@@ -3655,10 +3683,6 @@ msgstr "Utiliser le réglage de la catégorie"
 #: src\ui\menu.rs:197
 msgid "Use Server Default"
 msgstr "Utiliser le réglage du serveur"
-
-#: src\ui\menu.rs:200
-msgid "Notification Settings"
-msgstr "Paramètres de notification"
 
 #: src\ui\menu.rs:242
 msgid "60 Seconds"
@@ -3940,7 +3964,7 @@ msgstr "Masquer les liens d'invitation"
 msgid "Hide Muted Channels"
 msgstr "Masquer les salons en sourdine"
 
-#: src\ui\mod.rs:713 src\ui\mod.rs:770 src\ui\mod.rs:1510
+#: src\ui\mod.rs:713 src\ui\mod.rs:770 src\ui\mod.rs:1048 src\ui\mod.rs:1525
 msgid "Invite People"
 msgstr "Inviter des gens"
 
@@ -3960,7 +3984,7 @@ msgstr "Quitter le serveur"
 msgid "Copy Server ID"
 msgstr "Copier l'identifiant du serveur"
 
-#: src\ui\mod.rs:813 src\ui\mod.rs:991 src\ui\mod.rs:1155 src\ui\settings.rs:544
+#: src\ui\mod.rs:813 src\ui\mod.rs:991 src\ui\mod.rs:1170 src\ui\settings.rs:544
 msgid "Direct Messages"
 msgstr "Messages privés"
 
@@ -3984,322 +4008,322 @@ msgstr "Marquer le dossier comme lu"
 msgid "Find or start a conversation"
 msgstr "Rechercher/lancer une conversation"
 
-#: src\ui\mod.rs:1144
+#: src\ui\mod.rs:1159
 msgid "Nitro Home"
 msgstr "Ton Nitro"
 
-#: src\ui\mod.rs:1144
+#: src\ui\mod.rs:1159
 msgid "Shop"
 msgstr "Boutique"
 
-#: src\ui\mod.rs:1144
+#: src\ui\mod.rs:1159
 msgid "Quests"
 msgstr "Quêtes"
 
-#: src\ui\mod.rs:1404
+#: src\ui\mod.rs:1419
 msgid "You do not have permission to view this channel."
 msgstr "Tu n'as pas la permission de voir ce salon."
 
-#: src\ui\mod.rs:1432
+#: src\ui\mod.rs:1447
 msgid "Invite to Voice"
 msgstr "Inviter dans le vocal"
 
-#: src\ui\mod.rs:1452
+#: src\ui\mod.rs:1467
 msgid "Collapse Category"
 msgstr "Réduire la catégorie"
 
-#: src\ui\mod.rs:1459
+#: src\ui\mod.rs:1474
 msgid "Collapse All Categories"
 msgstr "Réduire toutes les catégories"
 
-#: src\ui\mod.rs:1472
+#: src\ui\mod.rs:1487
 msgid "Edit Category"
 msgstr "Modifier la catégorie"
 
-#: src\ui\mod.rs:1479
+#: src\ui\mod.rs:1494
 msgid "Copy Category ID"
 msgstr "Copier l'identifiant de la catégorie"
 
-#: src\ui\mod.rs:1491
+#: src\ui\mod.rs:1506
 msgid "Join Voice Channel"
 msgstr "Rejoindre le salon vocal"
 
-#: src\ui\mod.rs:1500
+#: src\ui\mod.rs:1515
 msgid "End Stage"
 msgstr "Terminer la conférence"
 
-#: src\ui\mod.rs:1531
+#: src\ui\mod.rs:1546
 msgid "Leave Thread"
 msgstr "Quitter le fil"
 
-#: src\ui\mod.rs:1531
+#: src\ui\mod.rs:1546
 msgid "Join Thread"
 msgstr "Rejoindre le fil"
 
-#: src\ui\mod.rs:1536
+#: src\ui\mod.rs:1551
 msgid "Close Thread"
 msgstr "Fermer le fil"
 
-#: src\ui\mod.rs:1540
+#: src\ui\mod.rs:1555
 msgid "Unlock Thread"
 msgstr "Déverrouiller le fil"
 
-#: src\ui\mod.rs:1540
+#: src\ui\mod.rs:1555
 msgid "Lock Thread"
 msgstr "Verrouiller le fil"
 
-#: src\ui\mod.rs:1554
+#: src\ui\mod.rs:1569
 msgid "Edit Channel"
 msgstr "Modifier le salon"
 
-#: src\ui\mod.rs:1561 src\ui\mod.rs:1814
+#: src\ui\mod.rs:1576 src\ui\mod.rs:1829
 msgid "Copy Channel ID"
 msgstr "Copier l'identifiant du salon"
 
-#: src\ui\mod.rs:1643
+#: src\ui\mod.rs:1658
 msgid "Mute Soundboard"
 msgstr "Rendre le Soundboard muet"
 
-#: src\ui\mod.rs:1652 src\ui\profile.rs:596
+#: src\ui\mod.rs:1667 src\ui\profile.rs:596
 msgid "User Volume"
 msgstr "Volume de l'utilisateur"
 
-#: src\ui\mod.rs:1671
+#: src\ui\mod.rs:1686
 msgid "Server Mute"
 msgstr "Rendre muet sur le serveur"
 
-#: src\ui\mod.rs:1674
+#: src\ui\mod.rs:1689
 msgid "Server Deafen"
 msgstr "Mettre en sourdine sur le serveur"
 
-#: src\ui\mod.rs:1677 src\ui\mod.rs:2147 src\ui\overlay.rs:540
+#: src\ui\mod.rs:1692 src\ui\mod.rs:2162 src\ui\overlay.rs:540
 msgid "Disconnect"
 msgstr "Déconnecter"
 
-#: src\ui\mod.rs:1687
+#: src\ui\mod.rs:1702
 msgid "Invite to Speak"
 msgstr "Inviter à parler"
 
-#: src\ui\mod.rs:1700
+#: src\ui\mod.rs:1715
 msgid "Move to"
 msgstr "Déplacer vers"
 
-#: src\ui\mod.rs:1767
+#: src\ui\mod.rs:1782
 msgid "{count} Member"
 msgid_plural "{count} Members"
 msgstr[0] "{count} membre"
 msgstr[1] "{count} membres"
 
-#: src\ui\mod.rs:1800 src\ui\mod.rs:1802 src\ui\mod.rs:1804
+#: src\ui\mod.rs:1815 src\ui\mod.rs:1817 src\ui\mod.rs:1819
 msgid "Leave Group"
 msgstr "Quitter le groupe"
 
-#: src\ui\mod.rs:1803
+#: src\ui\mod.rs:1818
 msgid "Are you sure you want to leave this group?"
 msgstr "Veux-tu vraiment quitter ce groupe ?"
 
-#: src\ui\mod.rs:1809
+#: src\ui\mod.rs:1824
 msgid "Close DM"
 msgstr "Fermer le MP"
 
-#: src\ui\mod.rs:1911
+#: src\ui\mod.rs:1926
 msgid "Windows Default"
 msgstr "Par défaut de Windows"
 
-#: src\ui\mod.rs:1911
+#: src\ui\mod.rs:1926
 msgid "System Default"
 msgstr "Par défaut du système"
 
-#: src\ui\mod.rs:1974
+#: src\ui\mod.rs:1989
 msgid "Input Device"
 msgstr "Périphérique d'entrée"
 
-#: src\ui\mod.rs:1974
+#: src\ui\mod.rs:1989
 msgid "Output Device"
 msgstr "Périphérique de sortie"
 
-#: src\ui\mod.rs:1993 src\ui\settings.rs:976
+#: src\ui\mod.rs:2008 src\ui\settings.rs:976
 msgid "Input Profile"
 msgstr "Profil d'entrée"
 
-#: src\ui\mod.rs:2006
+#: src\ui\mod.rs:2021
 msgid "Input Volume"
 msgstr "Volume d'entrée"
 
-#: src\ui\mod.rs:2006
+#: src\ui\mod.rs:2021
 msgid "Output Volume"
 msgstr "Volume de sortie"
 
-#: src\ui\mod.rs:2016
+#: src\ui\mod.rs:2031
 msgid "Voice Settings"
 msgstr "Paramètres vocaux"
 
-#: src\ui\mod.rs:2050
+#: src\ui\mod.rs:2065
 msgid "Voice Isolation"
 msgstr "Isolation de la voix"
 
-#: src\ui\mod.rs:2051
+#: src\ui\mod.rs:2066
 msgid "Studio"
 msgstr "Studio"
 
-#: src\ui\mod.rs:2052
+#: src\ui\mod.rs:2067
 msgid "Custom"
 msgstr "Personnalisé"
 
-#: src\ui\mod.rs:2058
+#: src\ui\mod.rs:2073
 msgid "Just your beautiful voice: let Discord cut through the noise"
 msgstr "Rien que ta jolie voix : laisse Discord s'occuper des bruits parasites"
 
-#: src\ui\mod.rs:2059
+#: src\ui\mod.rs:2074
 msgid "Pure audio: open mic with no processing"
 msgstr "Audio pur : micro ouvert sans aucun traitement"
 
-#: src\ui\mod.rs:2060
+#: src\ui\mod.rs:2075
 msgid "Advanced mode: give me all the buttons and dials!"
 msgstr "Mode avancé : je veux utiliser tous les boutons !"
 
-#: src\ui\mod.rs:2094 src\ui\overlay.rs:569
+#: src\ui\mod.rs:2109 src\ui\overlay.rs:569
 msgid "Voice Connected"
 msgstr "Connecté au vocal"
 
-#: src\ui\mod.rs:2098 src\ui\mod.rs:2125 src\ui\mod.rs:2249
+#: src\ui\mod.rs:2113 src\ui\mod.rs:2140 src\ui\mod.rs:2264
 msgid "Connecting…"
 msgstr "Connexion…"
 
-#: src\ui\mod.rs:2116
+#: src\ui\mod.rs:2131
 msgid "Excellent"
 msgstr "Excellente"
 
-#: src\ui\mod.rs:2116
+#: src\ui\mod.rs:2131
 msgid "Good"
 msgstr "Bonne"
 
-#: src\ui\mod.rs:2116
+#: src\ui\mod.rs:2131
 msgid "Bad"
 msgstr "Mauvaise"
 
-#: src\ui\mod.rs:2117
+#: src\ui\mod.rs:2132
 msgid "Average ping: {ms} ms"
 msgstr "Ping moyen : {ms} ms"
 
-#: src\ui\mod.rs:2118
+#: src\ui\mod.rs:2133
 msgid "Connection: {quality}"
 msgstr "Connexion : {quality}"
 
-#: src\ui\mod.rs:2122
+#: src\ui\mod.rs:2137
 msgid "Measuring the ping…"
 msgstr "Mesure du ping…"
 
-#: src\ui\mod.rs:2125
+#: src\ui\mod.rs:2140
 msgid "End-to-end encrypted"
 msgstr "Chiffré de bout en bout"
 
-#: src\ui\mod.rs:2164
+#: src\ui\mod.rs:2179
 msgid "Noise Suppression On"
 msgstr "Suppression du bruit activée"
 
-#: src\ui\mod.rs:2164
+#: src\ui\mod.rs:2179
 msgid "Noise Suppression Off"
 msgstr "Suppression du bruit désactivée"
 
-#: src\ui\mod.rs:2191 src\ui\settings.rs:1003
+#: src\ui\mod.rs:2206 src\ui\settings.rs:1003
 msgid "Noise Suppression"
 msgstr "Suppression du bruit"
 
-#: src\ui\mod.rs:2191
+#: src\ui\mod.rs:2206
 msgid "Make some noise—like clapping your hands—while speaking. Your friends will hear nothing but your beautiful voice."
 msgstr "Fais du bruit (tape dans tes mains par exemple), tout en parlant. Tes amis n'entendront rien d'autre que ta magnifique voix."
 
-#: src\ui\mod.rs:2196 src\ui\settings.rs:946
+#: src\ui\mod.rs:2211 src\ui\settings.rs:946
 msgid "Mic Test"
 msgstr "Test du micro"
 
-#: src\ui\mod.rs:2199
+#: src\ui\mod.rs:2214
 msgid "Stop"
 msgstr "Arrêter"
 
-#: src\ui\mod.rs:2199
+#: src\ui\mod.rs:2214
 msgid "Test"
 msgstr "Tester"
 
-#: src\ui\mod.rs:2250
+#: src\ui\mod.rs:2265
 msgid "No connection"
 msgstr "Pas de connexion"
 
-#: src\ui\mod.rs:2271
+#: src\ui\mod.rs:2286
 msgid "User Settings"
 msgstr "Paramètres utilisateur"
 
-#: src\ui\mod.rs:2276
+#: src\ui\mod.rs:2291
 msgid "Output Options"
 msgstr "Options de sortie"
 
-#: src\ui\mod.rs:2283
+#: src\ui\mod.rs:2298
 msgid "Input Options"
 msgstr "Options d'entrée"
 
-#: src\ui\mod.rs:2318
+#: src\ui\mod.rs:2333
 msgid "is calling you…"
 msgstr "t'appelle…"
 
-#: src\ui\mod.rs:2330 src\ui\overlay.rs:597
+#: src\ui\mod.rs:2345 src\ui\overlay.rs:597
 msgid "Decline"
 msgstr "Refuser"
 
-#: src\ui\mod.rs:2330
+#: src\ui\mod.rs:2345
 msgctxt "call"
 msgid "Accept"
 msgstr "Accepter"
 
-#: src\ui\mod.rs:2367
+#: src\ui\mod.rs:2382
 msgid "Where would you like to go?"
 msgstr "Où désires-tu aller ?"
 
-#: src\ui\mod.rs:2368
+#: src\ui\mod.rs:2383
 msgid "Channel, server or conversation"
 msgstr "Salon, serveur ou conversation"
 
-#: src\ui\mod.rs:2595
+#: src\ui\mod.rs:2610
 msgid "Update ready ({version}): restart"
 msgstr "Mise à jour prête ({version}) : redémarrer"
 
-#: src\ui\mod.rs:2596
+#: src\ui\mod.rs:2611
 msgid "Downloading version {version}: {percent}%"
 msgstr "Téléchargement de la version {version} : {percent} %"
 
-#: src\ui\mod.rs:2665
+#: src\ui\mod.rs:2680
 msgid "For 3 Days"
 msgstr "Pendant 3 jours"
 
-#: src\ui\mod.rs:2666
+#: src\ui\mod.rs:2681
 msgid "Forever"
 msgstr "Pour toujours"
 
-#: src\ui\mod.rs:2697
+#: src\ui\mod.rs:2712
 msgid "You will not receive desktop notifications"
 msgstr "Tu ne recevras pas de notifications sur le bureau"
 
-#: src\ui\mod.rs:2698
+#: src\ui\mod.rs:2713
 msgid "You will not appear online, but will have full access to Discord"
 msgstr "Tu n'apparaîtras pas en ligne, mais tu auras accès à tout Discord"
 
-#: src\ui\mod.rs:2720
+#: src\ui\mod.rs:2735
 msgid "Switch Accounts"
 msgstr "Changer de compte"
 
-#: src\ui\mod.rs:2744
+#: src\ui\mod.rs:2759
 msgid "Remove From This List"
 msgstr "Retirer de cette liste"
 
-#: src\ui\mod.rs:2751
+#: src\ui\mod.rs:2766
 msgid "Add an Account"
 msgstr "Ajouter un compte"
 
-#: src\ui\mod.rs:2755
+#: src\ui\mod.rs:2770
 msgid "Log Out of This Account"
 msgstr "Se déconnecter de ce compte"
 
-#: src\ui\mod.rs:2762
+#: src\ui\mod.rs:2777
 msgid "ID copied"
 msgstr "Identifiant copié"
 

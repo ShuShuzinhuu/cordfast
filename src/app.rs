@@ -252,6 +252,8 @@ pub enum InboxTab {
 
 /// A small dialog over everything.
 pub enum Modal {
+    /// Follow an announcement channel into a channel of ours.
+    Follow { channel: Id, guild: Option<Id>, target: Option<Id> },
     /// Join with an invite, or create a server.
     AddServer { invite: String, name: String },
     NewThread { channel: Id, message: Id, name: String },

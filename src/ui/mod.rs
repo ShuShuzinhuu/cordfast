@@ -1017,18 +1017,20 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
             return;
         }
         ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-            // A long name stops short of the arrow.
-            let room = ui.available_width() - if app.selected_guild.is_some() { 26.0 } else { 0.0 };
+            // Discord's header: the name with its chevron right after it,
+            // and "Invite People" at the far right.
+            let room = ui.available_width() - 26.0 - 32.0;
             ui.scope(|ui| {
                 ui.set_max_width(room);
                 ui.add(Label::new(RichText::new(title).font(theme::strong(16.0)).color(p.strong)).truncate());
             });
-            if app.selected_guild.is_some() {
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    let (rect, _) = ui.allocate_exact_size(Vec2::splat(18.0), Sense::hover());
-                    icons::paint(ui, rect, Icon::ChevronDown, p.strong);
-                });
-            }
+            let (rect, _) = ui.allocate_exact_size(Vec2::splat(16.0), Sense::hover());
+            icons::paint(ui, rect, Icon::ChevronDown, p.strong);
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                let (rect, _) = ui.allocate_exact_size(Vec2::splat(20.0), Sense::hover());
+                icons::paint(ui, rect, Icon::UserPlus, p.muted);
+                ui.data_mut(|d| d.insert_temp(egui::Id::new("server-invite-rect"), rect));
+            });
         });
     });
     if let Some(guild) = app.selected_guild {
@@ -1037,6 +1039,19 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
             ui.painter().rect_filled(header.response.rect, 0.0, p.hover.linear_multiply(0.5));
         }
         server_menu(app, &response, guild);
+        // Registered after the header, so it takes its own clicks.
+        if let Some(rect) = ui.data(|d| d.get_temp::<Rect>(egui::Id::new("server-invite-rect"))) {
+            let invite = ui.interact(rect.expand(4.0), ui.id().with("server-invite"), Sense::click());
+            if invite.hovered() {
+                icons::paint(ui, rect, Icon::UserPlus, p.strong);
+            }
+            if invite.on_hover_text(t!("Invite People")).clicked() {
+                let target = app.selected_channel.filter(|c| app.channel(*c).is_some_and(|c| c.guild_id == Some(guild))).or_else(|| app.guild(guild).and_then(|g| g.channels.iter().find(|c| c.kind == ChannelKind::Text).map(|c| c.id)));
+                if let Some(channel) = target {
+                    create_invite(app, channel);
+                }
+            }
+        }
     }
     let line = ui.cursor().top();
     ui.painter().hline(ui.max_rect().x_range(), line, Stroke::new(1.0, p.border));
@@ -1090,7 +1105,7 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                         let color = if response.hovered() { p.strong } else { p.muted };
                         // Discord's current list: the name as written, the
                         // chevron after it, pointing right while collapsed.
-                        let text = ui.painter().text(pos2(rect.left() + 16.0, rect.center().y), Align2::LEFT_CENTER, &name, theme::strong(13.0), color);
+                        let text = ui.painter().text(pos2(rect.left() + 16.0, rect.center().y), Align2::LEFT_CENTER, &name, theme::strong(14.0), color);
                         let arrow = Rect::from_center_size(pos2(text.right() + 9.0, rect.center().y), Vec2::splat(12.0));
                         if collapsed {
                             icons::paint_chevron_right(ui, arrow, color);
