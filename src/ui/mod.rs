@@ -2402,13 +2402,16 @@ fn account(app: &mut App, ui: &mut egui::Ui) {
     ui.horizontal_centered(|ui| {
         let (rect, response) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::click());
         app.images.circle(ui, rect, Some(&me.avatar_url()), &initials(me.display_name()), 16.0);
+        // Speaking in a call: Discord's green ring on the avatar's edge, the
+        // status dot still cut out over it.
+        if app.voice.channel.is_some() && !app.voice.mute && app.voice.speaking.contains(&me.id) {
+            ui.painter().circle_stroke(rect.center(), 15.0, Stroke::new(2.0, p.green));
+        }
         match app.connection {
             Connection::Connected => friends::dot(ui, rect, &app.status, p.account),
             Connection::Connecting => friends::dot(ui, rect, "idle", p.account),
             Connection::Disconnected => friends::dot(ui, rect, "dnd", p.account),
         }
-        // No speaking ring here: Discord shows it in the channel's list,
-        // and over the status dot it hid it.
         if response.clicked() {
             // Over the account card, its left edge with the card's.
             let card = ui.data(|d| d.get_temp::<Rect>(egui::Id::new("account-card-rect"))).unwrap_or(ui.max_rect());
