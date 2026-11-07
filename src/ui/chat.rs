@@ -1543,16 +1543,21 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
     let p = theme::p();
     ui.add_space(4.0);
     let bar = embed.color.and_then(theme::role_color).unwrap_or(p.selected);
+    // Discord's `embedFull`: 432 points at most with its 4-point bar, no
+    // border, padded 2 16 16 12 inside the bar, each part 8 points under
+    // the last (the picture 16).
     let response = Frame::new()
         .fill(p.sidebar)
-        .stroke(Stroke::new(1.0, p.border))
         .corner_radius(CornerRadius::same(4))
-        .inner_margin(Margin { left: 16, right: 16, top: 10, bottom: 12 })
+        .inner_margin(Margin { left: 16, right: 16, top: 2, bottom: 16 })
         .show(ui, |ui| {
-            ui.set_max_width(516.0);
+            ui.set_max_width(400.0);
+            ui.spacing_mut().item_spacing.y = 8.0;
+            ui.add_space(6.0);
             ui.horizontal_top(|ui| {
                 ui.vertical(|ui| {
-                    ui.set_max_width(if embed.thumbnail.is_some() { 420.0 } else { 484.0 });
+                    ui.spacing_mut().item_spacing.y = 8.0;
+                    ui.set_max_width(if embed.thumbnail.is_some() { 316.0 } else { 400.0 });
                     if let Some(provider) = &embed.provider {
                         ui.label(RichText::new(provider).size(12.0).color(p.muted));
                     }
@@ -1578,10 +1583,10 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                     if let Some(title) = &embed.title {
                         match &embed.url {
                             Some(url) => {
-                                ui.hyperlink_to(RichText::new(title).font(theme::strong(15.0)).color(p.link), url);
+                                ui.hyperlink_to(RichText::new(title).font(theme::strong(16.0)).color(p.link), url);
                             }
                             None => {
-                                ui.label(RichText::new(title).font(theme::strong(15.0)).color(p.strong));
+                                ui.label(RichText::new(title).font(theme::strong(16.0)).color(p.strong));
                             }
                         }
                     }
@@ -1596,10 +1601,10 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                         if row.is_empty() {
                             return;
                         }
-                        ui.add_space(4.0);
                         ui.columns(row.len(), |columns| {
                             for (column, (name, value, _)) in columns.iter_mut().zip(row.iter()) {
-                                column.label(RichText::new(name).font(theme::strong(13.5)).color(p.strong));
+                                column.spacing_mut().item_spacing.y = 2.0;
+                                column.label(RichText::new(name).font(theme::strong(14.0)).color(p.strong));
                                 let blocks = markdown::parse(value);
                                 markdown::show_sized(app, column, &blocks, p.text, 0, 14.0);
                             }
@@ -1623,13 +1628,13 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                 }
             });
             if let Some((url, w, h)) = &embed.image {
+                ui.add_space(8.0);
                 let original = embed.url.clone().unwrap_or_else(|| url.clone());
                 picture(app, ui, url, &original, *w, *h, 400.0, 300.0, Some(message));
             }
             // The footer's picture and text, and when it happened: "Today
             // at 7:30 PM", as message times read.
             if embed.footer.is_some() || embed.timestamp.is_some() {
-                ui.add_space(6.0);
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 8.0;
                     if let Some(icon) = &embed.footer_icon {
@@ -1642,7 +1647,7 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                         (None, Some(ms)) => text::time(ms),
                         (None, None) => String::new(),
                     };
-                    ui.label(RichText::new(line).font(theme::strong(12.0)).color(p.text));
+                    ui.label(RichText::new(line).font(theme::medium(12.0)).color(p.text));
                 });
             }
         });

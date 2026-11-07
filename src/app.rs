@@ -2372,8 +2372,10 @@ impl App {
                     .map(|c| (self.latest.get(&c.id).copied().unwrap_or(0), c.id))
                     .collect();
                 dms.sort_unstable_by(|a, b| b.cmp(a));
-                if let Some((_, id)) = dms.get(index) {
-                    self.open_channel(*id);
+                // "dm:name=Loritta" opens the conversation with that title.
+                let named = n.strip_prefix("name=").and_then(|name| self.dms.iter().find(|c| c.title() == name).map(|c| c.id));
+                if let Some(id) = named.or_else(|| dms.get(index).map(|(_, id)| *id)) {
+                    self.open_channel(id);
                 }
             }
             "profile" | "member" => {
