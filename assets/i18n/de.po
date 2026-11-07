@@ -807,19 +807,19 @@ msgstr "Zeigt Text mit Betonung an."
 msgid "Marks your message as a spoiler."
 msgstr "Markiert deine Nachricht als Spoiler."
 
-#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3378
+#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3371
 msgid "Streaming {name}"
 msgstr "Streamt {name}"
 
-#: src\discord\gateway.rs:281 src\discord\gateway.rs:293 src\ui\chat.rs:3379
+#: src\discord\gateway.rs:281 src\discord\gateway.rs:293 src\ui\chat.rs:3372
 msgid "Listening to {name}"
 msgstr "Hört {name}"
 
-#: src\discord\gateway.rs:282 src\discord\gateway.rs:294 src\ui\chat.rs:3380
+#: src\discord\gateway.rs:282 src\discord\gateway.rs:294 src\ui\chat.rs:3373
 msgid "Watching {name}"
 msgstr "Schaut {name}"
 
-#: src\discord\gateway.rs:283 src\discord\gateway.rs:295 src\ui\chat.rs:3381
+#: src\discord\gateway.rs:283 src\discord\gateway.rs:295 src\ui\chat.rs:3374
 msgid "Competing in {name}"
 msgstr "Tritt an in {name}"
 
@@ -827,15 +827,15 @@ msgstr "Tritt an in {name}"
 msgid "Playing"
 msgstr "Spielt"
 
-#: src\discord\gateway.rs:291 src\ui\chat.rs:3382
+#: src\discord\gateway.rs:291 src\ui\chat.rs:3375
 msgid "Playing {name}"
 msgstr "Spielt {name}"
 
-#: src\discord\gateway.rs:461
+#: src\discord\gateway.rs:455
 msgid "no connection to Discord"
 msgstr "keine Verbindung zu Discord"
 
-#: src\discord\gateway.rs:586
+#: src\discord\gateway.rs:580
 msgid "the gateway refused the connection ({code})"
 msgstr "das Gateway hat die Verbindung abgelehnt ({code})"
 
@@ -1476,7 +1476,7 @@ msgstr "Wähle einen Kanal  ·  Strg+K zum Suchen"
 msgid "Pick a channel"
 msgstr "Wähle einen Kanal"
 
-#: src\ui\chat.rs:150 src\ui\chat.rs:2196 src\ui\chat.rs:3341 src\ui\friends.rs:261
+#: src\ui\chat.rs:150 src\ui\chat.rs:2196 src\ui\chat.rs:3332 src\ui\friends.rs:261
 msgid "In voice"
 msgstr "Im Sprachchat"
 
@@ -1650,7 +1650,7 @@ msgstr "Als ungelesen markieren"
 msgid "Delete"
 msgstr "Löschen"
 
-#: src\ui\chat.rs:867 src\ui\chat.rs:1450 src\ui\friends.rs:388 src\ui\profile.rs:187
+#: src\ui\chat.rs:867 src\ui\chat.rs:1450 src\ui\friends.rs:388 src\ui\profile.rs:190
 msgid "More"
 msgstr "Mehr"
 
@@ -2186,7 +2186,7 @@ msgstr "Einem Server beitreten"
 msgid "Paste an invite, such as discord.gg/abc123"
 msgstr "Füge eine Einladung ein, zum Beispiel discord.gg/abc123"
 
-#: src\ui\chat.rs:2631 src\ui\gates.rs:565 src\ui\profile.rs:452
+#: src\ui\chat.rs:2631 src\ui\gates.rs:565 src\ui\profile.rs:469
 msgid "Join"
 msgstr "Beitreten"
 
@@ -2376,39 +2376,35 @@ msgstr "Enter zum"
 msgid "save"
 msgstr "Speichern"
 
-#: src\ui\chat.rs:3188 src\ui\settings.rs:288
-msgid "About Me"
-msgstr "Über mich"
+#: src\ui\chat.rs:3170
+msgid "Friend"
+msgstr "Freund"
 
-#: src\ui\chat.rs:3193 src\ui\guild.rs:827 src\ui\profile.rs:563
+#: src\ui\chat.rs:3172 src\ui\friends.rs:394 src\ui\menu.rs:292 src\ui\menu.rs:433
+msgid "Remove Friend"
+msgstr "Freund entfernen"
+
+#: src\ui\chat.rs:3194 src\ui\guild.rs:827 src\ui\profile.rs:580
 msgid "Member Since"
 msgstr "Mitglied seit"
 
-#: src\ui\chat.rs:3204 src\ui\profile.rs:657 src\ui\requests.rs:187
-msgid "{count} Mutual Server"
-msgid_plural "{count} Mutual Servers"
-msgstr[0] "{count} gemeinsamer Server"
-msgstr[1] "{count} gemeinsame Server"
+#: src\ui\chat.rs:3204
+msgid "View Full Profile"
+msgstr "Vollständiges Profil anzeigen"
 
-#: src\ui\chat.rs:3215 src\ui\profile.rs:651
-msgid "{count} Mutual Friend"
-msgid_plural "{count} Mutual Friends"
-msgstr[0] "{count} gemeinsamer Freund"
-msgstr[1] "{count} gemeinsame Freunde"
-
-#: src\ui\chat.rs:3238
+#: src\ui\chat.rs:3228
 msgid "Show Chat"
 msgstr "Chat anzeigen"
 
-#: src\ui\chat.rs:3245 src\ui\chat.rs:3364
+#: src\ui\chat.rs:3235 src\ui\chat.rs:3357
 msgid "Join Voice"
 msgstr "Sprachchat beitreten"
 
-#: src\ui\chat.rs:3359
+#: src\ui\chat.rs:3352
 msgid "in {name}"
 msgstr "in {name}"
 
-#: src\ui\chat.rs:3364
+#: src\ui\chat.rs:3357
 msgid "Open Voice"
 msgstr "Sprachanruf öffnen"
 
@@ -2635,10 +2631,6 @@ msgstr "Ausgehende Freundschaftsanfrage"
 #: src\ui\friends.rs:369
 msgid "Blocked"
 msgstr "Blockiert"
-
-#: src\ui\friends.rs:394 src\ui\menu.rs:292 src\ui\menu.rs:433
-msgid "Remove Friend"
-msgstr "Freund entfernen"
 
 #: src\ui\friends.rs:420 src\ui\menu.rs:318 src\ui\settings.rs:569
 msgid "Unblock"
@@ -3728,7 +3720,7 @@ msgstr "Erwähnen"
 msgid "Call"
 msgstr "Anrufen"
 
-#: src\ui\menu.rs:283
+#: src\ui\menu.rs:283 src\ui\profile.rs:213
 msgid "Add Note"
 msgstr "Notiz hinzufügen"
 
@@ -4096,7 +4088,7 @@ msgstr "Kanal-ID kopieren"
 msgid "Mute Soundboard"
 msgstr "Soundboard stummschalten"
 
-#: src\ui\mod.rs:1707 src\ui\profile.rs:596
+#: src\ui\mod.rs:1707 src\ui\profile.rs:613
 msgid "User Volume"
 msgstr "Benutzerlautstärke"
 
@@ -4573,59 +4565,71 @@ msgstr "Max. angezeigte Benutzer"
 msgid "For each text message notification, shows a notice that you can reply to."
 msgstr "Zeigt für jede Benachrichtigung zu Textnachrichten eine Mitteilung an, auf die du antworten kannst."
 
-#: src\ui\profile.rs:153
+#: src\ui\profile.rs:156
 msgid "Add Status"
 msgstr "Status hinzufügen"
 
-#: src\ui\profile.rs:297
+#: src\ui\profile.rs:314
 msgid "Server Tag"
 msgstr "Server-Tag"
 
-#: src\ui\profile.rs:407
+#: src\ui\profile.rs:424
 msgid "{number} Online"
 msgstr "{number} online"
 
-#: src\ui\profile.rs:408
+#: src\ui\profile.rs:425
 msgid "{number} Member"
 msgid_plural "{number} Members"
 msgstr[0] "{number} Mitglied"
 msgstr[1] "{number} Mitglieder"
 
-#: src\ui\profile.rs:416
+#: src\ui\profile.rs:433
 msgid "Est. {date}"
 msgstr "Seit {date}"
 
-#: src\ui\profile.rs:446
+#: src\ui\profile.rs:463
 msgid "+ {count} more"
 msgid_plural "+ {count} more"
 msgstr[0] "+ {count} weiteres"
 msgstr[1] "+ {count} weitere"
 
-#: src\ui\profile.rs:452
+#: src\ui\profile.rs:469
 msgid "Go to Server"
 msgstr "Zum Server"
 
-#: src\ui\profile.rs:568
+#: src\ui\profile.rs:585
 msgid "Friends Since"
 msgstr "Freunde seit"
 
-#: src\ui\profile.rs:584 src\ui\settings.rs:1512
+#: src\ui\profile.rs:601 src\ui\settings.rs:1512
 msgid "Connections"
 msgstr "Verbindungen"
 
-#: src\ui\profile.rs:717
+#: src\ui\profile.rs:676
+msgid "{count} Mutual Friend"
+msgid_plural "{count} Mutual Friends"
+msgstr[0] "{count} gemeinsamer Freund"
+msgstr[1] "{count} gemeinsame Freunde"
+
+#: src\ui\profile.rs:682 src\ui\requests.rs:187
+msgid "{count} Mutual Server"
+msgid_plural "{count} Mutual Servers"
+msgstr[0] "{count} gemeinsamer Server"
+msgstr[1] "{count} gemeinsame Server"
+
+#: src\ui\profile.rs:742
 msgid "No servers in common."
 msgstr "Keine gemeinsamen Server."
 
-#: src\ui\profile.rs:742
+#: src\ui\profile.rs:767
 msgid "No friends in common."
 msgstr "Keine gemeinsamen Freunde."
 
-#: src\ui\profile.rs:777
+#: src\ui\profile.rs:802
 msgid "Edit Profile"
 msgstr "Profil bearbeiten"
 
-#: src\ui\profile.rs:795
+#: src\ui\profile.rs:820
 msgid "Message @{name}"
 msgstr "Nachricht an @{name}"
 
@@ -4792,6 +4796,10 @@ msgstr "Pronomen"
 #: src\ui\settings.rs:286
 msgid "Add your pronouns"
 msgstr "Deine Pronomen hinzufügen"
+
+#: src\ui\settings.rs:288
+msgid "About Me"
+msgstr "Über mich"
 
 #: src\ui\settings.rs:298
 msgid "Change Avatar"

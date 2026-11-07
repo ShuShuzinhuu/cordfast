@@ -347,12 +347,6 @@ impl Presence {
         })
     }
 
-    /// "Playing X", "Listening to Y" or the custom status, in the
-    /// interface's language when shown.
-    pub fn activity(&self) -> Option<String> {
-        self.activities.first().map(Activity::line).or_else(|| self.custom.clone())
-    }
-
     /// Every presence in READY or READY_SUPPLEMENTAL, in either shape.
     pub fn all_in(d: &Value) -> Vec<Self> {
         let mut out = Vec::new();

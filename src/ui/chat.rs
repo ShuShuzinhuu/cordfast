@@ -3146,77 +3146,67 @@ fn dm_profile(app: &mut App, ui: &mut egui::Ui, user: &crate::discord::model::Us
         app.commands.send(crate::backend::Command::Profile { user: user.id, guild: None });
     }
     let profile = app.profiles.get(&user.id).cloned();
-    let banner_color = profile
-        .as_ref()
-        .and_then(|pr| pr.theme_colors.map(|c| c.0).or(pr.accent))
-        .and_then(theme::role_color)
-        .unwrap_or(p.accent);
-    let (banner, _) = ui.allocate_exact_size(vec2(ui.available_width(), 120.0), Sense::hover());
-    ui.painter().rect_filled(banner, 0.0, banner_color);
-    if let Some(url) = profile.as_ref().and_then(|pr| pr.banner.clone())
-        && let Some((texture, _)) = app.images.get(&url, 680)
-    {
-        egui::Image::from_texture((texture, banner.size())).paint_at(ui, banner);
-    }
-    let avatar = Rect::from_min_size(banner.left_bottom() + vec2(16.0, -44.0), Vec2::splat(80.0));
-    ui.painter().circle_filled(avatar.center(), 46.0, p.sidebar);
-    app.images.circle(ui, avatar, Some(&user.avatar_moving(128)), &initials(user.display_name()), 40.0);
-    if let Some(presence) = app.presences.get(&user.id).filter(|pr| pr.status != "offline") {
-        super::friends::dot(ui, avatar, &presence.status, p.sidebar);
-    }
-    ui.add_space(48.0);
-    ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
-        Frame::new().inner_margin(Margin::symmetric(16, 0)).show(ui, |ui| {
-            ui.label(RichText::new(user.display_name()).font(theme::strong(20.0)).color(p.strong));
-            let mut handle = user.username.clone();
-            if let Some(pronouns) = profile.as_ref().map(|pr| pr.pronouns.clone()).filter(|x| !x.is_empty()) {
-                handle.push_str(&format!(" · {pronouns}"));
-            }
-            ui.label(RichText::new(handle).color(p.muted));
-            if let Some(activity) = app.presences.get(&user.id).and_then(|pr| pr.activity()) {
-                ui.add_space(4.0);
-                ui.label(RichText::new(activity).size(13.0).color(p.text));
-            }
-            let activities = app.presences.get(&user.id).map(|pr| pr.activities.clone()).unwrap_or_default();
-            for activity in &activities {
-                ui.add_space(8.0);
-                super::activity::card(app, ui, activity);
-            }
-            Frame::new().fill(p.rail).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
-                ui.set_width(ui.available_width());
-                if let Some(bio) = profile.as_ref().map(|pr| pr.bio.clone()).filter(|b| !b.is_empty()) {
-                    ui.label(RichText::new(t!("About Me")).font(theme::strong(12.5)).color(p.strong));
-                    let blocks = markdown::parse(&bio);
-                    markdown::show(app, ui, &blocks, p.text, user.id);
-                    ui.add_space(8.0);
-                }
-                ui.label(RichText::new(t!("Member Since")).font(theme::strong(12.5)).color(p.strong));
-                ui.label(RichText::new(text::day(crate::discord::model::snowflake_ms(user.id))).size(13.0).color(p.text));
-            });
-            voice_card(app, ui, user.id);
-            if let Some(profile) = &profile {
-                let mutual: Vec<(Option<String>, String)> = profile
-                    .mutual_guilds
-                    .iter()
-                    .filter_map(|g| app.guild(*g).map(|g| (g.icon_url(), g.name.clone())))
-                    .collect();
-                if !mutual.is_empty() {
-                    ui.label(RichText::new(tn!(mutual.len(), "{count} Mutual Server", "{count} Mutual Servers")).font(theme::strong(13.0)).color(p.muted));
-                    for (icon, name) in mutual.iter().take(8) {
-                        ui.horizontal(|ui| {
-                            let (rect, _) = ui.allocate_exact_size(Vec2::splat(24.0), Sense::hover());
-                            app.images.circle(ui, rect, icon.as_deref(), &initials(name), 8.0);
-                            ui.label(RichText::new(name).color(p.text));
-                        });
+    let user = profile.as_ref().map_or_else(|| user.clone(), |pr| super::profile::merge(user, &pr.user));
+    let (primary, secondary) = profile.as_ref().and_then(|pr| pr.theme_colors).map_or((None, None), |(a, b)| (theme::role_color(a), theme::role_color(b)));
+    // Discord's side panel: the profile as a card 8 points in from the
+    // panel's edges, "View Full Profile" pinned at its foot.
+    Frame::new()
+        .fill(p.rail)
+        .stroke(Stroke::new(1.0, secondary.unwrap_or(p.border)))
+        .corner_radius(8)
+        .outer_margin(Margin::same(8))
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            ui.set_height(ui.available_height());
+            let banner = super::profile::header(app, ui, &user, profile.as_deref(), primary, None);
+            // Beside "…": the relationship, as Discord's banner shows it
+            // ("Friend", its menu to remove them).
+            if app.relationships.get(&user.id).is_some_and(|r| r.kind == 1) {
+                let at = Rect::from_min_size(egui::pos2(banner.right() - 76.0, banner.top() + 10.0), Vec2::splat(30.0));
+                let response = ui.interact(at, ui.id().with("dm-profile-friend"), Sense::click());
+                ui.painter().circle_filled(at.center(), 15.0, Color32::from_black_alpha(if response.hovered() { 200 } else { 140 }));
+                crate::icons::paint(ui, at.shrink(7.0), crate::icons::Icon::UserCheck, Color32::WHITE);
+                let target = user.clone();
+                egui::Popup::menu(&response.on_hover_text(t!("Friend"))).show(|ui| {
+                    super::menu::begin(ui);
+                    if super::menu::danger(ui, t!("Remove Friend"), super::menu::Tail::None).clicked() {
+                        app.modal = Some(super::menu::remove_friend(&target));
+                        ui.close();
                     }
-                }
-                if let Some(friends) = profile.mutual_friends.filter(|n| *n > 0) {
-                    ui.add_space(6.0);
-                    ui.label(RichText::new(tn!(friends, "{count} Mutual Friend", "{count} Mutual Friends")).font(theme::strong(13.0)).color(p.muted));
-                }
+                });
             }
+            let foot = 64.0;
+            let body = (ui.available_height() - foot).max(60.0);
+            Frame::new().inner_margin(Margin::symmetric(16, 0)).show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ScrollArea::vertical().max_height(body).auto_shrink([false, false]).show(ui, |ui| {
+                    ui.set_width(ui.available_width());
+                    super::profile::names(app, ui, &user, profile.as_deref(), None, true);
+                    if let Some(profile) = &profile {
+                        super::profile::mutuals(app, ui, profile);
+                        let bio = profile.bio.clone();
+                        if !bio.is_empty() {
+                            ui.add_space(10.0);
+                            let blocks = markdown::parse(&bio);
+                            markdown::show(app, ui, &blocks, p.text, user.id);
+                        }
+                    }
+                    super::profile::section(ui, t!("Member Since"));
+                    ui.label(RichText::new(text::short_day(crate::discord::model::snowflake_ms(user.id))).size(14.0).color(p.text));
+                    let activities = app.presences.get(&user.id).map(|pr| pr.activities.clone()).unwrap_or_default();
+                    for activity in &activities {
+                        ui.add_space(10.0);
+                        super::activity::card(app, ui, activity);
+                    }
+                    voice_card(app, ui, user.id);
+                });
+                ui.add_space(8.0);
+                if super::form::button_wide(ui, t!("View Full Profile")).clicked() {
+                    let at = ui.max_rect().left_top();
+                    app.actions.push(Action::OpenProfile { user: user.clone(), guild: None, at });
+                }
+            });
         });
-    });
 }
 
 /// A voice channel's own view, as Discord's: a tile for each person, in
@@ -3336,13 +3326,16 @@ fn voice_card(app: &mut App, ui: &mut egui::Ui, user: Id) {
     };
     let inside = app.voice.channel.is_some_and(|(_, c)| c == channel.id);
     let people: Vec<crate::discord::model::User> = app.voice_members(&channel).into_iter().filter_map(|id| app.users.get(&id).cloned()).take(4).collect();
-    Frame::new().fill(p.rail).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
+    // A card of its own over the profile's (`background-mod-subtle`).
+    Frame::new().fill(p.hover.gamma_multiply(0.6)).corner_radius(8).inner_margin(Margin::same(12)).outer_margin(Margin::symmetric(0, 12)).show(ui, |ui| {
         ui.set_width(ui.available_width());
-        ui.label(RichText::new(t!("In voice")).font(theme::strong(12.5)).color(p.strong));
+        ui.label(RichText::new(t!("In voice")).font(theme::strong(14.0)).color(p.strong));
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            // The people, two by two.
-            let (tile, _) = ui.allocate_exact_size(Vec2::splat(52.0), Sense::hover());
+            // The people, two by two, in their own box.
+            let (tile, _) = ui.allocate_exact_size(Vec2::splat(60.0), Sense::hover());
+            ui.painter().rect(tile, 8.0, p.rail, Stroke::new(1.0, p.border), egui::StrokeKind::Inside);
+            let tile = tile.shrink(4.0);
             for (i, person) in people.iter().enumerate() {
                 let at = tile.min + vec2((i % 2) as f32 * 28.0, (i / 2) as f32 * 28.0);
                 app.images.circle(ui, Rect::from_min_size(at, Vec2::splat(24.0)), Some(&person.avatar_url()), &initials(person.display_name()), 12.0);

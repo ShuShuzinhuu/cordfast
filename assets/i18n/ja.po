@@ -806,19 +806,19 @@ msgstr "テキストを強調して表示します。"
 msgid "Marks your message as a spoiler."
 msgstr "自分のメッセージをスポイラーとしてマークします。"
 
-#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3378
+#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3371
 msgid "Streaming {name}"
 msgstr "{name}を配信中"
 
-#: src\discord\gateway.rs:281 src\discord\gateway.rs:293 src\ui\chat.rs:3379
+#: src\discord\gateway.rs:281 src\discord\gateway.rs:293 src\ui\chat.rs:3372
 msgid "Listening to {name}"
 msgstr "{name}を再生中"
 
-#: src\discord\gateway.rs:282 src\discord\gateway.rs:294 src\ui\chat.rs:3380
+#: src\discord\gateway.rs:282 src\discord\gateway.rs:294 src\ui\chat.rs:3373
 msgid "Watching {name}"
 msgstr "{name}を視聴中"
 
-#: src\discord\gateway.rs:283 src\discord\gateway.rs:295 src\ui\chat.rs:3381
+#: src\discord\gateway.rs:283 src\discord\gateway.rs:295 src\ui\chat.rs:3374
 msgid "Competing in {name}"
 msgstr "{name}で対戦中"
 
@@ -826,15 +826,15 @@ msgstr "{name}で対戦中"
 msgid "Playing"
 msgstr "プレイ中"
 
-#: src\discord\gateway.rs:291 src\ui\chat.rs:3382
+#: src\discord\gateway.rs:291 src\ui\chat.rs:3375
 msgid "Playing {name}"
 msgstr "{name}をプレイ中"
 
-#: src\discord\gateway.rs:461
+#: src\discord\gateway.rs:455
 msgid "no connection to Discord"
 msgstr "Discordに接続されていません"
 
-#: src\discord\gateway.rs:586
+#: src\discord\gateway.rs:580
 msgid "the gateway refused the connection ({code})"
 msgstr "ゲートウェイが接続を拒否しました ({code})"
 
@@ -1475,7 +1475,7 @@ msgstr "チャンネルを選択  ·  Ctrl+Kで検索"
 msgid "Pick a channel"
 msgstr "チャンネルを選択"
 
-#: src\ui\chat.rs:150 src\ui\chat.rs:2196 src\ui\chat.rs:3341 src\ui\friends.rs:261
+#: src\ui\chat.rs:150 src\ui\chat.rs:2196 src\ui\chat.rs:3332 src\ui\friends.rs:261
 msgid "In voice"
 msgstr "会話中"
 
@@ -1648,7 +1648,7 @@ msgstr "未読にする"
 msgid "Delete"
 msgstr "削除"
 
-#: src\ui\chat.rs:867 src\ui\chat.rs:1450 src\ui\friends.rs:388 src\ui\profile.rs:187
+#: src\ui\chat.rs:867 src\ui\chat.rs:1450 src\ui\friends.rs:388 src\ui\profile.rs:190
 msgid "More"
 msgstr "その他"
 
@@ -2180,7 +2180,7 @@ msgstr "サーバーに参加"
 msgid "Paste an invite, such as discord.gg/abc123"
 msgstr "招待を貼り付けてください(例: discord.gg/abc123)"
 
-#: src\ui\chat.rs:2631 src\ui\gates.rs:565 src\ui\profile.rs:452
+#: src\ui\chat.rs:2631 src\ui\gates.rs:565 src\ui\profile.rs:469
 msgid "Join"
 msgstr "参加"
 
@@ -2367,37 +2367,35 @@ msgstr "Enterキーで"
 msgid "save"
 msgstr "保存"
 
-#: src\ui\chat.rs:3188 src\ui\settings.rs:288
-msgid "About Me"
-msgstr "自己紹介"
+#: src\ui\chat.rs:3170
+msgid "Friend"
+msgstr "フレンド"
 
-#: src\ui\chat.rs:3193 src\ui\guild.rs:827 src\ui\profile.rs:563
+#: src\ui\chat.rs:3172 src\ui\friends.rs:394 src\ui\menu.rs:292 src\ui\menu.rs:433
+msgid "Remove Friend"
+msgstr "フレンドを削除"
+
+#: src\ui\chat.rs:3194 src\ui\guild.rs:827 src\ui\profile.rs:580
 msgid "Member Since"
 msgstr "メンバー歴"
 
-#: src\ui\chat.rs:3204 src\ui\profile.rs:657 src\ui\requests.rs:187
-msgid "{count} Mutual Server"
-msgid_plural "{count} Mutual Servers"
-msgstr[0] "{count} 個の共通サーバー"
+#: src\ui\chat.rs:3204
+msgid "View Full Profile"
+msgstr "プロフィール全体を表示"
 
-#: src\ui\chat.rs:3215 src\ui\profile.rs:651
-msgid "{count} Mutual Friend"
-msgid_plural "{count} Mutual Friends"
-msgstr[0] "共通のフレンド {count}人"
-
-#: src\ui\chat.rs:3238
+#: src\ui\chat.rs:3228
 msgid "Show Chat"
 msgstr "チャットを表示"
 
-#: src\ui\chat.rs:3245 src\ui\chat.rs:3364
+#: src\ui\chat.rs:3235 src\ui\chat.rs:3357
 msgid "Join Voice"
 msgstr "ボイスチャンネルに参加"
 
-#: src\ui\chat.rs:3359
+#: src\ui\chat.rs:3352
 msgid "in {name}"
 msgstr "{name}内"
 
-#: src\ui\chat.rs:3364
+#: src\ui\chat.rs:3357
 msgid "Open Voice"
 msgstr "ボイスチャンネルを開く"
 
@@ -2624,10 +2622,6 @@ msgstr "送信したフレンドリクエスト"
 #: src\ui\friends.rs:369
 msgid "Blocked"
 msgstr "ブロック中"
-
-#: src\ui\friends.rs:394 src\ui\menu.rs:292 src\ui\menu.rs:433
-msgid "Remove Friend"
-msgstr "フレンドを削除"
 
 #: src\ui\friends.rs:420 src\ui\menu.rs:318 src\ui\settings.rs:569
 msgid "Unblock"
@@ -3713,7 +3707,7 @@ msgstr "メンション"
 msgid "Call"
 msgstr "通話"
 
-#: src\ui\menu.rs:283
+#: src\ui\menu.rs:283 src\ui\profile.rs:213
 msgid "Add Note"
 msgstr "メモを追加"
 
@@ -4081,7 +4075,7 @@ msgstr "チャンネルIDをコピー"
 msgid "Mute Soundboard"
 msgstr "サウンドボードをミュート"
 
-#: src\ui\mod.rs:1707 src\ui\profile.rs:596
+#: src\ui\mod.rs:1707 src\ui\profile.rs:613
 msgid "User Volume"
 msgstr "ユーザー音量"
 
@@ -4556,57 +4550,67 @@ msgstr "表示するユーザー数の上限"
 msgid "For each text message notification, shows a notice that you can reply to."
 msgstr "毎回のテキストメッセージ通知で、返信できる通知が表示されます。"
 
-#: src\ui\profile.rs:153
+#: src\ui\profile.rs:156
 msgid "Add Status"
 msgstr "ステータスを追加"
 
-#: src\ui\profile.rs:297
+#: src\ui\profile.rs:314
 msgid "Server Tag"
 msgstr "サーバータグ"
 
-#: src\ui\profile.rs:407
+#: src\ui\profile.rs:424
 msgid "{number} Online"
 msgstr "{number} オンライン"
 
-#: src\ui\profile.rs:408
+#: src\ui\profile.rs:425
 msgid "{number} Member"
 msgid_plural "{number} Members"
 msgstr[0] "{number} メンバー"
 
-#: src\ui\profile.rs:416
+#: src\ui\profile.rs:433
 msgid "Est. {date}"
 msgstr "{date}設立"
 
-#: src\ui\profile.rs:446
+#: src\ui\profile.rs:463
 msgid "+ {count} more"
 msgid_plural "+ {count} more"
 msgstr[0] "他 {count} 件"
 
-#: src\ui\profile.rs:452
+#: src\ui\profile.rs:469
 msgid "Go to Server"
 msgstr "サーバーへ移動"
 
-#: src\ui\profile.rs:568
+#: src\ui\profile.rs:585
 msgid "Friends Since"
 msgstr "フレンドになった日"
 
-#: src\ui\profile.rs:584 src\ui\settings.rs:1512
+#: src\ui\profile.rs:601 src\ui\settings.rs:1512
 msgid "Connections"
 msgstr "接続"
 
-#: src\ui\profile.rs:717
+#: src\ui\profile.rs:676
+msgid "{count} Mutual Friend"
+msgid_plural "{count} Mutual Friends"
+msgstr[0] "共通のフレンド {count}人"
+
+#: src\ui\profile.rs:682 src\ui\requests.rs:187
+msgid "{count} Mutual Server"
+msgid_plural "{count} Mutual Servers"
+msgstr[0] "{count} 個の共通サーバー"
+
+#: src\ui\profile.rs:742
 msgid "No servers in common."
 msgstr "共通のサーバーはありません。"
 
-#: src\ui\profile.rs:742
+#: src\ui\profile.rs:767
 msgid "No friends in common."
 msgstr "共通のフレンドはいません。"
 
-#: src\ui\profile.rs:777
+#: src\ui\profile.rs:802
 msgid "Edit Profile"
 msgstr "プロフィールを編集"
 
-#: src\ui\profile.rs:795
+#: src\ui\profile.rs:820
 msgid "Message @{name}"
 msgstr "@{name}へメッセージを送信"
 
@@ -4773,6 +4777,10 @@ msgstr "代名詞"
 #: src\ui\settings.rs:286
 msgid "Add your pronouns"
 msgstr "あなたの代名詞を追加"
+
+#: src\ui\settings.rs:288
+msgid "About Me"
+msgstr "自己紹介"
 
 #: src\ui\settings.rs:298
 msgid "Change Avatar"

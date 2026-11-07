@@ -465,7 +465,6 @@ pub struct Profile {
     pub guild_bio: String,
     pub joined_guild: Option<String>,
     pub mutual_guilds: Vec<Id>,
-    pub mutual_friends: Option<u64>,
     pub mutual_friend_list: Vec<User>,
     /// Nicknames in mutual servers, by server.
     pub mutual_nicks: Vec<(Id, Option<String>)>,
@@ -519,7 +518,6 @@ impl Profile {
                         .collect()
                 })
                 .unwrap_or_default(),
-            mutual_friends: value.get("mutual_friends_count").and_then(Value::as_u64),
             mutual_friend_list: value
                 .get("mutual_friends")
                 .and_then(Value::as_array)
