@@ -88,7 +88,7 @@ pub enum Command {
     /// Part of the account's PreloadedUserSettings, merged into it.
     SaveSettings(Vec<u8>),
     /// A button press or menu choice, sent to the bot that owns it.
-    Interact { origin: crate::discord::components::Origin, data: Value },
+    Interact { origin: crate::discord::components::Origin, data: Value, nonce: String },
     /// A slash command (kind 2) or an autocomplete request (kind 4).
     SlashCommand { guild: Option<Id>, channel: Id, application: Id, kind: u64, data: Value, nonce: String },
     SetCustomStatus { text: Option<String>, settings: Vec<u8> },
@@ -823,11 +823,11 @@ impl Worker {
                     let _ = voice.send(command);
                 }
             }
-            Command::Interact { origin, data } => {
+            Command::Interact { origin, data, nonce } => {
                 let Some(api) = self.api.clone() else { return };
                 let (events, session) = (self.events.clone(), self.session_id.clone());
                 tokio::spawn(async move {
-                    if let Err(error) = api.interact(&origin, &session, data).await {
+                    if let Err(error) = api.interact(&origin, &session, data, &nonce).await {
                         events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}"))));
                     }
                 });
@@ -836,10 +836,11 @@ impl Worker {
                 let Some(api) = self.api.clone() else { return };
                 let (events, session) = (self.events.clone(), self.session_id.clone());
                 tokio::spawn(async move {
-                    if let Err(error) = api.command(guild, channel, application, &session, kind, data, &nonce).await
-                        && kind == 2
-                    {
-                        events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}"))));
+                    match api.command(guild, channel, application, &session, kind, data, &nonce).await {
+                        Err(error) if kind == 2 => events.send(Event::Error(t!("The interaction failed: {error}", error = format!("{error:#}")))),
+                        // A form (5): the form says it went wrong and stays open.
+                        Err(error) if kind == 5 => events.send(Event::Api { key: "modal-failed".into(), result: Err(format!("{error:#}")) }),
+                        _ => {}
                     }
                 });
             }

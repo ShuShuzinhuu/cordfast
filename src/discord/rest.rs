@@ -740,10 +740,10 @@ impl Api {
 impl Api {
     /// A component interaction (type 3), as the client sends one when a
     /// button is pressed or a menu value chosen.
-    pub async fn interact(&self, origin: &super::components::Origin, session: &str, data: Value) -> Result<()> {
+    pub async fn interact(&self, origin: &super::components::Origin, session: &str, data: Value, nonce: &str) -> Result<()> {
         let body = json!({
             "type": 3,
-            "nonce": super::model::now_snowflake().to_string(),
+            "nonce": nonce,
             "guild_id": origin.guild.map(|g| g.to_string()),
             "channel_id": origin.channel.to_string(),
             "message_flags": origin.flags,

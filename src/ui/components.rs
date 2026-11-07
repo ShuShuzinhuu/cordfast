@@ -214,8 +214,23 @@ fn button(
     }
 }
 
+/// Sends a component interaction. Its server comes from the channel, as
+/// Discord's `executeStateUpdate` takes `channel.guild_id`: messages loaded
+/// from history carry no `guild_id`, and without one a server's bot answers
+/// "This interaction failed".
 fn interact(app: &mut App, origin: &Origin, data: serde_json::Value) {
-    app.commands.send(crate::backend::Command::Interact { origin: origin.clone(), data });
+    let mut origin = origin.clone();
+    if let Some(guild) = app.channel(origin.channel).and_then(|c| c.guild_id) {
+        origin.guild = Some(guild);
+    }
+    // Its nonce comes back in INTERACTION_FAILURE when the app does not
+    // answer, which then says so.
+    let nonce = crate::discord::model::now_snowflake().to_string();
+    app.sent_commands.push(nonce.clone());
+    if app.sent_commands.len() > 16 {
+        app.sent_commands.remove(0);
+    }
+    app.commands.send(crate::backend::Command::Interact { origin, data, nonce });
 }
 
 fn picture(app: &mut App, ui: &mut egui::Ui, media: &Media, max_w: f32, max_h: f32) {

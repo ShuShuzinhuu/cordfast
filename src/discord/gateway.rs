@@ -85,6 +85,10 @@ pub enum Dispatch {
     Autocomplete { nonce: String, choices: Vec<(String, Value)> },
     /// A command or button got no answer from its application.
     InteractionFailed { nonce: String },
+    InteractionSucceeded { nonce: String },
+    /// INTERACTION_MODAL_CREATE as it came: the form's id, channel, app,
+    /// title, custom id and components.
+    InteractionModal(Box<Value>),
 }
 
 /// One row of a channel's member list.
@@ -834,6 +838,9 @@ fn translate(name: &str, d: &Value, me: Id) -> Vec<Dispatch> {
             })
         })()),
         "INTERACTION_FAILURE" => one(d.get("nonce").and_then(Value::as_str).map(|nonce| Dispatch::InteractionFailed { nonce: nonce.to_owned() })),
+        "INTERACTION_SUCCESS" => one(d.get("nonce").and_then(Value::as_str).map(|nonce| Dispatch::InteractionSucceeded { nonce: nonce.to_owned() })),
+        // A form an app opens in answer to a button or command.
+        "INTERACTION_MODAL_CREATE" => one(Some(Dispatch::InteractionModal(Box::new(d.clone())))),
         "GUILD_EMOJIS_UPDATE" => one((|| {
             Some(Dispatch::GuildEmojis {
                 guild: id("guild_id")?,

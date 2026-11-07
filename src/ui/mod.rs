@@ -20,6 +20,7 @@ pub mod overlay;
 pub mod soundboard;
 pub mod splash;
 mod requests;
+pub mod form_modal;
 mod titlebar;
 
 use egui::{
@@ -86,6 +87,7 @@ pub fn show(app: &mut App, ui: &mut egui::Ui) {
         chat::modal(app, ui.ctx());
         incoming_call(app, ui.ctx());
         switcher(app, ui.ctx());
+        form_modal::show(app, ui.ctx());
     }
     if app.page.is_none() {
         ui.ctx().data_mut(|d| d.insert_temp(egui::Id::new("settings-open"), false));

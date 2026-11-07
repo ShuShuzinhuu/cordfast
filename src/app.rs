@@ -508,6 +508,8 @@ pub struct App {
     pub selected_channel: Option<Id>,
     /// The page beside the DMs with no conversation open.
     pub home: Home,
+    /// A form an app opened (INTERACTION_MODAL_CREATE).
+    pub form: Option<crate::ui::form_modal::Form>,
     /// Message Requests' Spam tab, rather than its Requests.
     pub requests_spam: bool,
     /// Each request's last message, from Discord's supplemental data
@@ -761,6 +763,7 @@ impl App {
             selected_guild: None,
             selected_channel: None,
             home: Home::Friends,
+            form: None,
             requests_spam: false,
             request_previews: HashMap::new(),
             requests_asked: HashSet::new(),
@@ -1785,8 +1788,22 @@ impl App {
                 }
             }
             Dispatch::InteractionFailed { nonce } => {
-                if self.sent_commands.contains(&nonce) {
+                if let Some(form) = self.form.as_mut().filter(|f| f.nonce.as_deref() == Some(nonce.as_str())) {
+                    form.nonce = None;
+                    form.error = Some(t!("Something went wrong. Try again.").to_owned());
+                } else if self.sent_commands.contains(&nonce) {
                     self.notify(t!("The application did not respond."));
+                }
+            }
+            // A submitted form closes once the app took it.
+            Dispatch::InteractionSucceeded { nonce } => {
+                if self.form.as_ref().is_some_and(|f| f.nonce.as_deref() == Some(nonce.as_str())) {
+                    self.form = None;
+                }
+            }
+            Dispatch::InteractionModal(d) => {
+                if let Some(form) = crate::ui::form_modal::Form::parse(&d) {
+                    self.form = Some(form);
                 }
             }
             Dispatch::VoiceEffect { channel, user, sound, volume, emoji_id, emoji_name } => {
@@ -2203,6 +2220,8 @@ impl App {
                         log::info!("dump me member {:?}", self.members.get(&(id, me)).map(|m| m.nick.clone()));
                     }
                     self.select_guild(Some(id));
+                    // For opening the same place in Discord to compare.
+                    log::info!("preview: discord://-/channels/{id}/{}", self.selected_channel.map_or_else(String::new, |c| c.to_string()));
                 }
             }
             "dm" => {
@@ -2410,6 +2429,13 @@ impl App {
                 if key == "inbox-saved" {
                     if let Some(inbox) = &mut self.inbox {
                         inbox.mentions = Some(Vec::new());
+                    }
+                    return;
+                }
+                if key == "modal-failed" {
+                    if let Some(form) = &mut self.form {
+                        form.nonce = None;
+                        form.error = Some(t!("Something went wrong. Try again.").to_owned());
                     }
                     return;
                 }

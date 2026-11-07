@@ -96,7 +96,21 @@ impl Demo {
                 events.send(Event::Gateway(Dispatch::Autocomplete { nonce: nonce.clone(), choices }));
                 true
             }
+            // A submitted form: the app took it.
+            Command::SlashCommand { kind: 5, nonce, .. } => {
+                events.send(Event::Gateway(Dispatch::InteractionSucceeded { nonce: nonce.clone() }));
+                true
+            }
             Command::SlashCommand { .. } => true,
+            // A button answers with the file's form (`modal`), as a ticket
+            // bot opens one.
+            Command::Interact { origin, .. } => {
+                if let Some(mut modal) = self.0.get("modal").cloned() {
+                    modal["channel_id"] = Value::String(origin.channel.to_string());
+                    events.send(Event::Gateway(Dispatch::InteractionModal(Box::new(modal))));
+                }
+                true
+            }
             Command::Profile { user, .. } => {
                 let profile = self
                     .0
