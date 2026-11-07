@@ -57,7 +57,7 @@ msgstr "アクセス"
 msgid "Prune Members"
 msgstr "非アクティブメンバーをキック"
 
-#: src\admin.rs:40
+#: src\admin.rs:40 src\ui\chat.rs:1991
 msgid "Apps"
 msgstr "アプリ"
 
@@ -137,7 +137,7 @@ msgstr "メンバーシップ権限"
 msgid "Create Invite"
 msgstr "招待を作成"
 
-#: src\admin.rs:132 src\ui\chat.rs:2493 src\ui\menu.rs:358
+#: src\admin.rs:132 src\ui\chat.rs:2536 src\ui\menu.rs:358
 msgid "Change Nickname"
 msgstr "ニックネームの変更"
 
@@ -261,7 +261,7 @@ msgstr "管理者"
 msgid "Discord is indexing the members. Try again in a moment."
 msgstr "Discordがメンバーをインデックスしています。しばらくしてからもう一度お試しください。"
 
-#: src\admin.rs:312 src\app.rs:2692 src\ui\settings.rs:496
+#: src\admin.rs:312 src\app.rs:2696 src\ui\settings.rs:496
 msgid "Done."
 msgstr "完了しました。"
 
@@ -578,7 +578,7 @@ msgstr "サーバー"
 msgid "You are no longer in {name}"
 msgstr "{name}のメンバーではなくなりました"
 
-#: src\app.rs:1873 src\app.rs:2518
+#: src\app.rs:1873 src\app.rs:2522
 msgid "Something went wrong. Try again."
 msgstr "問題が発生しました。再度お試しください。"
 
@@ -594,7 +594,7 @@ msgstr "フレンド"
 msgid "{name} is no longer your friend"
 msgstr "{name}とフレンドではなくなりました"
 
-#: src\app.rs:2112 src\ui\guild.rs:990 src\ui\guild.rs:1269 src\ui\mod.rs:2476
+#: src\app.rs:2112 src\ui\guild.rs:990 src\ui\guild.rs:1269 src\ui\mod.rs:2494
 msgid "Someone"
 msgstr "誰か"
 
@@ -606,103 +606,103 @@ msgstr "着信"
 msgid "{name} is calling you"
 msgstr "{name}から着信中"
 
-#: src\app.rs:2523
+#: src\app.rs:2527
 msgid "Uh-oh! Something went wrong while updating this message request. Please wait a moment and try again."
 msgstr "おっと！　このメッセージリクエストのアップデート中に問題が発生しました。しばらくしてからもう一度お試しください。"
 
-#: src\app.rs:2553
+#: src\app.rs:2557
 msgid "Discord asked for a captcha: opening the invite in the browser."
 msgstr "Discordがキャプチャを要求しました: 招待をブラウザで開きます。"
 
-#: src\app.rs:2640
+#: src\app.rs:2644
 msgid "This server has no public profile."
 msgstr "このサーバーには公開プロフィールがありません。"
 
-#: src\app.rs:2655
+#: src\app.rs:2659
 msgid "Discord is still indexing this channel. Try again in a moment."
 msgstr "Discordはまだこのチャンネルをインデックスしています。しばらくしてからもう一度お試しください。"
 
-#: src\app.rs:2670 src\app.rs:2769
+#: src\app.rs:2674 src\app.rs:2773
 msgid "the server"
 msgstr "サーバー"
 
-#: src\app.rs:2671 src\app.rs:2770
+#: src\app.rs:2675 src\app.rs:2774
 msgid "You joined {name}."
 msgstr "{name}に参加しました。"
 
-#: src\app.rs:2675
+#: src\app.rs:2679
 msgid "Server created."
 msgstr "サーバーを作成しました。"
 
-#: src\app.rs:2741
+#: src\app.rs:2745
 msgid "Invite copied: discord.gg/{code}"
 msgstr "招待をコピーしました: discord.gg/{code}"
 
-#: src\app.rs:2745
+#: src\app.rs:2749
 msgid "Profile saved."
 msgstr "プロフィールを保存しました。"
 
-#: src\app.rs:2746
+#: src\app.rs:2750
 msgid "Member kicked."
 msgstr "メンバーをキックしました。"
 
-#: src\app.rs:2747 src\ui\guild.rs:918
+#: src\app.rs:2751 src\ui\guild.rs:918
 msgid "Member timed out."
 msgstr "メンバーをタイムアウトしました。"
 
-#: src\app.rs:2748
+#: src\app.rs:2752
 msgid "Member banned."
 msgstr "メンバーをBANしました。"
 
-#: src\app.rs:2749
+#: src\app.rs:2753
 msgid "Nickname changed."
 msgstr "ニックネームを変更しました。"
 
-#: src\app.rs:2750
+#: src\app.rs:2754
 msgid "Note saved."
 msgstr "メモを保存しました。"
 
-#: src\app.rs:2765
+#: src\app.rs:2769
 msgid "Image saved to {path}"
 msgstr "画像を {path} に保存しました"
 
-#: src\app.rs:2767
+#: src\app.rs:2771
 msgid "Image copied."
 msgstr "画像をコピーしました。"
 
-#: src\app.rs:2978 src\app.rs:2985
+#: src\app.rs:2982 src\app.rs:2989
 msgid "New message"
 msgstr "新しいメッセージ"
 
-#: src\app.rs:2983
+#: src\app.rs:2987
 msgid "Attachment"
 msgstr "添付ファイル"
 
-#: src\app.rs:3314
+#: src\app.rs:3318
 msgid "Fill in the email and the password."
 msgstr "メールアドレスとパスワードを入力してください。"
 
-#: src\app.rs:3420
+#: src\app.rs:3424
 msgid "Open a conversation with them before calling."
 msgstr "通話する前に相手との会話を開いてください。"
 
-#: src\app.rs:3433
+#: src\app.rs:3437
 msgid "Looks like you're in another voice channel. Are you sure you want to switch to {channel}?"
 msgstr "別のボイスチャンネルに参加中のようです。本当に{channel}に切り替えてもよろしいですか？"
 
-#: src\app.rs:3434
+#: src\app.rs:3438
 msgid "You sure?"
 msgstr "本当によろしいですか？"
 
-#: src\app.rs:3434 src\ui\mod.rs:271
+#: src\app.rs:3438 src\ui\mod.rs:271
 msgid "Confirm"
 msgstr "確認"
 
-#: src\app.rs:3550
+#: src\app.rs:3554
 msgid "Upload Files"
 msgstr "ファイルをアップロード"
 
-#: src\app.rs:3754
+#: src\app.rs:3758
 msgid "Couldn't update: {error}"
 msgstr "更新できませんでした: {error}"
 
@@ -806,35 +806,35 @@ msgstr "テキストを強調して表示します。"
 msgid "Marks your message as a spoiler."
 msgstr "自分のメッセージをスポイラーとしてマークします。"
 
-#: src\discord\gateway.rs:277 src\discord\gateway.rs:289 src\ui\chat.rs:3327
+#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3378
 msgid "Streaming {name}"
 msgstr "{name}を配信中"
 
-#: src\discord\gateway.rs:278 src\discord\gateway.rs:290 src\ui\chat.rs:3328
+#: src\discord\gateway.rs:281 src\discord\gateway.rs:293 src\ui\chat.rs:3379
 msgid "Listening to {name}"
 msgstr "{name}を再生中"
 
-#: src\discord\gateway.rs:279 src\discord\gateway.rs:291 src\ui\chat.rs:3329
+#: src\discord\gateway.rs:282 src\discord\gateway.rs:294 src\ui\chat.rs:3380
 msgid "Watching {name}"
 msgstr "{name}を視聴中"
 
-#: src\discord\gateway.rs:280 src\discord\gateway.rs:292 src\ui\chat.rs:3330
+#: src\discord\gateway.rs:283 src\discord\gateway.rs:295 src\ui\chat.rs:3381
 msgid "Competing in {name}"
 msgstr "{name}で対戦中"
 
-#: src\discord\gateway.rs:281 src\ui\settings.rs:1470 src\ui\settings.rs:1485
+#: src\discord\gateway.rs:284 src\ui\settings.rs:1470 src\ui\settings.rs:1485
 msgid "Playing"
 msgstr "プレイ中"
 
-#: src\discord\gateway.rs:288 src\ui\chat.rs:3331
+#: src\discord\gateway.rs:291 src\ui\chat.rs:3382
 msgid "Playing {name}"
 msgstr "{name}をプレイ中"
 
-#: src\discord\gateway.rs:448
+#: src\discord\gateway.rs:461
 msgid "no connection to Discord"
 msgstr "Discordに接続されていません"
 
-#: src\discord\gateway.rs:573
+#: src\discord\gateway.rs:586
 msgid "the gateway refused the connection ({code})"
 msgstr "ゲートウェイが接続を拒否しました ({code})"
 
@@ -882,7 +882,7 @@ msgstr "理由の記載なし"
 msgid "login cancelled on the phone"
 msgstr "スマートフォンでログインがキャンセルされました"
 
-#: src\discord\rest.rs:59 src\ui\chat.rs:2674 src\ui\mod.rs:254 src\ui\settings.rs:384
+#: src\discord\rest.rs:59 src\ui\chat.rs:2717 src\ui\mod.rs:254 src\ui\settings.rs:384
 msgid "Multi-Factor Authentication"
 msgstr "多要素認証"
 
@@ -1006,7 +1006,7 @@ msgstr "次のメンションありチャンネル"
 msgid "Jump to Oldest Unread Message"
 msgstr "最も古い未読メッセージへ移動"
 
-#: src\keybinds.rs:78 src\ui\chat.rs:184 src\ui\chat.rs:2211
+#: src\keybinds.rs:78 src\ui\chat.rs:217 src\ui\chat.rs:2254
 msgid "Pinned Messages"
 msgstr "ピン留めされたメッセージ"
 
@@ -1018,7 +1018,7 @@ msgstr "受信トレイ"
 msgid "Member List"
 msgstr "メンバーリスト"
 
-#: src\keybinds.rs:81 src\ui\chat.rs:161 src\ui\chat.rs:2212 src\ui\chat.rs:2399
+#: src\keybinds.rs:81 src\ui\chat.rs:2255 src\ui\chat.rs:2442 src\ui\chat.rs:2943
 msgid "Search"
 msgstr "検索"
 
@@ -1034,7 +1034,7 @@ msgstr "GIFピッカー"
 msgid "Sticker Picker"
 msgstr "スタンプピッカー"
 
-#: src\keybinds.rs:85 src\ui\chat.rs:1889
+#: src\keybinds.rs:85 src\ui\chat.rs:1912
 msgid "Upload a File"
 msgstr "ファイルをアップロード"
 
@@ -1062,11 +1062,11 @@ msgstr "チャンネルリンクをコピー"
 msgid "Collapse or Expand All Categories"
 msgstr "すべてのカテゴリーを折りたたむ/展開する"
 
-#: src\keybinds.rs:92 src\ui\chat.rs:1423
+#: src\keybinds.rs:92 src\ui\chat.rs:1446
 msgid "Zoom In"
 msgstr "拡大"
 
-#: src\keybinds.rs:93 src\ui\chat.rs:1423
+#: src\keybinds.rs:93 src\ui\chat.rs:1446
 msgid "Zoom Out"
 msgstr "縮小"
 
@@ -1222,23 +1222,23 @@ msgstr "通話の経過時間を表示します。"
 msgid "Allows user volumes up to 400% (instead of 200%)."
 msgstr "ユーザー音量を最大400%(通常は200%)まで上げられます。"
 
-#: src\sounds.rs:29 src\ui\chat.rs:2701 src\ui\friends.rs:401 src\ui\menu.rs:274
+#: src\sounds.rs:29 src\ui\chat.rs:2744 src\ui\friends.rs:401 src\ui\menu.rs:274
 msgid "Message"
 msgstr "メッセージ"
 
-#: src\sounds.rs:30 src\ui\mod.rs:2455 src\ui\overlay.rs:539
+#: src\sounds.rs:30 src\ui\mod.rs:2473 src\ui\overlay.rs:539
 msgid "Deafen"
 msgstr "スピーカーミュート"
 
-#: src\sounds.rs:31 src\ui\mod.rs:2455 src\ui\overlay.rs:539
+#: src\sounds.rs:31 src\ui\mod.rs:2473 src\ui\overlay.rs:539
 msgid "Undeafen"
 msgstr "スピーカーミュート解除"
 
-#: src\sounds.rs:32 src\ui\mod.rs:1693 src\ui\mod.rs:2462 src\ui\overlay.rs:538
+#: src\sounds.rs:32 src\ui\mod.rs:1693 src\ui\mod.rs:2480 src\ui\overlay.rs:538
 msgid "Mute"
 msgstr "ミュート"
 
-#: src\sounds.rs:33 src\ui\mod.rs:2462 src\ui\overlay.rs:538
+#: src\sounds.rs:33 src\ui\mod.rs:2480 src\ui\overlay.rs:538
 msgid "Unmute"
 msgstr "ミュート解除"
 
@@ -1475,917 +1475,929 @@ msgstr "チャンネルを選択  ·  Ctrl+Kで検索"
 msgid "Pick a channel"
 msgstr "チャンネルを選択"
 
-#: src\ui\chat.rs:141 src\ui\chat.rs:2153 src\ui\chat.rs:3290 src\ui\friends.rs:261
+#: src\ui\chat.rs:150 src\ui\chat.rs:2196 src\ui\chat.rs:3341 src\ui\friends.rs:261
 msgid "In voice"
 msgstr "会話中"
 
-#: src\ui\chat.rs:152
+#: src\ui\chat.rs:161
 msgid "Hide Chat"
 msgstr "チャットを非表示"
 
-#: src\ui\chat.rs:160
+#: src\ui\chat.rs:170
 msgid "Search {guildName}"
 msgstr "{guildName}を検索"
 
-#: src\ui\chat.rs:177
+#: src\ui\chat.rs:176
+msgid "Search {name}"
+msgstr "{name}を検索"
+
+#: src\ui\chat.rs:193
 msgid "Hide Member List"
 msgstr "メンバーリストを非表示"
 
-#: src\ui\chat.rs:177
+#: src\ui\chat.rs:193
 msgid "Show Member List"
 msgstr "メンバーリストを表示"
 
-#: src\ui\chat.rs:194 src\ui\menu.rs:200
-msgid "Notification Settings"
-msgstr "通知設定"
-
-#: src\ui\chat.rs:204 src\ui\chat.rs:2714
-msgid "Threads"
-msgstr "スレッド"
-
-#: src\ui\chat.rs:217 src\ui\friends.rs:390
-msgid "Start Voice Call"
-msgstr "音声通話を開始"
-
-#: src\ui\chat.rs:226
+#: src\ui\chat.rs:203
 msgid "Hide User Profile"
 msgstr "ユーザープロフィールを非表示"
 
-#: src\ui\chat.rs:226
+#: src\ui\chat.rs:203
 msgid "Show User Profile"
 msgstr "ユーザープロフィールを表示"
 
-#: src\ui\chat.rs:242 src\ui\chat.rs:2882
+#: src\ui\chat.rs:210 src\ui\chat.rs:2942 src\ui\mod.rs:1888
+msgid "Add Friends to DM"
+msgstr "DMにフレンドを追加"
+
+#: src\ui\chat.rs:227 src\ui\menu.rs:200
+msgid "Notification Settings"
+msgstr "通知設定"
+
+#: src\ui\chat.rs:237 src\ui\chat.rs:2757
+msgid "Threads"
+msgstr "スレッド"
+
+#: src\ui\chat.rs:248 src\ui\settings.rs:1015 src\ui\soundboard.rs:61 src\ui\soundboard.rs:61
+msgid "Camera and screen sharing aren't available yet."
+msgstr "カメラと画面共有はまだ利用できません。"
+
+#: src\ui\chat.rs:251 src\ui\friends.rs:390
+msgid "Start Voice Call"
+msgstr "音声通話を開始"
+
+#: src\ui\chat.rs:265 src\ui\chat.rs:2925
 msgid "Follow"
 msgstr "フォローする"
 
-#: src\ui\chat.rs:277
+#: src\ui\chat.rs:300
 msgid "Leave Call"
 msgstr "通話から退出"
 
-#: src\ui\chat.rs:280 src\ui\overlay.rs:592
+#: src\ui\chat.rs:303 src\ui\overlay.rs:592
 msgid "Join Call"
 msgstr "通話に参加"
 
-#: src\ui\chat.rs:294
+#: src\ui\chat.rs:317
 msgid "automatic"
 msgstr "自動"
 
-#: src\ui\chat.rs:297 src\ui\mod.rs:2298
+#: src\ui\chat.rs:320 src\ui\mod.rs:2302
 msgid "Region: {region}"
 msgstr "地域: {region}"
 
-#: src\ui\chat.rs:301
+#: src\ui\chat.rs:324
 msgid "Best route ({region}, {ms} ms)"
 msgstr "最適なルート ({region}、{ms} ms)"
 
-#: src\ui\chat.rs:311
+#: src\ui\chat.rs:334
 msgid "Measuring latency…"
 msgstr "レイテンシを測定中…"
 
-#: src\ui\chat.rs:348
+#: src\ui\chat.rs:371
 msgid "Couldn't load: {error}"
 msgstr "読み込めませんでした: {error}"
 
-#: src\ui\chat.rs:349
+#: src\ui\chat.rs:372
 msgid "Try Again"
 msgstr "再試行"
 
-#: src\ui\chat.rs:358
+#: src\ui\chat.rs:381
 msgid "This is the beginning of the conversation."
 msgstr "これが会話の始まりです。"
 
-#: src\ui\chat.rs:397
+#: src\ui\chat.rs:420
 msgid "New"
 msgstr "新規"
 
-#: src\ui\chat.rs:434
+#: src\ui\chat.rs:457
 msgid "Message from someone you blocked"
 msgstr "ブロックした人からのメッセージ"
 
-#: src\ui\chat.rs:470
+#: src\ui\chat.rs:493
 msgid "Couldn't find the original message."
 msgstr "元のメッセージが見つかりませんでした。"
 
-#: src\ui\chat.rs:493
+#: src\ui\chat.rs:516
 msgid "{count} new message since {time}"
 msgid_plural "{count} new messages since {time}"
 msgstr[0] "{time}以降の新しいメッセージ {count}件"
 
-#: src\ui\chat.rs:496 src\ui\mod.rs:738 src\ui\mod.rs:1502 src\ui\mod.rs:1560
+#: src\ui\chat.rs:519 src\ui\mod.rs:738 src\ui\mod.rs:1502 src\ui\mod.rs:1560
 msgid "Mark As Read"
 msgstr "既読にする"
 
-#: src\ui\chat.rs:511
+#: src\ui\chat.rs:534
 msgid "You're Viewing Older Messages"
 msgstr "以前のメッセージを表示しています"
 
-#: src\ui\chat.rs:512
+#: src\ui\chat.rs:535
 msgid "Jump To Present"
 msgstr "現在に移動"
 
-#: src\ui\chat.rs:648
+#: src\ui\chat.rs:671
 msgid "Forwarded"
 msgstr "転送されたメッセージ"
 
-#: src\ui\chat.rs:657
+#: src\ui\chat.rs:680
 msgid "(edited)"
 msgstr "(編集済)"
 
-#: src\ui\chat.rs:661
+#: src\ui\chat.rs:684
 msgid "(deleted)"
 msgstr "(削除済)"
 
-#: src\ui\chat.rs:688 src\ui\chat.rs:2990
+#: src\ui\chat.rs:711 src\ui\chat.rs:3041
 msgid "Play"
 msgstr "再生"
 
-#: src\ui\chat.rs:691
+#: src\ui\chat.rs:714
 msgid "Voice Message"
 msgstr "ボイスメッセージ"
 
-#: src\ui\chat.rs:704 src\ui\chat.rs:1217 src\ui\components.rs:253
+#: src\ui\chat.rs:727 src\ui\chat.rs:1240 src\ui\components.rs:253
 msgid "Spoiler"
 msgstr "ネタバレ"
 
-#: src\ui\chat.rs:806
+#: src\ui\chat.rs:829
 msgid "Click to react"
 msgstr "クリックしてリアクション"
 
-#: src\ui\chat.rs:813 src\ui\chat.rs:929
+#: src\ui\chat.rs:836 src\ui\chat.rs:952
 msgid "Add Reaction"
 msgstr "リアクションを付ける"
 
-#: src\ui\chat.rs:817 src\ui\settings.rs:342 src\ui\settings.rs:351 src\ui\settings.rs:363
+#: src\ui\chat.rs:840 src\ui\settings.rs:342 src\ui\settings.rs:351 src\ui\settings.rs:363
 msgid "Edit"
 msgstr "編集"
 
-#: src\ui\chat.rs:820 src\ui\chat.rs:827 src\ui\chat.rs:950
+#: src\ui\chat.rs:843 src\ui\chat.rs:850 src\ui\chat.rs:973
 msgid "Reply"
 msgstr "返信"
 
-#: src\ui\chat.rs:823 src\ui\chat.rs:954 src\ui\chat.rs:1424
+#: src\ui\chat.rs:846 src\ui\chat.rs:977 src\ui\chat.rs:1447
 msgid "Forward"
 msgstr "転送"
 
-#: src\ui\chat.rs:830 src\ui\chat.rs:1032
+#: src\ui\chat.rs:853 src\ui\chat.rs:1055
 msgid "Mark Unread"
 msgstr "未読にする"
 
-#: src\ui\chat.rs:839 src\ui\chat.rs:1087 src\ui\guild.rs:533 src\ui\guild_more.rs:111
+#: src\ui\chat.rs:862 src\ui\chat.rs:1110 src\ui\guild.rs:533 src\ui\guild_more.rs:111
 msgid "Delete"
 msgstr "削除"
 
-#: src\ui\chat.rs:844 src\ui\chat.rs:1427 src\ui\friends.rs:388 src\ui\profile.rs:187
+#: src\ui\chat.rs:867 src\ui\chat.rs:1450 src\ui\friends.rs:388 src\ui\profile.rs:187
 msgid "More"
 msgstr "その他"
 
-#: src\ui\chat.rs:938
+#: src\ui\chat.rs:961
 msgid "View More"
 msgstr "もっと見る"
 
-#: src\ui\chat.rs:946
+#: src\ui\chat.rs:969
 msgid "Edit Message"
 msgstr "メッセージを編集"
 
-#: src\ui\chat.rs:958
+#: src\ui\chat.rs:981
 msgid "View Reactions"
 msgstr "リアクションを表示"
 
-#: src\ui\chat.rs:964 src\ui\chat.rs:2930
+#: src\ui\chat.rs:987 src\ui\chat.rs:2981
 msgid "Create Thread"
 msgstr "スレッドを作成"
 
-#: src\ui\chat.rs:969 src\ui\chat.rs:2717
+#: src\ui\chat.rs:992 src\ui\chat.rs:2760
 msgid "New Thread"
 msgstr "新しいスレッド"
 
-#: src\ui\chat.rs:975
+#: src\ui\chat.rs:998
 msgid "Remove Bookmark"
 msgstr "ブックマークを削除"
 
-#: src\ui\chat.rs:975
+#: src\ui\chat.rs:998
 msgid "Bookmark Message"
 msgstr "メッセージをブックマーク"
 
-#: src\ui\chat.rs:985
+#: src\ui\chat.rs:1008
 msgid "Remind Me"
 msgstr "リマインドする"
 
-#: src\ui\chat.rs:986
+#: src\ui\chat.rs:1009
 msgid "In 1 hour"
 msgstr "1時間後"
 
-#: src\ui\chat.rs:986
+#: src\ui\chat.rs:1009
 msgid "In 3 hours"
 msgstr "3時間後"
 
-#: src\ui\chat.rs:986
+#: src\ui\chat.rs:1009
 msgid "Tomorrow"
 msgstr "明日"
 
-#: src\ui\chat.rs:990
+#: src\ui\chat.rs:1013
 msgid "Reminder added."
 msgstr "リマインダーが追加されました。"
 
-#: src\ui\chat.rs:995
+#: src\ui\chat.rs:1018
 msgid "Copy Text"
 msgstr "テキストをコピー"
 
-#: src\ui\chat.rs:1000
+#: src\ui\chat.rs:1023
 msgid "Unpin Message"
 msgstr "メッセージのピン留めを外す"
 
-#: src\ui\chat.rs:1000
+#: src\ui\chat.rs:1023
 msgid "Pin Message"
 msgstr "メッセージをピン留め"
 
-#: src\ui\chat.rs:1014
+#: src\ui\chat.rs:1037
 msgid "Publish"
 msgstr "公開"
 
-#: src\ui\chat.rs:1018
+#: src\ui\chat.rs:1041
 msgid "Remove Embeds"
 msgstr "埋め込みを削除"
 
-#: src\ui\chat.rs:1022 src\ui\chat.rs:1024 src\ui\chat.rs:1026
+#: src\ui\chat.rs:1045 src\ui\chat.rs:1047 src\ui\chat.rs:1049
 msgid "Remove All Reactions"
 msgstr "全リアクションを削除"
 
-#: src\ui\chat.rs:1025
+#: src\ui\chat.rs:1048
 msgid "Are you sure you want to remove all the reactions from this message?"
 msgstr "このメッセージのリアクションをすべて削除してもよろしいですか？"
 
-#: src\ui\chat.rs:1036
+#: src\ui\chat.rs:1059
 msgid "Copy Message Link"
 msgstr "メッセージリンクをコピー"
 
-#: src\ui\chat.rs:1041
+#: src\ui\chat.rs:1064
 msgid "View Raw"
 msgstr "ソースを表示"
 
-#: src\ui\chat.rs:1048
+#: src\ui\chat.rs:1071
 msgid "Search Image (Google Lens)"
 msgstr "画像を検索 (Google レンズ)"
 
-#: src\ui\chat.rs:1056 src\ui\chat.rs:1085
+#: src\ui\chat.rs:1079 src\ui\chat.rs:1108
 msgid "Delete Message"
 msgstr "メッセージを削除"
 
-#: src\ui\chat.rs:1066
+#: src\ui\chat.rs:1089
 msgid "Copy Message ID"
 msgstr "メッセージIDをコピー"
 
-#: src\ui\chat.rs:1080 src\ui\chat.rs:1082
+#: src\ui\chat.rs:1103 src\ui\chat.rs:1105
 msgid "Are you sure you want to delete this message?"
 msgstr "メッセージを削除します。よろしいですか？"
 
-#: src\ui\chat.rs:1086
+#: src\ui\chat.rs:1109
 msgid "PROTIP: You can hold down shift when clicking delete message to bypass this confirmation entirely."
 msgstr "ヒント: Shiftキーを押しながらメッセージの削除をクリックすると、この確認をスキップできます。"
 
-#: src\ui\chat.rs:1095
+#: src\ui\chat.rs:1118
 msgid "{name} joined the party."
 msgstr "{name}がパーティーに参加しました。"
 
-#: src\ui\chat.rs:1096
+#: src\ui\chat.rs:1119
 msgid "{name} is here."
 msgstr "{name}がやってきました。"
 
-#: src\ui\chat.rs:1097
+#: src\ui\chat.rs:1120
 msgid "Welcome, {name}. We hope you brought pizza."
 msgstr "ようこそ、{name}さん。ピザを持ってきてくれたと信じています。"
 
-#: src\ui\chat.rs:1098
+#: src\ui\chat.rs:1121
 msgid "A wild {name} appeared."
 msgstr "野生の{name}が現れた。"
 
-#: src\ui\chat.rs:1099
+#: src\ui\chat.rs:1122
 msgid "{name} just landed."
 msgstr "{name}が着陸しました。"
 
-#: src\ui\chat.rs:1100
+#: src\ui\chat.rs:1123
 msgid "{name} just slid into the server."
 msgstr "{name}がサーバーに滑り込みました。"
 
-#: src\ui\chat.rs:1101
+#: src\ui\chat.rs:1124
 msgid "{name} just showed up!"
 msgstr "{name}が姿を現しました！"
 
-#: src\ui\chat.rs:1102
+#: src\ui\chat.rs:1125
 msgid "Welcome {name}. Say hi!"
 msgstr "ようこそ、{name}さん。挨拶してね！"
 
-#: src\ui\chat.rs:1103
+#: src\ui\chat.rs:1126
 msgid "{name} hopped into the server."
 msgstr "{name}がサーバーに飛び込みました。"
 
-#: src\ui\chat.rs:1104
+#: src\ui\chat.rs:1127
 msgid "Everyone welcome {name}!"
 msgstr "みんなで{name}さんを歓迎しましょう！"
 
-#: src\ui\chat.rs:1105
+#: src\ui\chat.rs:1128
 msgid "Glad you're here, {name}."
 msgstr "{name}さん、来てくれて嬉しいです。"
 
-#: src\ui\chat.rs:1106
+#: src\ui\chat.rs:1129
 msgid "Good to see you, {name}."
 msgstr "会えて嬉しいです、{name}さん。"
 
-#: src\ui\chat.rs:1107
+#: src\ui\chat.rs:1130
 msgid "Yay you made it, {name}!"
 msgstr "やった、{name}さんが来ました！"
 
-#: src\ui\chat.rs:1112 src\ui\guild.rs:1284
+#: src\ui\chat.rs:1135 src\ui\guild.rs:1284
 msgid "someone"
 msgstr "誰か"
 
-#: src\ui\chat.rs:1115
+#: src\ui\chat.rs:1138
 msgid "{name} added {other} to the group."
 msgstr "{name}が{other}をグループに追加しました。"
 
-#: src\ui\chat.rs:1116
+#: src\ui\chat.rs:1139
 msgid "{name} removed {other} from the group."
 msgstr "{name}が{other}をグループから削除しました。"
 
-#: src\ui\chat.rs:1117
+#: src\ui\chat.rs:1140
 msgid "{name} started a call."
 msgstr "{name}が通話を開始しました。"
 
-#: src\ui\chat.rs:1118
+#: src\ui\chat.rs:1141
 msgid "{name} changed the channel name: {channel}"
 msgstr "{name}がチャンネル名を変更しました: {channel}"
 
-#: src\ui\chat.rs:1119
+#: src\ui\chat.rs:1142
 msgid "{name} changed the channel icon."
 msgstr "{name}がチャンネルアイコンを変更しました。"
 
-#: src\ui\chat.rs:1120
+#: src\ui\chat.rs:1143
 msgid "{name} pinned a message to this channel."
 msgstr "{name}がこのチャンネルにメッセージをピン留めしました。"
 
-#: src\ui\chat.rs:1125
+#: src\ui\chat.rs:1148
 msgid "{name} just boosted the server!"
 msgstr "{name}がサーバーをブーストしました！"
 
-#: src\ui\chat.rs:1126
+#: src\ui\chat.rs:1149
 msgid "{name} just boosted the server! The server has achieved Level {level}!"
 msgstr "{name}がサーバーをブーストしました！サーバーがレベル{level}に到達しました！"
 
-#: src\ui\chat.rs:1127
+#: src\ui\chat.rs:1150
 msgid "{name} has added {channel} to this channel. Its most important updates will show up here."
 msgstr "{name}がこのチャンネルに{channel}を追加しました。重要な更新はここに表示されます。"
 
-#: src\ui\chat.rs:1128
+#: src\ui\chat.rs:1151
 msgid "{name} started a thread: {thread}"
 msgstr "{name}がスレッドを開始しました: {thread}"
 
-#: src\ui\chat.rs:1129
+#: src\ui\chat.rs:1152
 msgid "AutoMod has blocked a message."
 msgstr "AutoModがメッセージをブロックしました。"
 
-#: src\ui\chat.rs:1130
+#: src\ui\chat.rs:1153
 msgid "{name} started {stage}"
 msgstr "{name}が{stage}を開始しました"
 
-#: src\ui\chat.rs:1131
+#: src\ui\chat.rs:1154
 msgid "{name} ended {stage}"
 msgstr "{name}が{stage}を終了しました"
 
-#: src\ui\chat.rs:1132
+#: src\ui\chat.rs:1155
 msgid "{name} is now a speaker."
 msgstr "{name}がスピーカーになりました。"
 
-#: src\ui\chat.rs:1133
+#: src\ui\chat.rs:1156
 msgid "{name} changed the Stage topic: {topic}"
 msgstr "{name}がステージのトピックを変更しました: {topic}"
 
-#: src\ui\chat.rs:1134
+#: src\ui\chat.rs:1157
 msgid "{name}'s poll has closed."
 msgstr "{name}の投票が終了しました。"
 
-#: src\ui\chat.rs:1135
+#: src\ui\chat.rs:1158
 msgid "{name} added a new emoji."
 msgstr "{name}が新しい絵文字を追加しました。"
 
-#: src\ui\chat.rs:1136
+#: src\ui\chat.rs:1159
 msgid "You and {name} are now friends."
 msgstr "あなたと{name}はフレンドになりました。"
 
-#: src\ui\chat.rs:1229
+#: src\ui\chat.rs:1252
 msgid "Spoiler Attachment"
 msgstr "添付ファイルをスポイラーにする"
 
-#: src\ui\chat.rs:1230 src\ui\chat.rs:2541
+#: src\ui\chat.rs:1253 src\ui\chat.rs:2584
 msgid "Modify Attachment"
 msgstr "添付ファイルを編集"
 
-#: src\ui\chat.rs:1231
+#: src\ui\chat.rs:1254
 msgid "Remove Attachment"
 msgstr "添付ファイルを削除"
 
-#: src\ui\chat.rs:1425
+#: src\ui\chat.rs:1448
 msgid "Save Image"
 msgstr "画像を保存"
 
-#: src\ui\chat.rs:1426
+#: src\ui\chat.rs:1449
 msgid "Open in Browser"
 msgstr "ブラウザで開く"
 
-#: src\ui\chat.rs:1428 src\ui\chat.rs:2216 src\ui\form_modal.rs:220 src\ui\gates.rs:318
+#: src\ui\chat.rs:1451 src\ui\chat.rs:2259 src\ui\form_modal.rs:220 src\ui\gates.rs:318
 msgid "Close"
 msgstr "閉じる"
 
-#: src\ui\chat.rs:1447
+#: src\ui\chat.rs:1470
 msgid "Copy Image"
 msgstr "画像をコピー"
 
-#: src\ui\chat.rs:1451
+#: src\ui\chat.rs:1474
 msgid "Copy Media Link"
 msgstr "メディアリンクをコピー"
 
-#: src\ui\chat.rs:1453
+#: src\ui\chat.rs:1476
 msgid "Link Copied!"
 msgstr "リンクをコピーしました！"
 
-#: src\ui\chat.rs:1620
+#: src\ui\chat.rs:1643
 msgid "Poll closed"
 msgstr "投票終了"
 
-#: src\ui\chat.rs:1622
+#: src\ui\chat.rs:1645
 msgid "Select one or more answers"
 msgstr "回答を1件または複数選択"
 
-#: src\ui\chat.rs:1624
+#: src\ui\chat.rs:1647
 msgid "Select one answer"
 msgstr "回答を1つ選択してください"
 
-#: src\ui\chat.rs:1640 src\ui\chat.rs:1662
+#: src\ui\chat.rs:1663 src\ui\chat.rs:1685
 msgid "{count} vote"
 msgid_plural "{count} votes"
 msgstr[0] "{count}票"
 
-#: src\ui\chat.rs:1666
+#: src\ui\chat.rs:1689
 msgid "ends {when}"
 msgstr "{when}に終了"
 
-#: src\ui\chat.rs:1678 src\ui\chat.rs:2697
+#: src\ui\chat.rs:1701 src\ui\chat.rs:2740
 msgid "New Post"
 msgstr "新しい投稿"
 
-#: src\ui\chat.rs:1687
+#: src\ui\chat.rs:1710
 msgid "No active posts."
 msgstr "アクティブな投稿はありません。"
 
-#: src\ui\chat.rs:1706
+#: src\ui\chat.rs:1729
 msgid "Last activity: {when}"
 msgstr "最後のアクティビティ: {when}"
 
-#: src\ui\chat.rs:1727 src\ui\gates.rs:244
+#: src\ui\chat.rs:1750 src\ui\gates.rs:244
 msgid "Complete"
 msgstr "完了！"
 
-#: src\ui\chat.rs:1743 src\ui\chat.rs:2855
+#: src\ui\chat.rs:1766 src\ui\chat.rs:2898
 msgid "Follow to get this channel's updates in your own server."
 msgstr "フォローすると、このチャンネルの最新情報を自分のサーバーで受け取れます。"
 
-#: src\ui\chat.rs:1757 src\ui\mod.rs:1131 src\ui\requests.rs:74 src\ui\titlebar.rs:122
+#: src\ui\chat.rs:1780 src\ui\mod.rs:1131 src\ui\requests.rs:74 src\ui\titlebar.rs:122
 msgid "Message Requests"
 msgstr "メッセージ・リクエスト"
 
-#: src\ui\chat.rs:1761 src\ui\friends.rs:413
+#: src\ui\chat.rs:1784 src\ui\friends.rs:413
 msgid "Accept"
 msgstr "承認"
 
-#: src\ui\chat.rs:1764 src\ui\friends.rs:408 src\ui\menu.rs:329 src\ui\requests.rs:105
+#: src\ui\chat.rs:1787 src\ui\friends.rs:408 src\ui\menu.rs:329 src\ui\requests.rs:105
 msgid "Ignore"
 msgstr "無視"
 
-#: src\ui\chat.rs:1780
+#: src\ui\chat.rs:1803
 msgid "Replying to {author}"
 msgstr "{author}に返信"
 
-#: src\ui\chat.rs:1866
+#: src\ui\chat.rs:1889
 msgid "Message #{channel}"
 msgstr "#{channel}へメッセージを送信"
 
-#: src\ui\chat.rs:1868
+#: src\ui\chat.rs:1891
 msgid "Message @{user}"
 msgstr "@{user}へメッセージを送信"
 
-#: src\ui\chat.rs:1884
+#: src\ui\chat.rs:1907
 msgid "Upload a File (or drag it onto the window)"
 msgstr "ファイルをアップロード(ウィンドウにドラッグしても可)"
 
-#: src\ui\chat.rs:1893 src\ui\chat.rs:2804
+#: src\ui\chat.rs:1916 src\ui\chat.rs:2847
 msgid "Create Poll"
 msgstr "投票の作成"
 
-#: src\ui\chat.rs:1935
-msgid "Open sticker picker"
-msgstr "スタンプピッカーを開く"
+#: src\ui\chat.rs:1961
+msgid "Send a gift"
+msgstr "ギフトを贈る"
 
-#: src\ui\chat.rs:1942
+#: src\ui\chat.rs:1968
 msgid "Open GIF picker"
 msgstr "GIFピッカーを開く"
 
-#: src\ui\chat.rs:1949
+#: src\ui\chat.rs:1975
+msgid "Open sticker picker"
+msgstr "スタンプピッカーを開く"
+
+#: src\ui\chat.rs:1982
 msgid "Select emoji"
 msgstr "絵文字を選択"
 
-#: src\ui\chat.rs:1969
+#: src\ui\chat.rs:2012
 msgid "Your message is too long: the limit is {limit} characters."
 msgstr "メッセージが長すぎます: 上限は{limit}文字です。"
 
-#: src\ui\chat.rs:1998
+#: src\ui\chat.rs:2041
 msgid "{a} is typing…"
 msgstr "{a}が入力中…"
 
-#: src\ui\chat.rs:1999
+#: src\ui\chat.rs:2042
 msgid "{a} and {b} are typing…"
 msgstr "{a}と{b}が入力中…"
 
-#: src\ui\chat.rs:2000
+#: src\ui\chat.rs:2043
 msgid "{a}, {b}, and {c} are typing…"
 msgstr "{a}、{b}、{c}が入力中…"
 
-#: src\ui\chat.rs:2001
+#: src\ui\chat.rs:2044
 msgid "Several people are typing…"
 msgstr "複数の人が入力中…"
 
-#: src\ui\chat.rs:2081 src\ui\chat.rs:2353 src\ui\chat.rs:2704 src\ui\chat.rs:2840
+#: src\ui\chat.rs:2124 src\ui\chat.rs:2396 src\ui\chat.rs:2747 src\ui\chat.rs:2883
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: src\ui\chat.rs:2113 src\ui\friends.rs:26 src\ui\friends.rs:130
+#: src\ui\chat.rs:2156 src\ui\friends.rs:26 src\ui\friends.rs:130
 msgid "Online"
 msgstr "オンライン"
 
-#: src\ui\chat.rs:2114 src\ui\friends.rs:30
+#: src\ui\chat.rs:2157 src\ui\friends.rs:30
 msgid "Offline"
 msgstr "オフライン"
 
-#: src\ui\chat.rs:2223
+#: src\ui\chat.rs:2266
 msgid "Search Messages"
 msgstr "メッセージを検索"
 
-#: src\ui\chat.rs:2231 src\ui\overlay.rs:867 src\ui\settings.rs:1206
+#: src\ui\chat.rs:2274 src\ui\overlay.rs:867 src\ui\settings.rs:1206
 msgid "Messages"
 msgstr "メッセージ"
 
-#: src\ui\chat.rs:2231
+#: src\ui\chat.rs:2274
 msgid "Media"
 msgstr "メディア"
 
-#: src\ui\chat.rs:2231 src\ui\settings.rs:1248
+#: src\ui\chat.rs:2274 src\ui\settings.rs:1248
 msgid "Links"
 msgstr "リンク"
 
-#: src\ui\chat.rs:2231
+#: src\ui\chat.rs:2274
 msgid "Files"
 msgstr "ファイル"
 
-#: src\ui\chat.rs:2239
+#: src\ui\chat.rs:2282
 msgid "Newest"
 msgstr "最新"
 
-#: src\ui\chat.rs:2243
+#: src\ui\chat.rs:2286
 msgid "Oldest"
 msgstr "古い順"
 
-#: src\ui\chat.rs:2295
+#: src\ui\chat.rs:2338
 msgid "{count} Pinned Message"
 msgid_plural "{count} Pinned Messages"
 msgstr[0] "ピン留めされたメッセージ {count}件"
 
-#: src\ui\chat.rs:2296
+#: src\ui\chat.rs:2339
 msgid "{count} Result"
 msgid_plural "{count} Results"
 msgstr[0] "{count}件の結果"
 
-#: src\ui\chat.rs:2323 src\ui\titlebar.rs:421
+#: src\ui\chat.rs:2366 src\ui\titlebar.rs:421
 msgid "{count} attachment"
 msgid_plural "{count} attachments"
 msgstr[0] "添付ファイル {count}件"
 
-#: src\ui\chat.rs:2328
+#: src\ui\chat.rs:2371
 msgid "Jump"
 msgstr "ジャンプ"
 
-#: src\ui\chat.rs:2373
+#: src\ui\chat.rs:2416
 msgid "PROTIP:"
 msgstr "ヒント:"
 
-#: src\ui\chat.rs:2380
+#: src\ui\chat.rs:2423
 msgid "Don't ask again"
 msgstr "今後確認しない"
 
-#: src\ui\chat.rs:2396
+#: src\ui\chat.rs:2439
 msgid "Forward To"
 msgstr "転送先"
 
-#: src\ui\chat.rs:2397
+#: src\ui\chat.rs:2440
 msgid "Choose up to 5 conversations."
 msgstr "会話を5つまで選択してください。"
 
-#: src\ui\chat.rs:2458
+#: src\ui\chat.rs:2501
 msgid "Add an optional message…"
 msgstr "メッセージを追加(任意)…"
 
-#: src\ui\chat.rs:2459
+#: src\ui\chat.rs:2502
 msgid "Send"
 msgstr "送信"
 
-#: src\ui\chat.rs:2484
+#: src\ui\chat.rs:2527
 msgid "Message forwarded."
 msgstr "メッセージを転送しました。"
 
-#: src\ui\chat.rs:2484
+#: src\ui\chat.rs:2527
 msgid "Message forwarded to the conversations."
 msgstr "メッセージを会話に転送しました。"
 
-#: src\ui\chat.rs:2495
+#: src\ui\chat.rs:2538
 msgid "Nickname"
 msgstr "ニックネーム"
 
-#: src\ui\chat.rs:2497
+#: src\ui\chat.rs:2540
 msgid "Reset Nickname"
 msgstr "ニックネームをリセット"
 
-#: src\ui\chat.rs:2500 src\ui\chat.rs:2525 src\ui\chat.rs:2550 src\ui\chat.rs:2568
+#: src\ui\chat.rs:2543 src\ui\chat.rs:2568 src\ui\chat.rs:2593 src\ui\chat.rs:2611
 msgid "Save"
 msgstr "保存"
 
-#: src\ui\chat.rs:2521
+#: src\ui\chat.rs:2564
 msgid "Note"
 msgstr "メモ"
 
-#: src\ui\chat.rs:2522
+#: src\ui\chat.rs:2565
 msgid "About @{name}, only visible to you"
 msgstr "@{name}についてのメモ(自分だけに表示)"
 
-#: src\ui\chat.rs:2524
+#: src\ui\chat.rs:2567
 msgid "Click to add a note"
 msgstr "クリックしてメモを追加"
 
-#: src\ui\chat.rs:2543
+#: src\ui\chat.rs:2586
 msgid "Filename"
 msgstr "ファイル名"
 
-#: src\ui\chat.rs:2546
+#: src\ui\chat.rs:2589
 msgid "Description (Alt Text)"
 msgstr "概要（代替テキスト）"
 
-#: src\ui\chat.rs:2547
+#: src\ui\chat.rs:2590
 msgid "Add a description"
 msgstr "説明を追加"
 
-#: src\ui\chat.rs:2549
+#: src\ui\chat.rs:2592
 msgid "Mark as spoiler"
 msgstr "スポイラーとしてマーク"
 
-#: src\ui\chat.rs:2564 src\ui\mod.rs:1304
+#: src\ui\chat.rs:2607 src\ui\mod.rs:1304
 msgid "Set a channel status"
 msgstr "チャンネルステータスを設定"
 
-#: src\ui\chat.rs:2565
+#: src\ui\chat.rs:2608
 msgid "Everyone in the channel sees it under its name."
 msgstr "チャンネルの全員が名前の下に表示されます。"
 
-#: src\ui\chat.rs:2567
+#: src\ui\chat.rs:2610
 msgid "What's going on?"
 msgstr "何してる？"
 
-#: src\ui\chat.rs:2583
+#: src\ui\chat.rs:2626
 msgid "Join a Server"
 msgstr "サーバーに参加"
 
-#: src\ui\chat.rs:2584
+#: src\ui\chat.rs:2627
 msgid "Paste an invite, such as discord.gg/abc123"
 msgstr "招待を貼り付けてください(例: discord.gg/abc123)"
 
-#: src\ui\chat.rs:2588 src\ui\gates.rs:565 src\ui\profile.rs:452
+#: src\ui\chat.rs:2631 src\ui\gates.rs:565 src\ui\profile.rs:452
 msgid "Join"
 msgstr "参加"
 
-#: src\ui\chat.rs:2599
+#: src\ui\chat.rs:2642
 msgid "Create Your Server"
 msgstr "サーバーを作成"
 
-#: src\ui\chat.rs:2600 src\ui\guild.rs:178
+#: src\ui\chat.rs:2643 src\ui\guild.rs:178
 msgid "Server Name"
 msgstr "サーバー名"
 
-#: src\ui\chat.rs:2601 src\ui\chat.rs:2718 src\ui\chat.rs:2932 src\ui\guild_more.rs:190
+#: src\ui\chat.rs:2644 src\ui\chat.rs:2761 src\ui\chat.rs:2983 src\ui\guild_more.rs:190
 msgid "Create"
 msgstr "作成"
 
-#: src\ui\chat.rs:2611
+#: src\ui\chat.rs:2654
 msgid "Set a custom status"
 msgstr "カスタムステータスを設定"
 
-#: src\ui\chat.rs:2614
+#: src\ui\chat.rs:2657
 msgid "What's cookin', {name}?"
 msgstr "何してる、{name}？"
 
-#: src\ui\chat.rs:2615
+#: src\ui\chat.rs:2658
 msgid "Support has arrived!"
 msgstr "サポートが到着しました！"
 
-#: src\ui\chat.rs:2617
+#: src\ui\chat.rs:2660
 msgid "Clear after"
 msgstr "クリアまで"
 
-#: src\ui\chat.rs:2619
+#: src\ui\chat.rs:2662
 msgid "Today"
 msgstr "今日"
 
-#: src\ui\chat.rs:2620
+#: src\ui\chat.rs:2663
 msgid "4 hours"
 msgstr "4時間"
 
-#: src\ui\chat.rs:2621 src\ui\guild.rs:203
+#: src\ui\chat.rs:2664 src\ui\guild.rs:203
 msgid "1 hour"
 msgstr "1時間"
 
-#: src\ui\chat.rs:2622 src\ui\guild.rs:203
+#: src\ui\chat.rs:2665 src\ui\guild.rs:203
 msgid "30 minutes"
 msgstr "30分"
 
-#: src\ui\chat.rs:2623
+#: src\ui\chat.rs:2666
 msgid "Don't clear"
 msgstr "クリアしない"
 
-#: src\ui\chat.rs:2640
+#: src\ui\chat.rs:2683
 msgid "Select Friends"
 msgstr "フレンドを選択"
 
-#: src\ui\chat.rs:2641
+#: src\ui\chat.rs:2684
 msgid "You can add {count} more friend."
 msgid_plural "You can add {count} more friends."
 msgstr[0] "あと{count}人のフレンドを追加できます。"
 
-#: src\ui\chat.rs:2642
+#: src\ui\chat.rs:2685
 msgid "Type the username of a friend"
 msgstr "フレンドのユーザー名を入力"
 
-#: src\ui\chat.rs:2668
+#: src\ui\chat.rs:2711
 msgid "Create Group"
 msgstr "グループを作成"
 
-#: src\ui\chat.rs:2668 src\ui\mod.rs:1151
+#: src\ui\chat.rs:2711 src\ui\mod.rs:1151
 msgid "Create DM"
 msgstr "DMを作成"
 
-#: src\ui\chat.rs:2675
+#: src\ui\chat.rs:2718
 msgid "Enter your password to continue."
 msgstr "続行するにはパスワードを入力してください。"
 
-#: src\ui\chat.rs:2675 src\ui\gates.rs:164 src\ui\gates.rs:202 src\ui\mod.rs:294
+#: src\ui\chat.rs:2718 src\ui\gates.rs:164 src\ui\gates.rs:202 src\ui\mod.rs:294
 msgid "Password"
 msgstr "パスワード"
 
-#: src\ui\chat.rs:2675
+#: src\ui\chat.rs:2718
 msgid "Open your authentication app and enter the code below."
 msgstr "認証アプリを開いて、以下のコードを入力します。"
 
-#: src\ui\chat.rs:2675
+#: src\ui\chat.rs:2718
 msgid "Enter Discord Auth/Backup Code"
 msgstr "Discordの認証／バックアップコードを入力してください"
 
-#: src\ui\chat.rs:2681
+#: src\ui\chat.rs:2724
 msgid "Verify"
 msgstr "認証"
 
-#: src\ui\chat.rs:2699
+#: src\ui\chat.rs:2742
 msgid "Post Title"
 msgstr "投稿タイトル"
 
-#: src\ui\chat.rs:2707 src\ui\chat.rs:2843
+#: src\ui\chat.rs:2750 src\ui\chat.rs:2886
 msgid "Post"
 msgstr "投稿"
 
-#: src\ui\chat.rs:2728
+#: src\ui\chat.rs:2771
 msgid "Active Threads"
 msgstr "アクティブ状態のスレッド"
 
-#: src\ui\chat.rs:2736
+#: src\ui\chat.rs:2779
 msgid "Archived Threads"
 msgstr "アーカイブ済みスレッド"
 
-#: src\ui\chat.rs:2753
+#: src\ui\chat.rs:2796
 msgid "Reactions"
 msgstr "リアクション"
 
-#: src\ui\chat.rs:2791 src\ui\guild.rs:287 src\ui\guild_more.rs:176 src\ui\settings.rs:1534
+#: src\ui\chat.rs:2834 src\ui\guild.rs:287 src\ui\guild_more.rs:176 src\ui\settings.rs:1534
 msgid "Remove"
 msgstr "削除"
 
-#: src\ui\chat.rs:2806
+#: src\ui\chat.rs:2849
 msgid "Question"
 msgstr "質問"
 
-#: src\ui\chat.rs:2809
+#: src\ui\chat.rs:2852
 msgid "Answers"
 msgstr "回答"
 
-#: src\ui\chat.rs:2822
+#: src\ui\chat.rs:2865
 msgid "Add another answer"
 msgstr "別の回答を追加"
 
-#: src\ui\chat.rs:2828
+#: src\ui\chat.rs:2871
 msgid "Duration"
 msgstr "期間"
 
-#: src\ui\chat.rs:2829
+#: src\ui\chat.rs:2872
 msgid "{count} hour"
 msgid_plural "{count} hours"
 msgstr[0] "{count}時間"
 
-#: src\ui\chat.rs:2829 src\ui\guild_more.rs:269
+#: src\ui\chat.rs:2872 src\ui\guild_more.rs:269
 msgid "{count} day"
 msgid_plural "{count} days"
 msgstr[0] "{count}日"
 
-#: src\ui\chat.rs:2835
+#: src\ui\chat.rs:2878
 msgid "Allow Multiple Answers"
 msgstr "複数回答を許可する"
 
-#: src\ui\chat.rs:2854
+#: src\ui\chat.rs:2897
 msgid "Follow Updates"
 msgstr "アップデートをフォロー"
 
-#: src\ui\chat.rs:2860 src\ui\chat.rs:2861
+#: src\ui\chat.rs:2903 src\ui\chat.rs:2904
 msgid "Select a server"
 msgstr "サーバーを選択"
 
-#: src\ui\chat.rs:2872 src\ui\chat.rs:2873
+#: src\ui\chat.rs:2915 src\ui\chat.rs:2916
 msgid "Select a channel"
 msgstr "チャンネルを選択"
 
-#: src\ui\chat.rs:2890 src\ui\mod.rs:1884
+#: src\ui\chat.rs:2933 src\ui\mod.rs:1884
 msgid "Edit Group"
 msgstr "グループを編集"
 
-#: src\ui\chat.rs:2891
+#: src\ui\chat.rs:2934
 msgid "Group Name"
 msgstr "グループ名"
 
-#: src\ui\chat.rs:2899 src\ui\mod.rs:1888
-msgid "Add Friends to DM"
-msgstr "DMにフレンドを追加"
-
-#: src\ui\chat.rs:2922 src\ui\settings.rs:363
+#: src\ui\chat.rs:2965 src\ui\settings.rs:363
 msgid "Add"
 msgstr "追加"
 
-#: src\ui\chat.rs:3079
+#: src\ui\chat.rs:3130
 msgid "escape to"
 msgstr "Escキーで"
 
-#: src\ui\chat.rs:3080
+#: src\ui\chat.rs:3131
 msgid "cancel"
 msgstr "キャンセル"
 
-#: src\ui\chat.rs:3084
+#: src\ui\chat.rs:3135
 msgid "enter to"
 msgstr "Enterキーで"
 
-#: src\ui\chat.rs:3085
+#: src\ui\chat.rs:3136
 msgid "save"
 msgstr "保存"
 
-#: src\ui\chat.rs:3137 src\ui\settings.rs:288
+#: src\ui\chat.rs:3188 src\ui\settings.rs:288
 msgid "About Me"
 msgstr "自己紹介"
 
-#: src\ui\chat.rs:3142 src\ui\guild.rs:827 src\ui\profile.rs:563
+#: src\ui\chat.rs:3193 src\ui\guild.rs:827 src\ui\profile.rs:563
 msgid "Member Since"
 msgstr "メンバー歴"
 
-#: src\ui\chat.rs:3153 src\ui\profile.rs:657 src\ui\requests.rs:187
+#: src\ui\chat.rs:3204 src\ui\profile.rs:657 src\ui\requests.rs:187
 msgid "{count} Mutual Server"
 msgid_plural "{count} Mutual Servers"
 msgstr[0] "{count} 個の共通サーバー"
 
-#: src\ui\chat.rs:3164 src\ui\profile.rs:651
+#: src\ui\chat.rs:3215 src\ui\profile.rs:651
 msgid "{count} Mutual Friend"
 msgid_plural "{count} Mutual Friends"
 msgstr[0] "共通のフレンド {count}人"
 
-#: src\ui\chat.rs:3187
+#: src\ui\chat.rs:3238
 msgid "Show Chat"
 msgstr "チャットを表示"
 
-#: src\ui\chat.rs:3194 src\ui\chat.rs:3313
+#: src\ui\chat.rs:3245 src\ui\chat.rs:3364
 msgid "Join Voice"
 msgstr "ボイスチャンネルに参加"
 
-#: src\ui\chat.rs:3308
+#: src\ui\chat.rs:3359
 msgid "in {name}"
 msgstr "{name}内"
 
-#: src\ui\chat.rs:3313
+#: src\ui\chat.rs:3364
 msgid "Open Voice"
 msgstr "ボイスチャンネルを開く"
 
@@ -3300,7 +3312,7 @@ msgstr "本当に@{name}をBANしますか？BANが解除されるまでサー�
 msgid "Ban"
 msgstr "BAN"
 
-#: src\ui\guild.rs:945 src\ui\menu.rs:424 src\ui\mod.rs:2939
+#: src\ui\guild.rs:945 src\ui\menu.rs:424 src\ui\mod.rs:2957
 msgid "Copy User ID"
 msgstr "ユーザーIDをコピー"
 
@@ -3344,7 +3356,7 @@ msgstr "なし"
 msgid "Copy Link"
 msgstr "リンクをコピー"
 
-#: src\ui\guild.rs:1003 src\ui\mod.rs:2619
+#: src\ui\guild.rs:1003 src\ui\mod.rs:2637
 msgid "Link copied"
 msgstr "リンクをコピーしました"
 
@@ -3597,11 +3609,11 @@ msgstr "連携ロール"
 msgid "unknown-channel"
 msgstr "不明なチャンネル"
 
-#: src\ui\menu.rs:136 src\ui\mod.rs:2840
+#: src\ui\menu.rs:136 src\ui\mod.rs:2858
 msgid "For 15 Minutes"
 msgstr "15分間"
 
-#: src\ui\menu.rs:137 src\ui\mod.rs:2841
+#: src\ui\menu.rs:137 src\ui\mod.rs:2859
 msgid "For 1 Hour"
 msgstr "1時間"
 
@@ -3609,11 +3621,11 @@ msgstr "1時間"
 msgid "For 3 Hours"
 msgstr "3時間"
 
-#: src\ui\menu.rs:139 src\ui\mod.rs:2842
+#: src\ui\menu.rs:139 src\ui\mod.rs:2860
 msgid "For 8 Hours"
 msgstr "8時間"
 
-#: src\ui\menu.rs:140 src\ui\mod.rs:2843
+#: src\ui\menu.rs:140 src\ui\mod.rs:2861
 msgid "For 24 Hours"
 msgstr "24時間"
 
@@ -4081,7 +4093,7 @@ msgstr "サーバーミュート"
 msgid "Server Deafen"
 msgstr "サーバースピーカーミュート"
 
-#: src\ui\mod.rs:1732 src\ui\mod.rs:2326 src\ui\overlay.rs:540
+#: src\ui\mod.rs:1732 src\ui\mod.rs:2330 src\ui\overlay.rs:540
 msgid "Disconnect"
 msgstr "切断"
 
@@ -4118,204 +4130,204 @@ msgstr "ピンを外す"
 msgid "Pin"
 msgstr "ピン留め"
 
-#: src\ui\mod.rs:2090
+#: src\ui\mod.rs:2094
 msgid "Windows Default"
 msgstr "Windowsの既定"
 
-#: src\ui\mod.rs:2090
+#: src\ui\mod.rs:2094
 msgid "System Default"
 msgstr "システムの既定"
 
-#: src\ui\mod.rs:2153
+#: src\ui\mod.rs:2157
 msgid "Input Device"
 msgstr "入力デバイス"
 
-#: src\ui\mod.rs:2153
+#: src\ui\mod.rs:2157
 msgid "Output Device"
 msgstr "出力デバイス"
 
-#: src\ui\mod.rs:2172 src\ui\settings.rs:976
+#: src\ui\mod.rs:2176 src\ui\settings.rs:976
 msgid "Input Profile"
 msgstr "入力プロファイル"
 
-#: src\ui\mod.rs:2185
+#: src\ui\mod.rs:2189
 msgid "Input Volume"
 msgstr "入力音量"
 
-#: src\ui\mod.rs:2185
+#: src\ui\mod.rs:2189
 msgid "Output Volume"
 msgstr "出力音量"
 
-#: src\ui\mod.rs:2195
+#: src\ui\mod.rs:2199
 msgid "Voice Settings"
 msgstr "音声設定"
 
-#: src\ui\mod.rs:2229
+#: src\ui\mod.rs:2233
 msgid "Voice Isolation"
 msgstr "ボイスアイソレーション"
 
-#: src\ui\mod.rs:2230
+#: src\ui\mod.rs:2234
 msgid "Studio"
 msgstr "スタジオ"
 
-#: src\ui\mod.rs:2231
+#: src\ui\mod.rs:2235
 msgid "Custom"
 msgstr "カスタム"
 
-#: src\ui\mod.rs:2237
+#: src\ui\mod.rs:2241
 msgid "Just your beautiful voice: let Discord cut through the noise"
 msgstr "Discordが雑音を取り除いて、残るのはあなたの美声だけです"
 
-#: src\ui\mod.rs:2238
+#: src\ui\mod.rs:2242
 msgid "Pure audio: open mic with no processing"
 msgstr "処理なしのオープンマイクで、そのままの音声になります"
 
-#: src\ui\mod.rs:2239
+#: src\ui\mod.rs:2243
 msgid "Advanced mode: give me all the buttons and dials!"
 msgstr "上級モード：すべてのボタンとダイヤルが必要！"
 
-#: src\ui\mod.rs:2273 src\ui\overlay.rs:569
+#: src\ui\mod.rs:2277 src\ui\overlay.rs:569
 msgid "Voice Connected"
 msgstr "ボイス接続済み"
 
-#: src\ui\mod.rs:2277 src\ui\mod.rs:2304 src\ui\mod.rs:2428
+#: src\ui\mod.rs:2281 src\ui\mod.rs:2308 src\ui\mod.rs:2445
 msgid "Connecting…"
 msgstr "接続中…"
 
-#: src\ui\mod.rs:2295
+#: src\ui\mod.rs:2299
 msgid "Excellent"
 msgstr "非常に良好"
 
-#: src\ui\mod.rs:2295
+#: src\ui\mod.rs:2299
 msgid "Good"
 msgstr "良好"
 
-#: src\ui\mod.rs:2295
+#: src\ui\mod.rs:2299
 msgid "Bad"
 msgstr "不良"
 
-#: src\ui\mod.rs:2296
+#: src\ui\mod.rs:2300
 msgid "Average ping: {ms} ms"
 msgstr "平均ping: {ms} ms"
 
-#: src\ui\mod.rs:2297
+#: src\ui\mod.rs:2301
 msgid "Connection: {quality}"
 msgstr "接続品質: {quality}"
 
-#: src\ui\mod.rs:2301
+#: src\ui\mod.rs:2305
 msgid "Measuring the ping…"
 msgstr "pingを測定中…"
 
-#: src\ui\mod.rs:2304
+#: src\ui\mod.rs:2308
 msgid "End-to-end encrypted"
 msgstr "エンドツーエンド暗号化"
 
-#: src\ui\mod.rs:2343
+#: src\ui\mod.rs:2347
 msgid "Noise Suppression On"
 msgstr "ノイズ抑制オン"
 
-#: src\ui\mod.rs:2343
+#: src\ui\mod.rs:2347
 msgid "Noise Suppression Off"
 msgstr "ノイズ抑制オフ"
 
-#: src\ui\mod.rs:2370 src\ui\settings.rs:1003
+#: src\ui\mod.rs:2374 src\ui\settings.rs:1003
 msgid "Noise Suppression"
 msgstr "ノイズ抑制"
 
-#: src\ui\mod.rs:2370
+#: src\ui\mod.rs:2374
 msgid "Make some noise—like clapping your hands—while speaking. Your friends will hear nothing but your beautiful voice."
 msgstr "話し中に手を叩いたり音を出してみてください。友達はあなたの美声しか聞こえないはずです。"
 
-#: src\ui\mod.rs:2375 src\ui\settings.rs:946
+#: src\ui\mod.rs:2379 src\ui\settings.rs:946
 msgid "Mic Test"
 msgstr "マイクテスト"
 
-#: src\ui\mod.rs:2378
+#: src\ui\mod.rs:2382
 msgid "Stop"
 msgstr "停止"
 
-#: src\ui\mod.rs:2378
+#: src\ui\mod.rs:2382
 msgid "Test"
 msgstr "テスト"
 
-#: src\ui\mod.rs:2429
+#: src\ui\mod.rs:2446
 msgid "No connection"
 msgstr "接続なし"
 
-#: src\ui\mod.rs:2450
+#: src\ui\mod.rs:2468
 msgid "User Settings"
 msgstr "ユーザー設定"
 
-#: src\ui\mod.rs:2455
+#: src\ui\mod.rs:2473
 msgid "Output Options"
 msgstr "出力オプション"
 
-#: src\ui\mod.rs:2462
+#: src\ui\mod.rs:2480
 msgid "Input Options"
 msgstr "入力オプション"
 
-#: src\ui\mod.rs:2497
+#: src\ui\mod.rs:2515
 msgid "is calling you…"
 msgstr "から着信中…"
 
-#: src\ui\mod.rs:2509 src\ui\overlay.rs:597
+#: src\ui\mod.rs:2527 src\ui\overlay.rs:597
 msgid "Decline"
 msgstr "拒否"
 
-#: src\ui\mod.rs:2509
+#: src\ui\mod.rs:2527
 msgctxt "call"
 msgid "Accept"
 msgstr "応答"
 
-#: src\ui\mod.rs:2546
+#: src\ui\mod.rs:2564
 msgid "Where would you like to go?"
 msgstr "どこに行きたいですか？"
 
-#: src\ui\mod.rs:2547
+#: src\ui\mod.rs:2565
 msgid "Channel, server or conversation"
 msgstr "チャンネル、サーバー、会話"
 
-#: src\ui\mod.rs:2774
+#: src\ui\mod.rs:2792
 msgid "Update ready ({version}): restart"
 msgstr "アップデートの準備完了 ({version}): 再起動"
 
-#: src\ui\mod.rs:2775
+#: src\ui\mod.rs:2793
 msgid "Downloading version {version}: {percent}%"
 msgstr "バージョン{version}をダウンロード中: {percent}%"
 
-#: src\ui\mod.rs:2844
+#: src\ui\mod.rs:2862
 msgid "For 3 Days"
 msgstr "3日間"
 
-#: src\ui\mod.rs:2845
+#: src\ui\mod.rs:2863
 msgid "Forever"
 msgstr "無期限"
 
-#: src\ui\mod.rs:2876
+#: src\ui\mod.rs:2894
 msgid "You will not receive desktop notifications"
 msgstr "デスクトップ通知が届かなくなります"
 
-#: src\ui\mod.rs:2877
+#: src\ui\mod.rs:2895
 msgid "You will not appear online, but will have full access to Discord"
 msgstr "オンラインとして表示されませんが、Discordのすべての機能を使えます"
 
-#: src\ui\mod.rs:2899
+#: src\ui\mod.rs:2917
 msgid "Switch Accounts"
 msgstr "アカウントを切り替え"
 
-#: src\ui\mod.rs:2923
+#: src\ui\mod.rs:2941
 msgid "Remove From This List"
 msgstr "このリストから削除"
 
-#: src\ui\mod.rs:2930
+#: src\ui\mod.rs:2948
 msgid "Add an Account"
 msgstr "アカウントを追加"
 
-#: src\ui\mod.rs:2934
+#: src\ui\mod.rs:2952
 msgid "Log Out of This Account"
 msgstr "このアカウントからログアウト"
 
-#: src\ui\mod.rs:2941
+#: src\ui\mod.rs:2959
 msgid "ID copied"
 msgstr "IDをコピーしました"
 
@@ -5435,10 +5447,6 @@ msgstr "指定したキーを押している間のみ、マイクが有効にな
 #: src\ui\settings.rs:1014
 msgid "Camera"
 msgstr "カメラ"
-
-#: src\ui\settings.rs:1015 src\ui\soundboard.rs:61 src\ui\soundboard.rs:61
-msgid "Camera and screen sharing aren't available yet."
-msgstr "カメラと画面共有はまだ利用できません。"
 
 #: src\ui\settings.rs:1016
 msgid "Always preview video"

@@ -123,7 +123,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     crate::icons::paint(ui, rect, icon, p.faint);
                 }
                 None => {
-                    ui.label(RichText::new("@").size(20.0).color(p.faint));
+                    // A DM: the person's (or the group's) picture, 24 points,
+                    // with the status, as Discord's header.
+                    let (rect, _) = ui.allocate_exact_size(Vec2::splat(24.0), Sense::hover());
+                    let person = (channel.kind == ChannelKind::Dm).then(|| channel.recipients.first()).flatten();
+                    let url = person.map(|u| u.avatar_url());
+                    app.images.circle(ui, rect, url.as_deref(), &super::initials(&channel.title()), 12.0);
+                    if let Some(presence) = person.and_then(|u| app.presences.get(&u.id)).filter(|p| p.status != "offline") {
+                        super::friends::dot(ui, rect, &presence.status, p.chat);
+                    }
+                    ui.add_space(4.0);
                 }
             }
             ui.add(Label::new(RichText::new(channel.title()).font(theme::strong(16.0)).color(p.strong)).truncate());
@@ -156,9 +165,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 // SkinsRestorer"), the member list, pins, the notification
                 // bell and threads. The inbox and help are in the title bar.
                 let searching = matches!(app.side, Some(crate::app::Side::Search { .. }));
+                // A DM's box names the person by username, a group by title.
                 let hint = match channel.guild_id.and_then(|g| app.guild(g)) {
                     Some(guild) => t!("Search {guildName}", guildName = guild.name),
-                    None => t!("Search").to_owned(),
+                    None => {
+                        let name = match channel.kind {
+                            ChannelKind::Dm => channel.recipients.first().map(|u| u.username.clone()).unwrap_or_default(),
+                            _ => channel.title(),
+                        };
+                        t!("Search {name}", name = name)
+                    }
                 };
                 let width = (ui.available_width() * 0.3).clamp(144.0, 244.0);
                 let (rect, response) = ui.allocate_exact_size(vec2(width, 32.0), Sense::click());
@@ -176,6 +192,23 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Members, color);
                     if response.on_hover_text(if app.show_members { t!("Hide Member List") } else { t!("Show Member List") }).clicked() {
                         app.toggle_members();
+                    }
+                }
+                // A DM's, right to left: the profile, Add Friends to DM, then
+                // pins, video and voice calls.
+                if channel.kind == ChannelKind::Dm {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    let color = if app.show_dm_profile || response.hovered() { p.strong } else { p.muted };
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::UserCircle, color);
+                    if response.on_hover_text(if app.show_dm_profile { t!("Hide User Profile") } else { t!("Show User Profile") }).clicked() {
+                        app.show_dm_profile = !app.show_dm_profile;
+                    }
+                }
+                if dm {
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::GroupPlus, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Add Friends to DM")).clicked() {
+                        app.modal = Some(crate::app::Modal::GroupAdd { channel: channel.id, picked: Vec::new(), filter: String::new() });
                     }
                 }
                 let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
@@ -207,26 +240,16 @@ fn header(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                         app.modal = Some(crate::app::Modal::Threads { channel: channel.id, name: String::new() });
                     }
                 }
-                if dm {
-                    let in_call = app.voice.channel.map(|(_, c)| c) == Some(channel.id);
+                if dm && app.voice.channel.map(|(_, c)| c) != Some(channel.id) {
+                    // Video is not here yet (Go Live and the camera): the
+                    // button shows, as Discord's, without a call behind it.
                     let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                    let color = if response.hovered() { p.strong } else { p.muted };
-                    if !in_call {
-                        crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::PhoneCall, color);
-                    }
-                    if !in_call && response.on_hover_text(t!("Start Voice Call")).clicked() {
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Video, p.muted.gamma_multiply(0.5));
+                    response.on_hover_text(t!("Camera and screen sharing aren't available yet."));
+                    let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
+                    crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::PhoneCall, if response.hovered() { p.strong } else { p.muted });
+                    if response.on_hover_text(t!("Start Voice Call")).clicked() {
                         app.actions.push(Action::JoinVoice { guild: None, channel: channel.id, ring: true });
-                    }
-                    if channel.kind == ChannelKind::Dm
-                        && let Some(user) = channel.recipients.first().cloned()
-                    {
-                        let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
-                        let color = if app.show_dm_profile || response.hovered() { p.strong } else { p.muted };
-                        crate::icons::paint(ui, rect.shrink(3.0), crate::icons::Icon::Friends, color);
-                        if response.on_hover_text(if app.show_dm_profile { t!("Hide User Profile") } else { t!("Show User Profile") }).clicked() {
-                            app.show_dm_profile = !app.show_dm_profile;
-                        }
-                        let _ = user;
                     }
                 }
             });
@@ -1896,8 +1919,9 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                 }
             });
             ui.add_space(4.0);
-            // Settings → Appearance → Chat Box hides any of the three.
-            let buttons = [app.settings.sticker_button, app.settings.gif_button, app.settings.emoji_button].iter().filter(|b| **b).count();
+            // Settings → Appearance → Chat Box hides any of the three; the
+            // gift and the app launcher always show.
+            let buttons = 2 + [app.settings.sticker_button, app.settings.gif_button, app.settings.emoji_button].iter().filter(|b| **b).count();
             let width = ui.available_width() - buttons as f32 * 36.0 - 4.0;
             // A slash command picked: its options take the box's place.
             if in_command {
@@ -1929,11 +1953,13 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
             }
             ui.add_space(4.0);
             let cell = |ui: &mut egui::Ui| ui.allocate_exact_size(vec2(36.0, BOX), Sense::click());
-            if app.settings.sticker_button {
+            // Discord's bar, left to right: Send a gift, GIF, stickers, emoji
+            // and the app launcher.
+            {
                 let (rect, response) = cell(ui);
-                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Sticker, if response.hovered() { p.strong } else { p.muted });
-                if response.on_hover_text(t!("Open sticker picker")).clicked() {
-                    app.toggle_expressions(crate::app::ExpressionTab::Stickers, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Gift, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Send a gift")).clicked() {
+                    let _ = open::that_detached("https://discord.com/store");
                 }
             }
             if app.settings.gif_button {
@@ -1943,11 +1969,28 @@ fn composer(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
                     app.toggle_expressions(crate::app::ExpressionTab::Gifs, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
                 }
             }
+            if app.settings.sticker_button {
+                let (rect, response) = cell(ui);
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Sticker, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Open sticker picker")).clicked() {
+                    app.toggle_expressions(crate::app::ExpressionTab::Stickers, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                }
+            }
             if app.settings.emoji_button {
                 let (rect, response) = cell(ui);
                 emoji_button(ui, &response, Rect::from_center_size(rect.center(), Vec2::splat(28.0)));
                 if response.on_hover_text(t!("Select emoji")).clicked() {
                     app.toggle_expressions(crate::app::ExpressionTab::Emoji, crate::app::PickerTarget::Composer, ui.input(|i| i.time));
+                }
+            }
+            {
+                // The app launcher: the apps' and the built-in commands,
+                // which the slash command picker lists.
+                let (rect, response) = cell(ui);
+                crate::icons::paint(ui, Rect::from_center_size(rect.center(), Vec2::splat(24.0)), crate::icons::Icon::Apps, if response.hovered() { p.strong } else { p.muted });
+                if response.on_hover_text(t!("Apps")).clicked() && app.composer.is_empty() {
+                    app.composer.push('/');
+                    app.focus_composer = true;
                 }
             }
         });
@@ -2920,8 +2963,16 @@ pub fn modal(app: &mut App, ctx: &egui::Context) {
                     }
                 });
                 if ui.add_enabled(!picked.is_empty(), egui::Button::new(RichText::new(t!("Add")).color(Color32::WHITE)).fill(p.accent)).clicked() {
-                    for user in picked.iter() {
-                        app.commands.send(call("PUT", format!("/channels/{channel}/recipients/{user}"), None));
+                    // From a one-to-one DM Discord makes a new group with
+                    // both; a group takes them in.
+                    if app.channel(*channel).is_some_and(|c| c.kind == ChannelKind::Dm) {
+                        let mut everyone: Vec<String> = already.iter().chain(picked.iter()).map(Id::to_string).collect();
+                        everyone.dedup();
+                        app.commands.send(call("POST", "/users/@me/channels".to_owned(), Some(serde_json::json!({ "recipients": everyone }))));
+                    } else {
+                        for user in picked.iter() {
+                            app.commands.send(call("PUT", format!("/channels/{channel}/recipients/{user}"), None));
+                        }
                     }
                     keep = false;
                 }
