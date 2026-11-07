@@ -47,7 +47,7 @@ fn draw(app: &mut App, ui: &mut egui::Ui, message: &Message, component: &Compone
         }
         Component::Text(content) => {
             let blocks = markdown::parse(content);
-            markdown::show(app, ui, &blocks, p.text, message.id);
+            markdown::show_sized(app, ui, &blocks, p.text, message.id, 16.0);
         }
         Component::Section { texts, accessory } => {
             ui.horizontal_top(|ui| {
@@ -56,7 +56,7 @@ fn draw(app: &mut App, ui: &mut egui::Ui, message: &Message, component: &Compone
                     ui.set_width(width.max(120.0));
                     for text in texts {
                         let blocks = markdown::parse(text);
-                        markdown::show(app, ui, &blocks, p.text, message.id);
+                        markdown::show_sized(app, ui, &blocks, p.text, message.id, 16.0);
                     }
                 });
                 if let Some(accessory) = accessory {

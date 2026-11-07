@@ -559,8 +559,10 @@ fn messages(app: &mut App, ui: &mut egui::Ui, channel: Id) {
 fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Option<Id>, grouped: bool, mentioned: bool, light: f32) {
     let p = theme::p();
     let compact = app.settings.compact;
+    // A new group starts 17 points below the last, as Discord's
+    // `groupStart` margin.
     if !grouped {
-        ui.add_space(if compact { 4.0 } else { 14.0 });
+        ui.add_space(if compact { 4.0 } else { 17.0 });
     }
     let background = ui.painter().add(Shape::Noop);
     let top = ui.cursor().top();
@@ -573,7 +575,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
     // The message's own area goes in before its content, with last frame's
     // height, so the name, the reply line and links stay clickable: egui
     // gives a click to the widget added last.
-    let gap = if grouped { 0.0 } else if compact { 4.0 } else { 14.0 };
+    let gap = if grouped { 0.0 } else if compact { 4.0 } else { 17.0 };
     let message_id = ui.id().with(("message", message.id));
     let early = app
         .heights
@@ -581,10 +583,16 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
         .filter(|(w, _)| (*w - width).abs() < 1.0)
         .map(|(_, h)| ui.interact(Rect::from_min_size(pos2(left, top), vec2(width, (h - gap).max(1.0))), message_id, Sense::click()));
 
+    // Rows follow each other with nothing between them: a message is its
+    // 2-point padding and 22-point lines, 26 points for one line (Discord's
+    // `cozyMessage`).
+    ui.spacing_mut().item_spacing.y = 0.0;
     Frame::new()
         .inner_margin(Margin { left: gutter as i8, right: 16, top: 2, bottom: 2 })
         .show(ui, |ui| {
+            ui.spacing_mut().item_spacing.y = 2.0;
             ui.set_width(content_width);
+            ui.set_min_height(22.0);
             if system {
                 ui.label(RichText::new(system_text(message, &name, app.me_id(), &app.channel(message.channel_id).map(Channel::title).unwrap_or_default())).italics().color(p.muted));
                 return;
@@ -626,9 +634,10 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
             if !grouped {
                 ui.horizontal(|ui| {
                     let response = match app.gradient(guild, message.author.id) {
-                        Some((from, to)) => ui.add(Label::new(theme::gradient_job(&name, theme::strong(15.0), from, to)).sense(Sense::click())),
+                        // Discord's header: the name in 16-point medium.
+                        Some((from, to)) => ui.add(Label::new(theme::gradient_job(&name, theme::medium(16.0), from, to)).sense(Sense::click())),
                         None => {
-                            let name_text = RichText::new(&name).font(theme::strong(15.0)).color(name_color.unwrap_or(p.strong));
+                            let name_text = RichText::new(&name).font(theme::medium(16.0)).color(name_color.unwrap_or(p.strong));
                             ui.add(Label::new(name_text).sense(Sense::click()))
                         }
                     };
@@ -652,7 +661,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                         super::profile::bot_pill(ui, message.author.verified_bot());
                     }
                     // The whole date on hover, as Discord's tooltip.
-                    ui.label(RichText::new(text::time(message.timestamp_ms())).size(12.0).color(p.faint)).on_hover_text(text::full(message.timestamp_ms()));
+                    ui.label(RichText::new(text::time(message.timestamp_ms())).font(theme::medium(12.0)).color(p.faint)).on_hover_text(text::full(message.timestamp_ms()));
                 });
             }
             let color = if message.deleted {
@@ -675,7 +684,7 @@ fn message_view(app: &mut App, ui: &mut egui::Ui, message: &Message, guild: Opti
                 edit_box(app, ui);
             } else if !message.content.is_empty() {
                 let blocks = markdown::parse(&message.content);
-                markdown::show(app, ui, &blocks, color, message.id);
+                markdown::show_sized(app, ui, &blocks, color, message.id, 16.0);
                 if message.edited {
                     ui.label(RichText::new(t!("(edited)")).size(11.0).color(p.faint));
                 }
@@ -1568,7 +1577,7 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                     if let Some(description) = &embed.description {
                         let short: String = description.chars().take(1200).collect();
                         let blocks = markdown::parse(&short);
-                        markdown::show(app, ui, &blocks, p.text, 0);
+                        markdown::show_sized(app, ui, &blocks, p.text, 0, 14.0);
                     }
                     // Fields: inline ones side by side, up to three a row.
                     let mut row: Vec<&(String, String, bool)> = Vec::new();
@@ -1581,7 +1590,7 @@ fn embed_view(app: &mut App, ui: &mut egui::Ui, embed: &crate::discord::model::E
                             for (column, (name, value, _)) in columns.iter_mut().zip(row.iter()) {
                                 column.label(RichText::new(name).font(theme::strong(13.5)).color(p.strong));
                                 let blocks = markdown::parse(value);
-                                markdown::show(app, column, &blocks, p.text, 0);
+                                markdown::show_sized(app, column, &blocks, p.text, 0, 14.0);
                             }
                         });
                         row.clear();

@@ -576,7 +576,7 @@ fn about(app: &mut App, ui: &mut egui::Ui, user: &User, profile: &Profile, guild
     let bio = if profile.guild_bio.is_empty() { &profile.bio } else { &profile.guild_bio };
     if !bio.is_empty() {
         let blocks = markdown::parse(bio);
-        markdown::show(app, ui, &blocks, p.text, user.id);
+        markdown::show_sized(app, ui, &blocks, p.text, user.id, 14.0);
     }
     // Yours come from what this computer reports (the pipe, the detected
     // game), as Discord shows them on your own card too.
