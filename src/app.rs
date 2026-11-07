@@ -446,6 +446,8 @@ pub enum Action {
     DeclineCall(Id),
     SetRegion(String),
     OpenSettings(SettingsTab),
+    /// Pins a DM to the top of the list, or unpins it.
+    PinDm(Id, bool),
     CloseSettings,
     SettingsChanged,
     AttachFiles,
@@ -3436,6 +3438,20 @@ impl App {
                 self.commands.send(Command::Call { guild, channel, ring });
             }
             Action::LeaveVoice => self.commands.send(Command::Voice(VoiceCommand::Leave)),
+            Action::PinDm(channel, pin) => {
+                // The FAVORITED bit of the DM's override, the others kept;
+                // shown at once, the settings update confirms it.
+                let flags = self.mutes.dm_flags.get(&channel).copied().unwrap_or(0);
+                let flags = if pin { flags | crate::discord::model::FAVORITED } else { flags & !crate::discord::model::FAVORITED };
+                self.mutes.dm_flags.insert(channel, flags);
+                if pin {
+                    self.mutes.favorites.insert(channel);
+                } else {
+                    self.mutes.favorites.remove(&channel);
+                }
+                let body = serde_json::json!({ "channel_overrides": { channel.to_string(): { "flags": flags } } });
+                self.commands.send(Command::Api { key: "pin-dm".into(), method: "PATCH", path: "/users/@me/guilds/@me/settings".into(), body: Some(body) });
+            }
             Action::ToggleMute => {
                 self.voice.mute = !self.voice.mute;
                 self.sound(if self.voice.mute { crate::sounds::Sound::Mute } else { crate::sounds::Sound::Unmute });

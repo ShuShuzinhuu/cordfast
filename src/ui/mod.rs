@@ -1154,8 +1154,10 @@ fn sidebar(app: &mut App, ui: &mut egui::Ui) {
                     });
                 });
                 // Requests wait on their own page until accepted.
+                // Pinned ones first, then the latest message (or the channel
+                // itself) first, as PrivateChannelSortStore orders them.
                 let mut dms: Vec<Channel> = app.dms.iter().filter(|c| !c.message_request).cloned().collect();
-                dms.sort_by_key(|c| std::cmp::Reverse(app.latest.get(&c.id).copied().or(c.last_message_id).unwrap_or(c.id)));
+                dms.sort_by_key(|c| (!app.mutes.favorites.contains(&c.id), std::cmp::Reverse(app.latest.get(&c.id).copied().or(c.last_message_id).unwrap_or(c.id))));
                 for channel in dms {
                     dm_row(app, ui, &channel);
                 }
@@ -1813,7 +1815,8 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
     match &person {
         Some(user) => {
             let width = name_with_tag(app, ui, name_rect, user, &title, font, color);
-            if let Some(plate) = &user.nameplate {
+            // Shown while open or under the pointer only (`e1` in the row).
+            if let Some(plate) = user.nameplate.as_ref().filter(|_| selected || response.hovered()) {
                 nameplate(app, ui, slot, rect, plate, x - rect.left() + width, response.hovered(), selected, Plate::Channel);
             }
         }
@@ -1825,10 +1828,33 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
         }
         None => paint_truncated(ui, bottom, &tn!(channel.recipients.len() + 1, "{count} Member", "{count} Members"), FontId::proportional(12.0), p.muted),
     }
-    if mentions > 0 {
+    // At the end: under the pointer the close button ("Close DM", "Leave
+    // Group"), else the mentions, else a pinned DM's pin, as Discord's row.
+    let mut closed = false;
+    if response.hovered() || ui.rect_contains_pointer(rect) {
+        let at = Rect::from_center_size(pos2(rect.right() - 16.0, rect.center().y), Vec2::splat(20.0));
+        let close = ui.interact(at, ui.id().with(("dm-close", channel.id)), Sense::click());
+        icons::paint(ui, Rect::from_center_size(at.center(), Vec2::splat(16.0)), Icon::Close, if close.hovered() { p.strong } else { p.muted });
+        let group = channel.kind == ChannelKind::GroupDm;
+        if close.on_hover_text(if group { t!("Leave Group") } else { t!("Close DM") }).clicked() {
+            closed = true;
+            if group {
+                app.modal = Some(crate::app::Modal::Confirm {
+                    title: t!("Leave Group").into(),
+                    body: t!("Are you sure you want to leave this group?").into(),
+                    button: t!("Leave Group").into(),
+                    then: crate::app::Confirmed::LeaveGroup { channel: channel.id },
+                });
+            } else {
+                app.actions.push(Action::CloseDm(channel.id));
+            }
+        }
+    } else if mentions > 0 {
         badge(ui, pos2(rect.right() - 16.0, rect.center().y), mentions, Color32::TRANSPARENT);
+    } else if app.mutes.favorites.contains(&channel.id) {
+        icons::paint(ui, Rect::from_center_size(pos2(rect.right() - 16.0, rect.center().y), Vec2::splat(12.0)), Icon::Pin, p.muted);
     }
-    if response.clicked() {
+    if response.clicked() && !closed {
         app.actions.push(Action::SelectChannel(channel.id));
     }
     let id = channel.id;
@@ -1839,6 +1865,13 @@ fn dm_row(app: &mut App, ui: &mut egui::Ui, channel: &Channel) {
         menu::begin(ui);
         if menu::item(ui, t!("Mark As Read"), menu::Tail::None).clicked() {
             app.actions.push(Action::MarkRead(vec![id]));
+            ui.close();
+        }
+        menu::separator(ui);
+        // Discord's "Pin" / "Unpin" (`pin-dm`), with the pin icon.
+        let pinned = app.mutes.favorites.contains(&id);
+        if menu::item(ui, if pinned { t!("Unpin") } else { t!("Pin") }, menu::Tail::Icon(Icon::Pin)).clicked() {
+            app.actions.push(Action::PinDm(id, !pinned));
             ui.close();
         }
         menu::separator(ui);

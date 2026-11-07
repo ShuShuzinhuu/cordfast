@@ -1259,7 +1259,15 @@ pub struct Mutes {
     /// 0 every message, 1 only @mentions, 2 nothing. A channel that follows
     /// its category or server is absent.
     pub levels: HashMap<Id, u8>,
+    /// DMs pinned to the top of the list: the `FAVORITED` flag (2048) of
+    /// their override in the settings without a server.
+    pub favorites: std::collections::HashSet<Id>,
+    /// Those overrides' flags, kept so a change sets one bit only.
+    pub dm_flags: HashMap<Id, u64>,
 }
+
+/// `ChannelNotificationSettingsFlags.FAVORITED`.
+pub const FAVORITED: u64 = 2048;
 
 /// A mute's end, when it has one, in Unix ms.
 fn mute_end(value: &Value) -> Option<u64> {
@@ -1300,6 +1308,15 @@ impl Mutes {
             .flatten()
         {
             if let Some(channel) = field_sf(o, "channel_id") {
+                if field_sf(entry, "guild_id").is_none() {
+                    let flags = o.get("flags").and_then(Value::as_u64).unwrap_or(0);
+                    self.dm_flags.insert(channel, flags);
+                    if flags & FAVORITED != 0 {
+                        self.favorites.insert(channel);
+                    } else {
+                        self.favorites.remove(&channel);
+                    }
+                }
                 self.set(channel, muted(o).then(|| mute_end(o)), false);
                 match level(o) {
                     Some(level) => self.levels.insert(channel, level),
